@@ -287,6 +287,7 @@ export async function POST(req: NextRequest) {
     const seenUrls = new Set<string>();
     let totalScraped = 0;
     let passes = 0;
+    let isLiveData = false;
 
     // ── Scrape + analyze loop ─────────────────────────────────────────────────
     while (validJobs.length < targetCount && passes < MAX_PASSES) {
@@ -305,6 +306,7 @@ export async function POST(req: NextRequest) {
           // with complete descriptions that the AI can properly analyze.
           if (rawBatch.length > 0) {
             rawBatch = await enrichJobsWithDetails(rawBatch, sessionCookie);
+            isLiveData = true;
           }
         } catch {
           // Live scrape failed — use mock
@@ -399,6 +401,7 @@ export async function POST(req: NextRequest) {
         totalRemoved: removedJobs.length,
         scrapePasses: passes,
       },
+      isLiveData,
     };
 
     return NextResponse.json(result);

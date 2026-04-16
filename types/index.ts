@@ -68,6 +68,7 @@ export interface ProcessResult {
     totalRemoved: number;
     scrapePasses: number;
   };
+  isLiveData: boolean; // false = mock/demo data, true = scraped from onlinejobs.ph
 }
 
 // ─── UI State ─────────────────────────────────────────────────────────────────

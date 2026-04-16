@@ -139,9 +139,6 @@ function getTemplatesForKeyword(keyword: string): typeof JOB_TEMPLATES['default'
   return JOB_TEMPLATES.default;
 }
 
-function slugify(title: string) {
-  return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-}
 
 export function generateMockJobs(keyword: string, count: number): RawJob[] {
   const templates = getTemplatesForKeyword(keyword);
@@ -158,14 +155,13 @@ export function generateMockJobs(keyword: string, count: number): RawJob[] {
     const empType = EMPLOYMENT_TYPES[i % EMPLOYMENT_TYPES.length];
     const daysAgo = Math.floor(Math.random() * 14);
     const posted = new Date(now.getTime() - daysAgo * 86400000);
-    const slug = slugify(template.title);
 
     jobs.push({
       id: `mock-${i}-${Date.now()}`,
       companyName: company,
       employmentType: empType,
       title: template.title,
-      url: `https://www.onlinejobs.ph/jobseekers/job/${slug}-${1000 + i}`,
+      url: null, // null on mock data — no fake links that mislead users
       salary,
       description: template.description,
       datePosted: posted.toISOString().slice(0, 19).replace('T', ' '),
@@ -183,7 +179,7 @@ export function generateMockJobs(keyword: string, count: number): RawJob[] {
       companyName: COMPANY_NAMES[(j + 5) % COMPANY_NAMES.length],
       employmentType: 'Full Time',
       title: template.title,
-      url: `https://www.onlinejobs.ph/jobseekers/job/filtered-demo-${j}`,
+      url: null,
       salary: SALARY_OPTIONS[j % SALARY_OPTIONS.length],
       description: `${template.description} ${template.requirements}`,
       datePosted: posted.toISOString().slice(0, 19).replace('T', ' '),
