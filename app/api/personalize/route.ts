@@ -8,6 +8,48 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { AnalyzedJob } from '@/types';
 
+// ─── Fetch full job description from the detail page ─────────────────────────
+// Called when the job's stored description is missing or too short to
+// produce a good personalized message. Individual job pages on onlinejobs.ph
+// are server-rendered and contain the complete job post.
+
+async function fetchFullDescription(url: string, sessionCookie?: string): Promise<string> {
+  try {
+    const { load } = await import('cheerio');
+    const headers: Record<string, string> = {
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml',
+    };
+    if (sessionCookie) headers['Cookie'] = `ci_session=${sessionCookie}`;
+
+    const res = await fetch(url, { headers, signal: AbortSignal.timeout(8000) });
+    if (!res.ok) return '';
+
+    const html = await res.text();
+    const $ = load(html);
+
+    // Try specific job-content selectors first
+    const selectors = [
+      '.jobpost-details', '.job-description', '.job-details',
+      '#job-description', '[class*="job-desc"]', '.description-content',
+    ];
+    for (const sel of selectors) {
+      const text = $(sel).text().replace(/\s+/g, ' ').trim();
+      if (text.length > 100) return text.slice(0, 2000);
+    }
+
+    // Fallback: collect all meaningful paragraphs
+    const paragraphs: string[] = [];
+    $('p').each((_, el) => {
+      const t = $(el).text().trim();
+      if (t.length > 30) paragraphs.push(t);
+    });
+    return paragraphs.join(' ').slice(0, 2000);
+  } catch {
+    return '';
+  }
+}
+
 async function personalizeWithAI(
   job: AnalyzedJob,
   baseMessage: string,
@@ -96,18 +138,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'job and baseMessage are required' }, { status: 400 });
     }
 
+    // If the description is missing or too short, fetch the full job page so
+    // the AI has enough context to write a genuinely tailored message.
+    let enrichedJob = job;
+    if (job.url && (job.description ?? '').length < 150) {
+      const sessionCookie = process.env.ONLINEJOBS_SESSION_COOKIE;
+      const fullDesc = await fetchFullDescription(job.url, sessionCookie);
+      if (fullDesc.length > (job.description ?? '').length) {
+        enrichedJob = { ...job, description: fullDesc };
+      }
+    }
+
     const apiKey = process.env.OPENROUTER_API_KEY;
     let message: string;
 
     if (apiKey) {
       try {
-        message = await personalizeWithAI(job, baseMessage, apiKey);
+        message = await personalizeWithAI(enrichedJob, baseMessage, apiKey);
       } catch {
-        // Fall back to local if AI fails
-        message = personalizeLocally(job, baseMessage);
+        message = personalizeLocally(enrichedJob, baseMessage);
       }
     } else {
-      message = personalizeLocally(job, baseMessage);
+      message = personalizeLocally(enrichedJob, baseMessage);
     }
 
     return NextResponse.json({ message });

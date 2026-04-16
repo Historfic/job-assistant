@@ -113,6 +113,100 @@ async function scrapeFromOnlineJobs(
   return jobs;
 }
 
+// ─── Individual job detail fetcher ───────────────────────────────────────────
+// The list page only has a short description snippet (or nothing when JS-gated).
+// Each individual job page at /jobseekers/job/<slug> is server-rendered HTML
+// and contains the full description + requirements — perfect for AI analysis.
+
+async function fetchJobDetails(
+  job: RawJob,
+  sessionCookie?: string
+): Promise<RawJob> {
+  if (!job.url) return job;
+
+  try {
+    const { load } = await import('cheerio');
+    const headers: Record<string, string> = {
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml',
+      'Accept-Language': 'en-US,en;q=0.9',
+    };
+    if (sessionCookie) headers['Cookie'] = `ci_session=${sessionCookie}`;
+
+    const res = await fetch(job.url, { headers, signal: AbortSignal.timeout(8000) });
+    if (!res.ok) return job;
+
+    const html = await res.text();
+    const $ = load(html);
+
+    // Try multiple selectors that onlinejobs.ph uses for the full description
+    const descSelectors = [
+      '.jobpost-details',
+      '.job-description',
+      '.job-details',
+      '#job-description',
+      '.description-content',
+      '[class*="job-desc"]',
+      '.content-area p',
+    ];
+
+    let fullDescription = '';
+    for (const sel of descSelectors) {
+      const el = $(sel);
+      if (el.length) {
+        const text = el.text().replace(/\s+/g, ' ').trim();
+        if (text.length > fullDescription.length) fullDescription = text;
+      }
+    }
+
+    // If no specific selector worked, grab all paragraph text from main content
+    if (fullDescription.length < 100) {
+      const paragraphs: string[] = [];
+      $('p').each((_, el) => {
+        const t = $(el).text().trim();
+        if (t.length > 30) paragraphs.push(t);
+      });
+      const joined = paragraphs.join(' ').slice(0, 2000);
+      if (joined.length > fullDescription.length) fullDescription = joined;
+    }
+
+    // Only update if we got something richer than what we had
+    if (fullDescription.length > (job.description?.length ?? 0)) {
+      return { ...job, description: fullDescription.slice(0, 2000) };
+    }
+  } catch {
+    // Non-fatal — just return the job as-is
+  }
+
+  return job;
+}
+
+// ─── Batch detail enrichment ──────────────────────────────────────────────────
+// Fetches individual job pages concurrently (max 5 at a time to avoid
+// rate-limiting) and enriches each job with its full description.
+
+async function enrichJobsWithDetails(
+  jobs: RawJob[],
+  sessionCookie?: string,
+  concurrency = 5
+): Promise<RawJob[]> {
+  const results: RawJob[] = [];
+
+  for (let i = 0; i < jobs.length; i += concurrency) {
+    const batch = jobs.slice(i, i + concurrency);
+    const enriched = await Promise.all(
+      batch.map(j => fetchJobDetails(j, sessionCookie))
+    );
+    results.push(...enriched);
+    // Small pause between batches to be polite to the server
+    if (i + concurrency < jobs.length) {
+      await new Promise(r => setTimeout(r, 500));
+    }
+  }
+
+  return results;
+}
+
 // ─── Job type filter ─────────────────────────────────────────────────────────
 
 function matchesJobType(job: RawJob, jobType?: string): boolean {
@@ -204,6 +298,14 @@ export async function POST(req: NextRequest) {
       if (!demoMode) {
         try {
           rawBatch = await scrapeFromOnlineJobs(keyword, sessionCookie, needed);
+
+          // Enrich each job with its full description from the detail page.
+          // This is the critical step — the list page only has snippet text
+          // (or nothing if JS-gated), but individual job pages are static HTML
+          // with complete descriptions that the AI can properly analyze.
+          if (rawBatch.length > 0) {
+            rawBatch = await enrichJobsWithDetails(rawBatch, sessionCookie);
+          }
         } catch {
           // Live scrape failed — use mock
         }
