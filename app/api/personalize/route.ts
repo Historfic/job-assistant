@@ -22,16 +22,19 @@ async function fetchFullDescription(url: string, sessionCookie?: string): Promis
     };
     if (sessionCookie) headers['Cookie'] = `ci_session=${sessionCookie}`;
 
-    const res = await fetch(url, { headers, signal: AbortSignal.timeout(8000) });
+    const res = await fetch(url, { headers, signal: AbortSignal.timeout(10000), redirect: 'follow' });
     if (!res.ok) return '';
 
     const html = await res.text();
     const $ = load(html);
 
-    // Try specific job-content selectors first
+    // Confirmed selector: <p id="job-description" class="job-description">
     const selectors = [
-      '.jobpost-details', '.job-description', '.job-details',
-      '#job-description', '[class*="job-desc"]', '.description-content',
+      '#job-description',
+      '.job-description',
+      '.jobpost-details',
+      '.job-details',
+      '.description-content',
     ];
     for (const sel of selectors) {
       const text = $(sel).text().replace(/\s+/g, ' ').trim();

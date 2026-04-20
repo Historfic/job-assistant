@@ -65,15 +65,18 @@ async function scrapeFromOnlineJobs(
     const h4 = $(card).find('h4').first();
     const titleText = h4.clone().find('span').remove().end().text().trim() || null;
 
-    // URL
-    const anchors = $(card).find('a[href*="/jobseekers/job/"]');
-    let jobUrl: string | null = null;
-    anchors.each((_, a) => {
-      if (!$(a).attr('target') && !jobUrl) {
-        jobUrl = $(a).attr('href') ?? null;
-      }
-    });
-    if (!jobUrl && anchors.length > 0) jobUrl = $(anchors[0]).attr('href') ?? null;
+    // URL — the slug URL is on the <a> that WRAPS the card div, not inside it.
+    // Structure: <a href="/jobseekers/job/Title-Slug-ID"><div class="latest-job-post">...</div></a>
+    const wrapperAnchor = $(card).parent('a[href*="/jobseekers/job/"]');
+    let jobUrl: string | null = wrapperAnchor.length
+      ? (wrapperAnchor.attr('href') ?? null)
+      : null;
+
+    // Fallback: the "See More" link inside .desc (numeric ID URL)
+    if (!jobUrl) {
+      const seeMore = $(card).find('.desc a[href*="/jobseekers/job/"]').first();
+      jobUrl = seeMore.length ? (seeMore.attr('href') ?? null) : null;
+    }
     if (jobUrl && !jobUrl.startsWith('http')) jobUrl = `https://www.onlinejobs.ph${jobUrl}`;
 
     // Salary
@@ -133,21 +136,20 @@ async function fetchJobDetails(
     };
     if (sessionCookie) headers['Cookie'] = `ci_session=${sessionCookie}`;
 
-    const res = await fetch(job.url, { headers, signal: AbortSignal.timeout(8000) });
+    // follow redirects (numeric ID → slug URL)
+    const res = await fetch(job.url, { headers, signal: AbortSignal.timeout(10000), redirect: 'follow' });
     if (!res.ok) return job;
 
     const html = await res.text();
     const $ = load(html);
 
-    // Try multiple selectors that onlinejobs.ph uses for the full description
+    // Confirmed selector from live DOM inspection: <p id="job-description" class="job-description">
     const descSelectors = [
-      '.jobpost-details',
-      '.job-description',
-      '.job-details',
       '#job-description',
+      '.job-description',
+      '.jobpost-details',
+      '.job-details',
       '.description-content',
-      '[class*="job-desc"]',
-      '.content-area p',
     ];
 
     let fullDescription = '';
