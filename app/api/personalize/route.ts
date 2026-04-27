@@ -58,29 +58,38 @@ async function personalizeWithAI(
   baseMessage: string,
   apiKey: string
 ): Promise<string> {
-  const prompt = `You are helping someone apply for a remote job on OnlineJobs.ph.
+  const description = (job.description ?? '').slice(0, 1500);
+  const skills = job.analysis.skills.join(', ') || 'Not listed';
 
-Here is their base application message:
+  const prompt = `You are writing a personalized job application message for a remote job on OnlineJobs.ph.
+
+Job Title: ${job.title}
+Company: ${job.companyName ?? 'Not specified'}
+Salary: ${job.salary ?? 'Not specified'}
+Skills Required: ${skills}
+Job Description:
+"""
+${description}
+"""
+${job.analysis.requires_cv ? '\nNote: This job requires a CV/resume.' : ''}
+${job.analysis.platform_redirect ? `\nNote: This job asks to apply via ${job.analysis.redirect_platform}.` : ''}
+
+Here is the applicant's background for reference:
 """
 ${baseMessage}
 """
 
-Now personalize it specifically for this job posting:
-- Job Title: ${job.title}
-- Company: ${job.companyName ?? 'Unknown'}
-- Salary: ${job.salary ?? 'Not specified'}
-- Skills required: ${job.analysis.skills.join(', ') || 'Not listed'}
-- Description: ${(job.description ?? '').slice(0, 500)}
-${job.analysis.requires_cv ? '- This job requires a CV/resume attachment.' : ''}
-${job.analysis.platform_redirect ? `- This job asks to apply via ${job.analysis.redirect_platform}.` : ''}
-
-Rules:
-- Keep the same professional, human tone
-- Reference the specific job title and 1-2 skills from the listing naturally
-- Mention the company name once if available
-- Keep it under 180 words
-- Do NOT add a subject line or "Dear Hiring Manager" header — start directly with the opening sentence
-- Return ONLY the message text, nothing else`;
+Write a unique, personalized cover letter that:
+- Opens with a specific hook referencing something concrete from the job description (NOT a generic "I came across your posting" opener)
+- Demonstrates understanding of what this specific role actually needs
+- Naturally weaves in 2-3 relevant skills from the job listing
+- Mentions the company name if available
+- Stays under 180 words
+- Sounds human and enthusiastic, not robotic
+${job.analysis.requires_cv ? '- Mentions that CV is attached' : ''}
+${job.analysis.platform_redirect ? `- Mentions willingness to continue on ${job.analysis.redirect_platform}` : ''}
+- Does NOT start with "Dear Hiring Manager" or a subject line
+- Returns ONLY the message text, nothing else`;
 
   const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
@@ -107,30 +116,39 @@ Rules:
 }
 
 function personalizeLocally(job: AnalyzedJob, baseMessage: string): string {
-  // Simple template injection — works without any API key
   const title   = job.title ?? 'this position';
   const company = job.companyName;
   const skills  = job.analysis.skills.slice(0, 3);
+  const desc    = job.description ?? '';
 
-  // Build an opening line that references the specific role
-  const opener = company
-    ? `I came across ${company}'s posting for a ${title} and I'm genuinely excited to apply.`
-    : `I came across your posting for a ${title} and I'm genuinely excited to apply.`;
+  // Extract a concrete detail from the job description for the opener
+  const sentences = desc.split(/[.!?]/).map(s => s.trim()).filter(s => s.length > 40 && s.length < 150);
+  const detailHook = sentences.length > 0
+    ? sentences[0]
+    : null;
 
-  // Build a skills sentence if available
-  const skillLine = skills.length > 0
-    ? `My background in ${skills.join(', ')} directly aligns with what you're looking for.`
-    : '';
-
-  // Splice the opener into the base message, replacing the first sentence
-  const lines = baseMessage.split('\n').filter(Boolean);
-  // Replace first paragraph with the personalized opener
-  lines[0] = opener;
-  if (skillLine && lines.length > 1) {
-    lines.splice(1, 0, skillLine);
+  // Build opener that references something specific about the role
+  let opener: string;
+  if (detailHook) {
+    opener = company
+      ? `When I read about ${company}'s need for a ${title} — specifically "${detailHook.toLowerCase()}" — I knew this was a role I could make an immediate impact in.`
+      : `Your posting for a ${title} caught my attention right away, particularly the focus on ${detailHook.toLowerCase()}.`;
+  } else {
+    opener = company
+      ? `I'm excited to apply for the ${title} role at ${company} — the scope of this position is exactly the kind of work I do best.`
+      : `I'm applying for your ${title} role and am confident I can deliver exactly what you're looking for.`;
   }
 
-  return lines.join('\n\n');
+  // Skills paragraph
+  const skillLine = skills.length > 0
+    ? `I bring hands-on experience with ${skills.join(', ')}, which maps directly to what this role requires.`
+    : 'I bring a strong track record in remote work, fast turnaround, and high-quality output.';
+
+  // Pull the middle/closing from the base message (skip its generic opener)
+  const baseLines = baseMessage.split('\n').filter(Boolean);
+  const middle = baseLines.slice(1).join('\n\n');
+
+  return [opener, skillLine, middle].filter(Boolean).join('\n\n');
 }
 
 export async function POST(req: NextRequest) {
@@ -141,10 +159,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'job and baseMessage are required' }, { status: 400 });
     }
 
-    // If the description is missing or too short, fetch the full job page so
-    // the AI has enough context to write a genuinely tailored message.
+    // Fetch the full job description whenever it's shorter than 800 chars —
+    // the scraper often captures only a preview snippet, which isn't enough
+    // for the AI to write a genuinely tailored cover letter.
     let enrichedJob = job;
-    if (job.url && (job.description ?? '').length < 150) {
+    if (job.url && (job.description ?? '').length < 800) {
       const sessionCookie = process.env.ONLINEJOBS_SESSION_COOKIE;
       const fullDesc = await fetchFullDescription(job.url, sessionCookie);
       if (fullDesc.length > (job.description ?? '').length) {
