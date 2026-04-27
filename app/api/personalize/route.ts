@@ -38,7 +38,7 @@ async function fetchFullDescription(url: string, sessionCookie?: string): Promis
     ];
     for (const sel of selectors) {
       const text = $(sel).text().replace(/\s+/g, ' ').trim();
-      if (text.length > 100) return text.slice(0, 2000);
+      if (text.length > 100) return text.slice(0, 4000);
     }
 
     // Fallback: collect all meaningful paragraphs
@@ -47,7 +47,7 @@ async function fetchFullDescription(url: string, sessionCookie?: string): Promis
       const t = $(el).text().trim();
       if (t.length > 30) paragraphs.push(t);
     });
-    return paragraphs.join(' ').slice(0, 2000);
+    return paragraphs.join(' ').slice(0, 4000);
   } catch {
     return '';
   }
@@ -58,7 +58,10 @@ async function personalizeWithAI(
   baseMessage: string,
   apiKey: string
 ): Promise<string> {
-  const description = (job.description ?? '').slice(0, 1500);
+  const raw = job.description ?? '';
+  const head = raw.slice(0, 900);
+  const tail = raw.length > 1400 ? '\n\n[...]\n\n' + raw.slice(-500) : '';
+  const description = head + tail;
   const skills = job.analysis.skills.join(', ') || 'Not listed';
 
   const prompt = `You are writing a personalized job application message for a remote job on OnlineJobs.ph.
