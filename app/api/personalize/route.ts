@@ -181,6 +181,7 @@ export async function POST(req: NextRequest) {
     if (job.url) {
       const sessionCookie = process.env.ONLINEJOBS_SESSION_COOKIE;
       const fullDesc = await fetchFullDescription(job.url, sessionCookie);
+      console.log(`[personalize] fetched ${fullDesc.length} chars. Last 300: "${fullDesc.slice(-300)}"`);
       if (fullDesc.length > 0) {
         enrichedJob = { ...job, description: fullDesc };
       }
