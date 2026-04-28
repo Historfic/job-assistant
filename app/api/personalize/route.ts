@@ -189,24 +189,31 @@ export async function POST(req: NextRequest) {
     const anthropicKey = process.env.ANTHROPIC_API_KEY;
     const openRouterKey = process.env.OPENROUTER_API_KEY;
     let message: string;
+    let source = 'local';
 
     if (anthropicKey) {
       try {
         message = await personalizeWithClaude(enrichedJob, baseMessage, anthropicKey);
-      } catch {
+        source = 'claude';
+      } catch (err) {
+        console.error('[/api/personalize] Claude failed:', err);
         message = personalizeLocally(enrichedJob, baseMessage);
       }
     } else if (openRouterKey) {
       try {
         message = await personalizeWithOpenRouter(enrichedJob, baseMessage, openRouterKey);
-      } catch {
+        source = 'openrouter';
+      } catch (err) {
+        console.error('[/api/personalize] OpenRouter failed:', err);
         message = personalizeLocally(enrichedJob, baseMessage);
       }
     } else {
+      console.warn('[/api/personalize] No AI key found — using local fallback. ANTHROPIC_API_KEY set:', Boolean(anthropicKey));
       message = personalizeLocally(enrichedJob, baseMessage);
     }
 
-    return NextResponse.json({ message });
+    console.log(`[/api/personalize] source=${source} descLen=${enrichedJob.description?.length ?? 0}`);
+    return NextResponse.json({ message, source });
   } catch (err) {
     console.error('[/api/personalize]', err);
     return NextResponse.json(
