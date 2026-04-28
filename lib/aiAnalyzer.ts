@@ -5,6 +5,7 @@
 //
 // Returns structured JobAnalysis objects matching the spec in the product brief.
 
+import Anthropic from '@anthropic-ai/sdk';
 import type { RawJob, JobAnalysis, AnalyzedJob } from '@/types';
 
 // ─── Keyword lists ─────────────────────────────────────────────────────────────
@@ -92,10 +93,10 @@ export function analyzeJobLocally(job: RawJob): JobAnalysis {
   };
 }
 
-// ─── OpenRouter AI analyzer ────────────────────────────────────────────────────
+// ─── AI analyzer (Claude Haiku preferred, OpenRouter fallback) ─────────────────
 
-async function analyzeJobWithAI(job: RawJob, apiKey: string): Promise<JobAnalysis> {
-  const prompt = `Analyze this job listing and return ONLY a valid JSON object. No explanation, just JSON.
+function buildAnalysisPrompt(job: RawJob): string {
+  return `Analyze this job listing and return ONLY a valid JSON object. No explanation, just JSON.
 
 Job Title: ${job.title}
 Description: ${(job.description ?? '').slice(0, 800)}
@@ -120,7 +121,27 @@ Rules:
 - requires_cv: true if job mentions resume, CV, or curriculum vitae
 - skills: array of technical/professional skills mentioned (React, Python, SEO, etc.)
 - keywords: 5-8 most important keywords from the job listing`;
+}
 
+function parseJobAnalysisJSON(raw: string): JobAnalysis {
+  const jsonMatch = raw.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error('No JSON in AI response');
+  return JSON.parse(jsonMatch[0]) as JobAnalysis;
+}
+
+async function analyzeJobWithClaude(job: RawJob, apiKey: string): Promise<JobAnalysis> {
+  const client = new Anthropic({ apiKey });
+  const response = await client.messages.create({
+    model: 'claude-haiku-4-5',
+    max_tokens: 400,
+    messages: [{ role: 'user', content: buildAnalysisPrompt(job) }],
+  });
+  const block = response.content[0];
+  if (block.type !== 'text') throw new Error('Unexpected response type');
+  return parseJobAnalysisJSON(block.text);
+}
+
+async function analyzeJobWithOpenRouter(job: RawJob, apiKey: string): Promise<JobAnalysis> {
   const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -131,23 +152,14 @@ Rules:
     },
     body: JSON.stringify({
       model: 'meta-llama/llama-3.1-8b-instruct:free',
-      messages: [{ role: 'user', content: prompt }],
+      messages: [{ role: 'user', content: buildAnalysisPrompt(job) }],
       temperature: 0.1,
       max_tokens: 400,
     }),
   });
-
   if (!res.ok) throw new Error(`OpenRouter error: ${res.status}`);
-
   const data = await res.json();
-  const raw = data.choices?.[0]?.message?.content ?? '';
-
-  // Extract JSON from the response
-  const jsonMatch = raw.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error('No JSON in AI response');
-
-  const parsed = JSON.parse(jsonMatch[0]) as JobAnalysis;
-  return parsed;
+  return parseJobAnalysisJSON(data.choices?.[0]?.message?.content ?? '');
 }
 
 // ─── Score calculator ──────────────────────────────────────────────────────────
@@ -189,22 +201,22 @@ export async function analyzeJobs(
   keyword: string,
   openRouterKey?: string
 ): Promise<AnalyzedJob[]> {
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
   const results: AnalyzedJob[] = [];
-  const useAI = Boolean(openRouterKey);
 
   for (const job of jobs) {
     let analysis: JobAnalysis;
 
     try {
-      if (useAI) {
-        analysis = await analyzeJobWithAI(job, openRouterKey!);
-        // Small delay to avoid rate limiting
+      if (anthropicKey) {
+        analysis = await analyzeJobWithClaude(job, anthropicKey);
+      } else if (openRouterKey) {
+        analysis = await analyzeJobWithOpenRouter(job, openRouterKey);
         await new Promise(r => setTimeout(r, 200));
       } else {
         analysis = analyzeJobLocally(job);
       }
     } catch {
-      // Always fall back to local analysis on any AI error
       analysis = analyzeJobLocally(job);
     }
 
@@ -221,15 +233,14 @@ export async function generateApplicationMessage(
   jobs: AnalyzedJob[],
   openRouterKey?: string
 ): Promise<string> {
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
   const hasCV = jobs.some(j => j.analysis.requires_cv);
   const hasPlatformRedirect = jobs.some(j => j.analysis.platform_redirect);
 
   const allSkills = [...new Set(jobs.flatMap(j => j.analysis.skills))].slice(0, 8);
   const topKeywords = [...new Set(jobs.flatMap(j => j.analysis.keywords))].slice(0, 6);
 
-  // Use AI if available
-  if (openRouterKey) {
-    const prompt = `Write a professional, human-sounding job application message for remote positions.
+  const basePrompt = `Write a professional, human-sounding job application message for remote positions.
 
 Skills to highlight: ${allSkills.join(', ')}
 Keywords from job listings: ${topKeywords.join(', ')}
@@ -245,6 +256,22 @@ Structure:
 
 Tone: Professional, confident, human — NOT robotic or generic. Write in first person. Under 200 words.`;
 
+  if (anthropicKey) {
+    try {
+      const client = new Anthropic({ apiKey: anthropicKey });
+      const response = await client.messages.create({
+        model: 'claude-haiku-4-5',
+        max_tokens: 400,
+        messages: [{ role: 'user', content: basePrompt }],
+      });
+      const block = response.content[0];
+      if (block.type === 'text' && block.text.length > 50) return block.text.trim();
+    } catch {
+      // fall through
+    }
+  }
+
+  if (openRouterKey) {
     try {
       const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
@@ -256,12 +283,11 @@ Tone: Professional, confident, human — NOT robotic or generic. Write in first 
         },
         body: JSON.stringify({
           model: 'meta-llama/llama-3.1-8b-instruct:free',
-          messages: [{ role: 'user', content: prompt }],
+          messages: [{ role: 'user', content: basePrompt }],
           temperature: 0.7,
           max_tokens: 400,
         }),
       });
-
       if (res.ok) {
         const data = await res.json();
         const msg = data.choices?.[0]?.message?.content?.trim();

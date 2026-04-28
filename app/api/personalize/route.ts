@@ -2,10 +2,11 @@
 // Takes a single job + the base reusable message and returns a version
 // personalized specifically for that listing.
 //
-// Uses OpenRouter if OPENROUTER_API_KEY is set, otherwise applies
-// a fast template-based approach (no API call needed).
+// Uses Claude Haiku (ANTHROPIC_API_KEY) for high-quality personalization,
+// falls back to OpenRouter (OPENROUTER_API_KEY), then local template.
 
 import { NextRequest, NextResponse } from 'next/server';
+import Anthropic from '@anthropic-ai/sdk';
 import type { AnalyzedJob } from '@/types';
 
 // ─── Fetch full job description from the detail page ─────────────────────────
@@ -53,18 +54,14 @@ async function fetchFullDescription(url: string, sessionCookie?: string): Promis
   }
 }
 
-async function personalizeWithAI(
-  job: AnalyzedJob,
-  baseMessage: string,
-  apiKey: string
-): Promise<string> {
+function buildPersonalizePrompt(job: AnalyzedJob, baseMessage: string): string {
   const raw = job.description ?? '';
   const head = raw.slice(0, 900);
   const tail = raw.length > 1400 ? '\n\n[...]\n\n' + raw.slice(-500) : '';
   const description = head + tail;
   const skills = job.analysis.skills.join(', ') || 'Not listed';
 
-  const prompt = `You are writing a personalized job application message for a remote job on OnlineJobs.ph.
+  return `You are writing a personalized job application message for a remote job on OnlineJobs.ph.
 
 Job Title: ${job.title}
 Company: ${job.companyName ?? 'Not specified'}
@@ -93,7 +90,22 @@ ${job.analysis.requires_cv ? '- Mentions that CV is attached' : ''}
 ${job.analysis.platform_redirect ? `- Mentions willingness to continue on ${job.analysis.redirect_platform}` : ''}
 - Does NOT start with "Dear Hiring Manager" or a subject line
 - Returns ONLY the message text, nothing else`;
+}
 
+async function personalizeWithClaude(job: AnalyzedJob, baseMessage: string, apiKey: string): Promise<string> {
+  const client = new Anthropic({ apiKey });
+  const response = await client.messages.create({
+    model: 'claude-haiku-4-5',
+    max_tokens: 400,
+    messages: [{ role: 'user', content: buildPersonalizePrompt(job, baseMessage) }],
+  });
+
+  const block = response.content[0];
+  if (block.type !== 'text' || block.text.length < 30) throw new Error('Empty Claude response');
+  return block.text.trim();
+}
+
+async function personalizeWithOpenRouter(job: AnalyzedJob, baseMessage: string, apiKey: string): Promise<string> {
   const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -104,17 +116,16 @@ ${job.analysis.platform_redirect ? `- Mentions willingness to continue on ${job.
     },
     body: JSON.stringify({
       model: 'meta-llama/llama-3.1-8b-instruct:free',
-      messages: [{ role: 'user', content: prompt }],
+      messages: [{ role: 'user', content: buildPersonalizePrompt(job, baseMessage) }],
       temperature: 0.65,
-      max_tokens: 350,
+      max_tokens: 400,
     }),
   });
 
   if (!res.ok) throw new Error(`OpenRouter error: ${res.status}`);
-
   const data = await res.json();
   const msg = data.choices?.[0]?.message?.content?.trim();
-  if (!msg || msg.length < 30) throw new Error('Empty AI response');
+  if (!msg || msg.length < 30) throw new Error('Empty OpenRouter response');
   return msg;
 }
 
@@ -175,12 +186,19 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const apiKey = process.env.OPENROUTER_API_KEY;
+    const anthropicKey = process.env.ANTHROPIC_API_KEY;
+    const openRouterKey = process.env.OPENROUTER_API_KEY;
     let message: string;
 
-    if (apiKey) {
+    if (anthropicKey) {
       try {
-        message = await personalizeWithAI(enrichedJob, baseMessage, apiKey);
+        message = await personalizeWithClaude(enrichedJob, baseMessage, anthropicKey);
+      } catch {
+        message = personalizeLocally(enrichedJob, baseMessage);
+      }
+    } else if (openRouterKey) {
+      try {
+        message = await personalizeWithOpenRouter(enrichedJob, baseMessage, openRouterKey);
       } catch {
         message = personalizeLocally(enrichedJob, baseMessage);
       }
