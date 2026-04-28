@@ -162,14 +162,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'job and baseMessage are required' }, { status: 400 });
     }
 
-    // Fetch the full job description whenever it's shorter than 800 chars —
-    // the scraper often captures only a preview snippet, which isn't enough
-    // for the AI to write a genuinely tailored cover letter.
+    // Always re-fetch the full job page — the scraper caps descriptions at
+    // 2000 chars during bulk scraping, which cuts off the "how to apply"
+    // section that typically appears at the end. One extra request per
+    // personalization click is acceptable and ensures the AI sees everything.
     let enrichedJob = job;
-    if (job.url && (job.description ?? '').length < 800) {
+    if (job.url) {
       const sessionCookie = process.env.ONLINEJOBS_SESSION_COOKIE;
       const fullDesc = await fetchFullDescription(job.url, sessionCookie);
-      if (fullDesc.length > (job.description ?? '').length) {
+      if (fullDesc.length > 0) {
         enrichedJob = { ...job, description: fullDesc };
       }
     }
