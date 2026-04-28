@@ -39,7 +39,7 @@ async function fetchFullDescription(url: string, sessionCookie?: string): Promis
     ];
     for (const sel of selectors) {
       const text = $(sel).text().replace(/\s+/g, ' ').trim();
-      if (text.length > 100) return text.slice(0, 4000);
+      if (text.length > 100) return text;
     }
 
     // Fallback: collect all meaningful paragraphs
@@ -48,7 +48,7 @@ async function fetchFullDescription(url: string, sessionCookie?: string): Promis
       const t = $(el).text().trim();
       if (t.length > 30) paragraphs.push(t);
     });
-    return paragraphs.join(' ').slice(0, 4000);
+    return paragraphs.join(' ');
   } catch {
     return '';
   }
@@ -56,8 +56,8 @@ async function fetchFullDescription(url: string, sessionCookie?: string): Promis
 
 function buildPersonalizePrompt(job: AnalyzedJob, baseMessage: string): string {
   const raw = job.description ?? '';
-  const head = raw.slice(0, 900);
-  const tail = raw.length > 1400 ? '\n\n[...]\n\n' + raw.slice(-500) : '';
+  const head = raw.slice(0, 1000);
+  const tail = raw.length > 1800 ? '\n\n[...]\n\n' + raw.slice(-800) : '';
   const description = head + tail;
   const skills = job.analysis.skills.join(', ') || 'Not listed';
 
