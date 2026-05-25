@@ -195,35 +195,51 @@ export function scoreJob(job: RawJob, analysis: JobAnalysis, keyword: string): n
 }
 
 // ─── Main batch analyzer ───────────────────────────────────────────────────────
+// Sequential AI calls are the dominant cost of /api/scrape and the most common
+// reason the route blows past Vercel's maxDuration. Two modes:
+//
+//   1. No AI keys configured → synchronous local regex analysis (instant).
+//   2. AI path → bounded-concurrency worker pool. Order preserved by writing
+//      results into pre-sized indexed slots.
 
 export async function analyzeJobs(
   jobs: RawJob[],
   keyword: string,
-  openRouterKey?: string
+  openRouterKey?: string,
+  concurrency = 5,
 ): Promise<AnalyzedJob[]> {
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
-  const results: AnalyzedJob[] = [];
+  const hasAI = Boolean(anthropicKey || openRouterKey);
 
-  for (const job of jobs) {
-    let analysis: JobAnalysis;
-
-    try {
-      if (anthropicKey) {
-        analysis = await analyzeJobWithClaude(job, anthropicKey);
-      } else if (openRouterKey) {
-        analysis = await analyzeJobWithOpenRouter(job, openRouterKey);
-        await new Promise(r => setTimeout(r, 200));
-      } else {
-        analysis = analyzeJobLocally(job);
-      }
-    } catch {
-      analysis = analyzeJobLocally(job);
-    }
-
-    const score = scoreJob(job, analysis, keyword);
-    results.push({ ...job, analysis, score });
+  if (!hasAI) {
+    return jobs.map(job => {
+      const analysis = analyzeJobLocally(job);
+      return { ...job, analysis, score: scoreJob(job, analysis, keyword) };
+    });
   }
 
+  const results: AnalyzedJob[] = new Array(jobs.length);
+  let cursor = 0;
+
+  async function workerLoop() {
+    while (true) {
+      const i = cursor++;
+      if (i >= jobs.length) return;
+      const job = jobs[i];
+      let analysis: JobAnalysis;
+      try {
+        analysis = anthropicKey
+          ? await analyzeJobWithClaude(job, anthropicKey)
+          : await analyzeJobWithOpenRouter(job, openRouterKey!);
+      } catch {
+        analysis = analyzeJobLocally(job);
+      }
+      results[i] = { ...job, analysis, score: scoreJob(job, analysis, keyword) };
+    }
+  }
+
+  const workers = Math.min(concurrency, jobs.length);
+  await Promise.all(Array.from({ length: workers }, workerLoop));
   return results;
 }
 
