@@ -1,7 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import type { AnalyzedJob } from '@/types';
+import {
+  subscribeAppliedJobs,
+  getAppliedSnapshot,
+  getServerSnapshot,
+  toggleApplied,
+  relativeAgo,
+} from '@/lib/appliedJobs';
 
 interface Props {
   job: AnalyzedJob;
@@ -39,6 +46,15 @@ function relativeDate(dateStr: string | null): string {
 export default function JobCard({ job, highlight, baseMessage }: Props) {
   const [expanded, setExpanded] = useState(false);
   const { analysis } = job;
+
+  // ── Applied state (URL-keyed so it survives across re-scrapes) ──────────────
+  const appliedMap = useSyncExternalStore(
+    subscribeAppliedJobs,
+    getAppliedSnapshot,
+    getServerSnapshot,
+  );
+  const applied = Boolean(job.url && appliedMap[job.url]);
+  const appliedDate = applied && job.url ? appliedMap[job.url].appliedAt : null;
 
   // ── Personalized message state ──────────────────────────────────────────────
   const [showPersonal, setShowPersonal]       = useState(false);
@@ -86,7 +102,8 @@ export default function JobCard({ job, highlight, baseMessage }: Props) {
         ${highlight
           ? 'bg-yellow-500/5 border-yellow-500/20 hover:border-yellow-500/40'
           : 'bg-gray-900 border-gray-800 hover:border-gray-700'
-        }`}
+        }
+        ${applied ? 'opacity-60 hover:opacity-100' : ''}`}
     >
       <div className="p-4">
         {/* Top row: title + score */}
@@ -111,6 +128,11 @@ export default function JobCard({ job, highlight, baseMessage }: Props) {
               )}
               {job.datePosted && (
                 <span className="text-[10px] text-gray-600">{relativeDate(job.datePosted)}</span>
+              )}
+              {applied && (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
+                  ✓ Applied {relativeAgo(appliedDate)}
+                </span>
               )}
             </div>
           </div>
@@ -224,6 +246,27 @@ export default function JobCard({ job, highlight, baseMessage }: Props) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>
             </a>
+          )}
+
+          {/* Applied toggle — only meaningful when job has a stable URL key */}
+          {job.url && (
+            <button
+              onClick={() => toggleApplied(job.url!)}
+              title={applied ? 'Unmark as applied' : 'Mark as applied'}
+              className={`inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-lg transition-colors shrink-0
+                ${applied
+                  ? 'bg-emerald-600/15 text-emerald-400 border border-emerald-600/25 hover:bg-emerald-600/25'
+                  : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 border border-gray-700'
+                }`}
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d={applied
+                    ? 'M5 13l4 4L19 7'
+                    : 'M9 12h6m-3-3v6m9-3a9 9 0 11-18 0 9 9 0 0118 0z'} />
+              </svg>
+              {applied ? 'Applied' : 'Mark Applied'}
+            </button>
           )}
         </div>
 
