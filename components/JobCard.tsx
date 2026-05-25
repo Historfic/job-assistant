@@ -202,7 +202,7 @@ export default function JobCard({ job, highlight, baseMessage }: Props) {
         )}
 
         {/* Footer: expand + personalize + view link */}
-        <div className="flex items-center justify-between mt-3 gap-2">
+        <div className="flex items-center justify-between mt-3 gap-2 flex-wrap">
           {job.description && job.description.length > 120 && (
             <button
               onClick={() => setExpanded(e => !e)}
@@ -248,24 +248,26 @@ export default function JobCard({ job, highlight, baseMessage }: Props) {
             </a>
           )}
 
-          {/* Applied toggle — only meaningful when job has a stable URL key */}
+          {/* Applied toggle — icon-only to keep the footer tight in 3-column
+              Top Matches cards. State communicated via colour + icon shape;
+              the header badge shows the full "Applied Xd ago" text when set. */}
           {job.url && (
             <button
               onClick={() => toggleApplied(job.url!)}
               title={applied ? 'Unmark as applied' : 'Mark as applied'}
-              className={`inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-lg transition-colors shrink-0
+              aria-label={applied ? 'Unmark as applied' : 'Mark as applied'}
+              className={`inline-flex items-center justify-center w-7 h-7 rounded-lg transition-colors shrink-0
                 ${applied
                   ? 'bg-emerald-600/15 text-emerald-400 border border-emerald-600/25 hover:bg-emerald-600/25'
                   : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 border border-gray-700'
                 }`}
             >
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d={applied
                     ? 'M5 13l4 4L19 7'
                     : 'M9 12h6m-3-3v6m9-3a9 9 0 11-18 0 9 9 0 0118 0z'} />
               </svg>
-              {applied ? 'Applied' : 'Mark Applied'}
             </button>
           )}
         </div>
