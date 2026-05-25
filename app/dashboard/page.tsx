@@ -59,6 +59,12 @@ export default function DashboardPage() {
 
   const visibleValidJobs   = useMemo(() => filterApplied(result?.validJobs ?? []),   [result, filterApplied]);
   const visibleBestMatches = useMemo(() => filterApplied(result?.bestMatches ?? []), [result, filterApplied]);
+  // Other jobs = all valid jobs MINUS the ones already shown in Top Matches,
+  // so the list below the gold cards doesn't duplicate them.
+  const otherValidJobs = useMemo(() => {
+    const bestUrls = new Set(visibleBestMatches.map(j => j.url).filter(Boolean));
+    return visibleValidJobs.filter(j => !j.url || !bestUrls.has(j.url));
+  }, [visibleValidJobs, visibleBestMatches]);
   const appliedCount       = useMemo(
     () => (result?.validJobs ?? []).filter(j => j.url && appliedMap[j.url]).length,
     [result, appliedMap],
@@ -413,14 +419,25 @@ export default function DashboardPage() {
                       </div>
                     )}
 
-                    {/* All valid jobs */}
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                        All Valid Jobs ({visibleValidJobs.length}{hideApplied && appliedCount > 0 ? ` of ${result.validJobs.length}` : ''})
-                      </span>
-                      <div className="flex-1 border-t border-gray-800" />
-                    </div>
-                    {visibleValidJobs.length === 0 ? (
+                    {/* Other valid jobs (excluding the Top Matches above to avoid duplicates) */}
+                    {otherValidJobs.length > 0 && (
+                      <>
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                            Other Jobs ({otherValidJobs.length})
+                          </span>
+                          <div className="flex-1 border-t border-gray-800" />
+                        </div>
+                        <div className="space-y-3">
+                          {otherValidJobs.map(job => (
+                            <JobCard key={job.id} job={job} baseMessage={result.applicationMessage} />
+                          ))}
+                        </div>
+                      </>
+                    )}
+
+                    {/* Empty state — only when BOTH Top Matches and Other Jobs render nothing */}
+                    {visibleBestMatches.length === 0 && otherValidJobs.length === 0 && (
                       <div className="text-center py-12 text-gray-600">
                         <p className="text-sm">
                           {hideApplied && result.validJobs.length > 0
@@ -432,12 +449,6 @@ export default function DashboardPage() {
                             ? 'Toggle "Hide applied" off to see them.'
                             : 'Try different keywords or filters.'}
                         </p>
-                      </div>
-                    ) : (
-                      <div className="space-y-3">
-                        {visibleValidJobs.map(job => (
-                          <JobCard key={job.id} job={job} baseMessage={result.applicationMessage} />
-                        ))}
                       </div>
                     )}
 
