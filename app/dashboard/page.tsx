@@ -80,8 +80,17 @@ export default function DashboardPage() {
       });
 
       if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Unknown error' }));
-        throw new Error(err.error ?? `Server error ${res.status}`);
+        // Read as text first so we can surface non-JSON responses (e.g. Vercel
+        // HTML error pages from a 504 timeout) instead of swallowing them.
+        const text = await res.text();
+        let msg: string;
+        try {
+          msg = (JSON.parse(text) as { error?: string }).error ?? `HTTP ${res.status}`;
+        } catch {
+          const snippet = text.slice(0, 200).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+          msg = `HTTP ${res.status} (non-JSON response): ${snippet || '<empty body>'}`;
+        }
+        throw new Error(msg);
       }
 
       animateProgress(STEPS[2].pct, STEPS[2].msg as string);
