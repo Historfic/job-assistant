@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import type { AnalyzedJob } from '@/types';
+import { stripEmDashes } from '@/lib/aiAnalyzer';
 
 // ─── Fetch full job description from the detail page ─────────────────────────
 // Called when the job's stored description is missing or too short to
@@ -89,6 +90,7 @@ Write a unique, personalized cover letter that:
 ${job.analysis.requires_cv ? '- Mentions that CV is attached' : ''}
 ${job.analysis.platform_redirect ? `- Mentions willingness to continue on ${job.analysis.redirect_platform}` : ''}
 - Does NOT start with "Dear Hiring Manager" or a subject line
+- Does NOT use em dashes (—) or en dashes (–) anywhere; use commas, periods, or parentheses
 - Returns ONLY the message text, nothing else`;
 }
 
@@ -102,7 +104,7 @@ async function personalizeWithClaude(job: AnalyzedJob, baseMessage: string, apiK
 
   const block = response.content[0];
   if (block.type !== 'text' || block.text.length < 30) throw new Error('Empty Claude response');
-  return block.text.trim();
+  return stripEmDashes(block.text.trim());
 }
 
 async function personalizeWithOpenRouter(job: AnalyzedJob, baseMessage: string, apiKey: string): Promise<string> {
@@ -132,7 +134,7 @@ async function personalizeWithOpenRouter(job: AnalyzedJob, baseMessage: string, 
       if (!res.ok) break;
       const data = await res.json();
       const msg = data.choices?.[0]?.message?.content?.trim();
-      if (msg && msg.length >= 30) return msg;
+      if (msg && msg.length >= 30) return stripEmDashes(msg);
     }
   }
 
@@ -172,7 +174,7 @@ function personalizeLocally(job: AnalyzedJob, baseMessage: string): string {
   const baseLines = baseMessage.split('\n').filter(Boolean);
   const middle = baseLines.slice(1).join('\n\n');
 
-  return [opener, skillLine, middle].filter(Boolean).join('\n\n');
+  return stripEmDashes([opener, skillLine, middle].filter(Boolean).join('\n\n'));
 }
 
 export async function POST(req: NextRequest) {

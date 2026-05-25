@@ -243,6 +243,17 @@ export async function analyzeJobs(
   return results;
 }
 
+// ─── Cover-letter sanitizer ──────────────────────────────────────────────────
+// Strips em/en dashes from AI-generated cover letters. Em dashes are a
+// well-known AI tell, and the user wants the output to read more human.
+//
+// Only replaces dashes that have spaces around them (typical AI-prose pattern),
+// leaving number ranges like "5–10 years" untouched.
+
+export function stripEmDashes(text: string): string {
+  return text.replace(/ [—–] /g, ', ');
+}
+
 // ─── Application message generator ───────────────────────────────────────────
 
 export async function generateApplicationMessage(
@@ -270,7 +281,9 @@ Structure:
 4. ${hasPlatformRedirect ? 'Platform flexibility line' : ''}
 5. Professional closing
 
-Tone: Professional, confident, human — NOT robotic or generic. Write in first person. Under 200 words.`;
+Tone: Professional, confident, human, NOT robotic or generic. Write in first person. Under 200 words.
+
+IMPORTANT: Do NOT use em dashes (—) or en dashes (–) anywhere. Use commas, periods, or parentheses instead.`;
 
   if (anthropicKey) {
     try {
@@ -281,7 +294,7 @@ Tone: Professional, confident, human — NOT robotic or generic. Write in first 
         messages: [{ role: 'user', content: basePrompt }],
       });
       const block = response.content[0];
-      if (block.type === 'text' && block.text.length > 50) return block.text.trim();
+      if (block.type === 'text' && block.text.length > 50) return stripEmDashes(block.text.trim());
     } catch {
       // fall through
     }
@@ -307,7 +320,7 @@ Tone: Professional, confident, human — NOT robotic or generic. Write in first 
       if (res.ok) {
         const data = await res.json();
         const msg = data.choices?.[0]?.message?.content?.trim();
-        if (msg && msg.length > 50) return msg;
+        if (msg && msg.length > 50) return stripEmDashes(msg);
       }
     } catch {
       // fall through to template
@@ -326,7 +339,7 @@ I came across your job posting and I'm genuinely excited about this opportunity.
 ${skillsText} I'm comfortable working independently, meeting deadlines, and adapting quickly to new tools and workflows. My experience in remote environments has made me highly responsive and proactive in my communication.
 ${hasCV ? '\nI have attached my CV/resume for your review.' : ''}${hasPlatformRedirect ? '\nI am open to continuing the application process on your preferred platform.' : ''}
 
-I would love the chance to discuss how I can contribute to your team. Thank you for considering my application — looking forward to hearing from you!
+I would love the chance to discuss how I can contribute to your team. Thank you for considering my application, and I'm looking forward to hearing from you!
 
 Best regards`.trim();
 }
