@@ -152,16 +152,19 @@ export default function DashboardPage() {
   }, []);
 
   // ── Email send ───────────────────────────────────────────────────────────────
-  async function handleSendEmail() {
+  async function handleSendEmail(toEmail: string) {
     if (!result || sendingEmail) return;
     setSendingEmail(true);
     try {
       const res = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ result, options: lastOptions }),
+        body: JSON.stringify({ result, options: lastOptions, toEmail }),
       });
-      if (!res.ok) throw new Error('Email send failed');
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: 'Email send failed' }));
+        throw new Error(data.error ?? 'Email send failed');
+      }
       setEmailSent(true);
     } catch (err) {
       setError((err as Error).message);
@@ -490,6 +493,7 @@ export default function DashboardPage() {
                   <EmailPreview
                     result={result}
                     options={lastOptions!}
+                    userEmail={user?.email}
                     onSend={handleSendEmail}
                     sending={sendingEmail}
                     sent={emailSent}

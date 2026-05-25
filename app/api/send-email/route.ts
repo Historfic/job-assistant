@@ -1,16 +1,17 @@
 // ─── POST /api/send-email ─────────────────────────────────────────────────────
-// Sends a job digest email to the configured recipient.
+// Sends a job digest email to a user-specified recipient.
 //
 // When SMTP_USER + SMTP_PASS are set in .env: sends a real HTML email via Gmail.
 // Otherwise:               simulates success (logs to console) for demo/Vercel.
 //
-// Recipient is always: dekuallmight1234@gmail.com (per the product spec)
-// Can be overridden with TO_EMAIL env var.
+// Recipient comes from the request body (`toEmail`). The TO_EMAIL env var is
+// only used as a fallback when the client doesn't supply one.
 
 import { NextRequest, NextResponse } from 'next/server';
 import type { ProcessResult, ScrapeOptions } from '@/types';
 
-const TO_EMAIL = process.env.TO_EMAIL || 'raffymcfee@gmail.com';
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const FALLBACK_TO_EMAIL = process.env.TO_EMAIL ?? '';
 
 // ─── HTML email builder ───────────────────────────────────────────────────────
 
@@ -123,10 +124,23 @@ function buildEmailHtml(result: ProcessResult, options: ScrapeOptions): string {
 
 export async function POST(req: NextRequest) {
   try {
-    const { result, options }: { result: ProcessResult; options: ScrapeOptions } = await req.json();
+    const { result, options, toEmail }: {
+      result: ProcessResult;
+      options: ScrapeOptions;
+      toEmail?: string;
+    } = await req.json();
 
     if (!result?.validJobs) {
       return NextResponse.json({ error: 'No result data provided' }, { status: 400 });
+    }
+
+    const trimmed = (toEmail ?? '').trim();
+    const recipient = EMAIL_RE.test(trimmed) ? trimmed : FALLBACK_TO_EMAIL;
+    if (!EMAIL_RE.test(recipient)) {
+      return NextResponse.json(
+        { error: 'A valid recipient email is required.' },
+        { status: 400 },
+      );
     }
 
     const htmlBody = buildEmailHtml(result, options);
@@ -147,16 +161,16 @@ export async function POST(req: NextRequest) {
 
       await transporter.sendMail({
         from: `"JobIQ Assistant" <${process.env.SMTP_USER}>`,
-        to: TO_EMAIL,
+        to: recipient,
         subject,
         html: htmlBody,
       });
 
-      console.log(`[email] Sent to ${TO_EMAIL}: ${subject}`);
+      console.log(`[email] Sent to ${recipient}: ${subject}`);
     } else {
       // ── Simulated send ────────────────────────────────────────────────────
       console.log('[email] DEMO MODE — simulated send:');
-      console.log(`  To:      ${TO_EMAIL}`);
+      console.log(`  To:      ${recipient}`);
       console.log(`  Subject: ${subject}`);
       console.log(`  Jobs:    ${result.validJobs.length}`);
       // Simulate a short delay to make the UI feel real
@@ -165,7 +179,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      to: TO_EMAIL,
+      to: recipient,
       subject,
       simulated: !(process.env.SMTP_USER && process.env.SMTP_PASS),
     });

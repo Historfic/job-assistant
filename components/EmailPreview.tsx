@@ -1,20 +1,25 @@
 'use client';
 
+import { useState } from 'react';
 import type { ProcessResult, ScrapeOptions } from '@/types';
 
 interface Props {
   result: ProcessResult;
   options: ScrapeOptions;
-  onSend: () => void;
+  userEmail?: string;                  // pre-fill the recipient input with this
+  onSend: (toEmail: string) => void;
   sending: boolean;
   sent: boolean;
 }
 
-const TO_EMAIL = 'raffymcfee@gmail.com';
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export default function EmailPreview({ result, options, onSend, sending, sent }: Props) {
+export default function EmailPreview({ result, options, userEmail, onSend, sending, sent }: Props) {
   const { validJobs, topSkills, suggestedKeywords, applicationMessage, stats, removedJobs } = result;
   const date = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+  const [toEmail, setToEmail] = useState(userEmail ?? '');
+  const isValidEmail = EMAIL_RE.test(toEmail.trim());
 
   return (
     <div className="space-y-4 animate-slide-up max-w-2xl">
@@ -25,22 +30,34 @@ export default function EmailPreview({ result, options, onSend, sending, sent }:
           ? 'bg-emerald-500/10 border-emerald-500/20'
           : 'bg-gray-900 border-gray-800'
         }`}>
-        <div>
+        <div className="flex-1 min-w-0 mr-3">
           <p className="text-sm font-semibold text-white">
             {sent ? '✅ Email sent successfully!' : 'Send Job Digest Email'}
           </p>
-          <p className="text-xs text-gray-500 mt-0.5">
-            {sent
-              ? `Delivered to ${TO_EMAIL}`
-              : `Will send to ${TO_EMAIL} · ${validJobs.length} job${validJobs.length !== 1 ? 's' : ''} + AI insights`
-            }
-          </p>
+          {sent ? (
+            <p className="text-xs text-gray-500 mt-0.5">Delivered to {toEmail}</p>
+          ) : (
+            <div className="mt-2 flex items-center gap-2 flex-wrap">
+              <input
+                type="email"
+                value={toEmail}
+                onChange={e => setToEmail(e.target.value)}
+                placeholder="your@email.com"
+                autoComplete="email"
+                className="bg-gray-950 border border-gray-700 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-blue-500 transition-colors w-56"
+              />
+              <span className="text-xs text-gray-500">
+                · {validJobs.length} job{validJobs.length !== 1 ? 's' : ''} + AI insights
+              </span>
+            </div>
+          )}
         </div>
         {!sent && (
           <button
-            onClick={onSend}
-            disabled={sending}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:cursor-not-allowed rounded-xl text-sm font-medium transition-colors"
+            onClick={() => onSend(toEmail.trim())}
+            disabled={sending || !isValidEmail}
+            title={!isValidEmail ? 'Enter a valid email address' : 'Send the digest'}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-60 rounded-xl text-sm font-medium transition-colors shrink-0"
           >
             {sending ? (
               <>
