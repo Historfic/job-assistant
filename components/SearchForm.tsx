@@ -54,7 +54,6 @@ export default function SearchForm({ onSearch, loading }: Props) {
   const [techStack, setTechStack] = useState('');
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [datePosted, setDatePosted] = useState('');
-  const [sessionCookie, setSessionCookie] = useState('');
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -70,7 +69,6 @@ export default function SearchForm({ onSearch, loading }: Props) {
       techStack: techStack || undefined,
       remoteOnly: remoteOnly || undefined,
       datePosted: datePosted || undefined,
-      sessionCookie: sessionCookie || undefined,
     });
   }
 
@@ -202,16 +200,6 @@ export default function SearchForm({ onSearch, loading }: Props) {
               </button>
             </div>
 
-            <div>
-              <Label>Session Cookie (optional)</Label>
-              <Input
-                type="password"
-                value={sessionCookie}
-                onChange={e => setSessionCookie(e.target.value)}
-                placeholder="ci_session value from browser"
-              />
-              <p className="text-[10px] text-gray-700 mt-1">Required for live scraping. Leave empty for demo mode.</p>
-            </div>
           </div>
         )}
       </div>
@@ -237,9 +225,6 @@ export default function SearchForm({ onSearch, loading }: Props) {
         )}
       </button>
 
-      <p className="text-[10px] text-gray-700 text-center leading-relaxed">
-        Demo mode active. Real scraping requires a session cookie from onlinejobs.ph.
-      </p>
     </form>
   );
 }

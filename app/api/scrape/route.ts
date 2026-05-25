@@ -14,7 +14,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { RawJob, ScrapeOptions, ProcessResult, AnalyzedJob } from '@/types';
 import { evaluateSalary } from '@/lib/salaryEvaluator';
-import { generateMockJobs } from '@/lib/mockJobs';
 import { analyzeJobs, generateApplicationMessage, scoreJob } from '@/lib/aiAnalyzer';
 
 export const maxDuration = 60; // Vercel: allow up to 60s for scraping + AI
@@ -168,13 +167,13 @@ async function fetchJobDetails(
         const t = $(el).text().trim();
         if (t.length > 30) paragraphs.push(t);
       });
-      const joined = paragraphs.join(' ').slice(0, 2000);
+      const joined = paragraphs.join(' ').slice(0, 5000);
       if (joined.length > fullDescription.length) fullDescription = joined;
     }
 
     // Only update if we got something richer than what we had
     if (fullDescription.length > (job.description?.length ?? 0)) {
-      return { ...job, description: fullDescription.slice(0, 2000) };
+      return { ...job, description: fullDescription.slice(0, 5000) };
     }
   } catch {
     // Non-fatal — just return the job as-is
@@ -273,15 +272,20 @@ function commonRequirements(jobs: AnalyzedJob[]): string[] {
 export async function POST(req: NextRequest) {
   try {
     const options: ScrapeOptions = await req.json();
-    const { keyword, limit = 10, sessionCookie, jobType, datePosted: dateFilter,
+    const { keyword, limit = 10, jobType, datePosted: dateFilter,
             minSalary, maxSalary } = options;
 
     if (!keyword?.trim()) {
       return NextResponse.json({ error: 'keyword is required' }, { status: 400 });
     }
 
+    // Read OJ.ph session from httpOnly cookie set at login
+    const sessionCookie = req.cookies.get('oj_session')?.value;
+    if (!sessionCookie) {
+      return NextResponse.json({ error: 'Not authenticated. Please sign in.' }, { status: 401 });
+    }
+
     const openRouterKey = process.env.OPENROUTER_API_KEY;
-    const demoMode = process.env.DEMO_MODE !== 'false'; // default true
     const targetCount = Math.min(Math.max(limit, 1), 30);
 
     const validJobs: AnalyzedJob[] = [];
@@ -298,27 +302,14 @@ export async function POST(req: NextRequest) {
 
       let rawBatch: RawJob[] = [];
 
-      if (!demoMode) {
-        try {
-          rawBatch = await scrapeFromOnlineJobs(keyword, sessionCookie, needed);
+      rawBatch = await scrapeFromOnlineJobs(keyword, sessionCookie, needed);
 
-          // Enrich each job with its full description from the detail page.
-          // This is the critical step — the list page only has snippet text
-          // (or nothing if JS-gated), but individual job pages are static HTML
-          // with complete descriptions that the AI can properly analyze.
-          if (rawBatch.length > 0) {
-            rawBatch = await enrichJobsWithDetails(rawBatch, sessionCookie);
-            isLiveData = true;
-          }
-        } catch {
-          // Live scrape failed — use mock
-        }
+      if (rawBatch.length > 0) {
+        rawBatch = await enrichJobsWithDetails(rawBatch, sessionCookie);
+        isLiveData = true;
       }
 
-      // Fall back to mock if no results or demo mode
-      if (rawBatch.length === 0) {
-        rawBatch = generateMockJobs(keyword, needed);
-      }
+      if (rawBatch.length === 0) break;
 
       totalScraped += rawBatch.length;
 

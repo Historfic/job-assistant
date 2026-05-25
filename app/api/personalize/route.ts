@@ -106,27 +106,37 @@ async function personalizeWithClaude(job: AnalyzedJob, baseMessage: string, apiK
 }
 
 async function personalizeWithOpenRouter(job: AnalyzedJob, baseMessage: string, apiKey: string): Promise<string> {
-  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-      'HTTP-Referer': 'https://job-assistant.vercel.app',
-      'X-Title': 'JobIQ Assistant',
-    },
-    body: JSON.stringify({
-      model: 'meta-llama/llama-3.1-8b-instruct:free',
-      messages: [{ role: 'user', content: buildPersonalizePrompt(job, baseMessage) }],
-      temperature: 0.65,
-      max_tokens: 400,
-    }),
-  });
+  const models = ['google/gemma-4-31b-it:free', 'google/gemma-4-26b-a4b-it:free'];
+  const prompt = buildPersonalizePrompt(job, baseMessage);
 
-  if (!res.ok) throw new Error(`OpenRouter error: ${res.status}`);
-  const data = await res.json();
-  const msg = data.choices?.[0]?.message?.content?.trim();
-  if (!msg || msg.length < 30) throw new Error('Empty OpenRouter response');
-  return msg;
+  for (const model of models) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      if (attempt > 0) await new Promise(r => setTimeout(r, 3000));
+      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://job-assistant.vercel.app',
+          'X-Title': 'JobIQ Assistant',
+        },
+        body: JSON.stringify({
+          model,
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.65,
+          max_tokens: 400,
+        }),
+      });
+
+      if (res.status === 429) continue;
+      if (!res.ok) break;
+      const data = await res.json();
+      const msg = data.choices?.[0]?.message?.content?.trim();
+      if (msg && msg.length >= 30) return msg;
+    }
+  }
+
+  throw new Error('OpenRouter: all models rate limited or failed');
 }
 
 function personalizeLocally(job: AnalyzedJob, baseMessage: string): string {
@@ -173,13 +183,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'job and baseMessage are required' }, { status: 400 });
     }
 
-    // Always re-fetch the full job page — the scraper caps descriptions at
-    // 2000 chars during bulk scraping, which cuts off the "how to apply"
-    // section that typically appears at the end. One extra request per
-    // personalization click is acceptable and ensures the AI sees everything.
     let enrichedJob = job;
     if (job.url) {
-      const sessionCookie = process.env.ONLINEJOBS_SESSION_COOKIE;
+      const sessionCookie = req.cookies.get('oj_session')?.value;
       const fullDesc = await fetchFullDescription(job.url, sessionCookie);
       console.log(`[personalize] fetched ${fullDesc.length} chars. Last 300: "${fullDesc.slice(-300)}"`);
       if (fullDesc.length > 0) {
@@ -197,8 +203,18 @@ export async function POST(req: NextRequest) {
         message = await personalizeWithClaude(enrichedJob, baseMessage, anthropicKey);
         source = 'claude';
       } catch (err) {
-        console.error('[/api/personalize] Claude failed:', err);
-        message = personalizeLocally(enrichedJob, baseMessage);
+        console.error('[/api/personalize] Claude failed, trying OpenRouter:', err);
+        if (openRouterKey) {
+          try {
+            message = await personalizeWithOpenRouter(enrichedJob, baseMessage, openRouterKey);
+            source = 'openrouter';
+          } catch (err2) {
+            console.error('[/api/personalize] OpenRouter also failed:', err2);
+            message = personalizeLocally(enrichedJob, baseMessage);
+          }
+        } else {
+          message = personalizeLocally(enrichedJob, baseMessage);
+        }
       }
     } else if (openRouterKey) {
       try {

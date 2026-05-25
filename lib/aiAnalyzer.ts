@@ -99,7 +99,7 @@ function buildAnalysisPrompt(job: RawJob): string {
   return `Analyze this job listing and return ONLY a valid JSON object. No explanation, just JSON.
 
 Job Title: ${job.title}
-Description: ${(job.description ?? '').slice(0, 800)}
+Description: ${(job.description ?? '').slice(0, 3000)}
 
 Return exactly this JSON structure:
 {
@@ -151,7 +151,7 @@ async function analyzeJobWithOpenRouter(job: RawJob, apiKey: string): Promise<Jo
       'X-Title': 'JobIQ Assistant',
     },
     body: JSON.stringify({
-      model: 'meta-llama/llama-3.1-8b-instruct:free',
+      model: 'google/gemma-4-31b-it:free',
       messages: [{ role: 'user', content: buildAnalysisPrompt(job) }],
       temperature: 0.1,
       max_tokens: 400,
@@ -282,7 +282,7 @@ Tone: Professional, confident, human — NOT robotic or generic. Write in first 
           'X-Title': 'JobIQ Assistant',
         },
         body: JSON.stringify({
-          model: 'meta-llama/llama-3.1-8b-instruct:free',
+          model: 'google/gemma-4-31b-it:free',
           messages: [{ role: 'user', content: basePrompt }],
           temperature: 0.7,
           max_tokens: 400,

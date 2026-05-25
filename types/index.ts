@@ -50,7 +50,6 @@ export interface ScrapeOptions {
   techStack?: string;
   remoteOnly?: boolean;
   datePosted?: string;
-  sessionCookie?: string;
 }
 
 // Full result returned from the /api/scrape endpoint
