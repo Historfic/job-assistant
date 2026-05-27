@@ -67,6 +67,8 @@ export interface ProcessResult {
     totalAnalyzed: number;
     totalRemoved: number;
     scrapePasses: number;
+    targetRequested: number;    // limit the user asked for
+    excludedAsMarked: number;   // how many scraped URLs were skipped because user already applied/rejected
   };
   isLiveData: boolean; // false = mock/demo data, true = scraped from onlinejobs.ph
 }

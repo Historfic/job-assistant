@@ -23,13 +23,21 @@ const BATCH_FACTOR = 1.5; // over-fetch to compensate for filtered-out jobs
 
 // ─── Live scraper (cheerio + fetch) ─────────────────────────────────────────
 
+// OnlineJobs.ph paginates with a URL path segment that's the offset, NOT a
+// page number (e.g. .../jobsearch/30 is page 2, .../jobsearch/60 is page 3).
+// 30 listings per page — confirmed from the rendered pagination nav.
+const PAGE_SIZE = 30;
+
 async function scrapeFromOnlineJobs(
   keyword: string,
   sessionCookie?: string,
-  limit = 10
+  limit = 10,
+  page = 0,
 ): Promise<RawJob[]> {
   const { load } = await import('cheerio');
-  const url = `https://www.onlinejobs.ph/jobseekers/jobsearch?jobkeyword=${encodeURIComponent(keyword)}`;
+  const offset = page * PAGE_SIZE;
+  const pathSuffix = offset > 0 ? `/${offset}` : '';
+  const url = `https://www.onlinejobs.ph/jobseekers/jobsearch${pathSuffix}?jobkeyword=${encodeURIComponent(keyword)}`;
 
   const headers: Record<string, string> = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
@@ -292,19 +300,26 @@ export async function POST(req: NextRequest) {
     const removedJobs: Array<{ job: RawJob; reason: string }> = [];
     // Pre-seed with URLs the client says to skip (already applied / rejected).
     // The existing dedupe check at the top of the pre-filter will drop them.
-    const seenUrls = new Set<string>(excludeUrls);
+    const excludeSet = new Set<string>(excludeUrls);
+    const seenUrls = new Set<string>(excludeSet);
+    const excludedCounted = new Set<string>(); // urls counted toward excludedAsMarked (dedup across passes)
     let totalScraped = 0;
+    let excludedAsMarked = 0;
     let passes = 0;
     let isLiveData = false;
 
     // ── Scrape + analyze loop ─────────────────────────────────────────────────
+    // Each pass scrapes the next page of OnlineJobs.ph results (page-size 30)
+    // so we can keep finding fresh listings even when many URLs are already
+    // applied/rejected and being filtered out client-side.
     while (validJobs.length < targetCount && passes < MAX_PASSES) {
+      const currentPage = passes; // 0-indexed: pass 0 = first page, pass 1 = offset 30, etc.
       passes++;
       const needed = Math.ceil((targetCount - validJobs.length) * BATCH_FACTOR) + 5;
 
       let rawBatch: RawJob[] = [];
 
-      rawBatch = await scrapeFromOnlineJobs(keyword, sessionCookie, needed);
+      rawBatch = await scrapeFromOnlineJobs(keyword, sessionCookie, needed, currentPage);
 
       if (rawBatch.length > 0) {
         rawBatch = await enrichJobsWithDetails(rawBatch, sessionCookie);
@@ -317,7 +332,14 @@ export async function POST(req: NextRequest) {
 
       // Apply pre-filters before AI analysis (salary, job type, date)
       const preFiltered = rawBatch.filter(job => {
-        if (seenUrls.has(job.url ?? '')) return false;
+        if (seenUrls.has(job.url ?? '')) {
+          // Attribute the drop to the user's applied/rejected list when applicable
+          if (job.url && excludeSet.has(job.url) && !excludedCounted.has(job.url)) {
+            excludedCounted.add(job.url);
+            excludedAsMarked++;
+          }
+          return false;
+        }
         if (job.url) seenUrls.add(job.url);
 
         const sal = evaluateSalary(job.salary, minSalary ?? 0);
@@ -395,6 +417,8 @@ export async function POST(req: NextRequest) {
         totalAnalyzed: validJobs.length + removedJobs.length,
         totalRemoved: removedJobs.length,
         scrapePasses: passes,
+        targetRequested: targetCount,
+        excludedAsMarked,
       },
       isLiveData,
     };
