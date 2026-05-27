@@ -273,7 +273,7 @@ export async function POST(req: NextRequest) {
   try {
     const options: ScrapeOptions = await req.json();
     const { keyword, limit = 10, jobType, datePosted: dateFilter,
-            minSalary, maxSalary } = options;
+            minSalary, maxSalary, excludeUrls = [] } = options;
 
     if (!keyword?.trim()) {
       return NextResponse.json({ error: 'keyword is required' }, { status: 400 });
@@ -290,7 +290,9 @@ export async function POST(req: NextRequest) {
 
     const validJobs: AnalyzedJob[] = [];
     const removedJobs: Array<{ job: RawJob; reason: string }> = [];
-    const seenUrls = new Set<string>();
+    // Pre-seed with URLs the client says to skip (already applied / rejected).
+    // The existing dedupe check at the top of the pre-filter will drop them.
+    const seenUrls = new Set<string>(excludeUrls);
     let totalScraped = 0;
     let passes = 0;
     let isLiveData = false;

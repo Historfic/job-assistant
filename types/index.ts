@@ -50,6 +50,7 @@ export interface ScrapeOptions {
   techStack?: string;
   remoteOnly?: boolean;
   datePosted?: string;
+  excludeUrls?: string[]; // jobs the user has already applied to or rejected
 }
 
 // Full result returned from the /api/scrape endpoint
@@ -72,7 +73,7 @@ export interface ProcessResult {
 
 // ─── UI State ─────────────────────────────────────────────────────────────────
 
-export type AppTab = 'jobs' | 'insights' | 'application' | 'email';
+export type AppTab = 'jobs' | 'insights' | 'application' | 'email' | 'applied' | 'rejected';
 
 export interface User {
   name: string;

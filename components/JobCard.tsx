@@ -3,12 +3,12 @@
 import { useState, useSyncExternalStore } from 'react';
 import type { AnalyzedJob } from '@/types';
 import {
-  subscribeAppliedJobs,
-  getAppliedSnapshot,
+  subscribeJobStatus,
+  getJobStatusSnapshot,
   getServerSnapshot,
-  toggleApplied,
+  toggleStatus,
   relativeAgo,
-} from '@/lib/appliedJobs';
+} from '@/lib/jobStatus';
 
 interface Props {
   job: AnalyzedJob;
@@ -47,14 +47,17 @@ export default function JobCard({ job, highlight, baseMessage }: Props) {
   const [expanded, setExpanded] = useState(false);
   const { analysis } = job;
 
-  // ── Applied state (URL-keyed so it survives across re-scrapes) ──────────────
-  const appliedMap = useSyncExternalStore(
-    subscribeAppliedJobs,
-    getAppliedSnapshot,
+  // ── Job status (applied / rejected) — URL-keyed so it survives re-scrapes ──
+  const statusMap = useSyncExternalStore(
+    subscribeJobStatus,
+    getJobStatusSnapshot,
     getServerSnapshot,
   );
-  const applied = Boolean(job.url && appliedMap[job.url]);
-  const appliedDate = applied && job.url ? appliedMap[job.url].appliedAt : null;
+  const entry      = job.url ? statusMap[job.url] : undefined;
+  const applied    = entry?.state === 'applied';
+  const rejected   = entry?.state === 'rejected';
+  const marked     = applied || rejected;
+  const statusDate = entry?.setAt ?? null;
 
   // ── Personalized message state ──────────────────────────────────────────────
   const [showPersonal, setShowPersonal]       = useState(false);
@@ -103,7 +106,7 @@ export default function JobCard({ job, highlight, baseMessage }: Props) {
           ? 'bg-yellow-500/5 border-yellow-500/20 hover:border-yellow-500/40'
           : 'bg-gray-900 border-gray-800 hover:border-gray-700'
         }
-        ${applied ? 'opacity-60 hover:opacity-100' : ''}`}
+        ${marked ? 'opacity-60 hover:opacity-100' : ''}`}
     >
       <div className="p-4">
         {/* Top row: title + score */}
@@ -131,7 +134,12 @@ export default function JobCard({ job, highlight, baseMessage }: Props) {
               )}
               {applied && (
                 <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
-                  ✓ Applied {relativeAgo(appliedDate)}
+                  ✓ Applied {relativeAgo(statusDate)}
+                </span>
+              )}
+              {rejected && (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] bg-red-500/10 text-red-400 border border-red-500/20 font-medium">
+                  ✗ Rejected {relativeAgo(statusDate)}
                 </span>
               )}
             </div>
@@ -248,18 +256,20 @@ export default function JobCard({ job, highlight, baseMessage }: Props) {
             </a>
           )}
 
-          {/* Applied toggle — icon-only to keep the footer tight in 3-column
-              Top Matches cards. State communicated via colour + icon shape;
-              the header badge shows the full "Applied Xd ago" text when set. */}
+          {/* Applied / Rejected toggles — icon-only to keep the footer tight
+              in 3-column Top Matches cards. State communicated via colour +
+              icon shape; header badge shows the full "Applied Xd ago" /
+              "Rejected Xd ago" text. Clicking the other state while one is
+              set switches directly (toggleStatus handles the exclusion). */}
           {job.url && (
             <button
-              onClick={() => toggleApplied(job.url!)}
+              onClick={() => toggleStatus(job.url!, 'applied', job)}
               title={applied ? 'Unmark as applied' : 'Mark as applied'}
               aria-label={applied ? 'Unmark as applied' : 'Mark as applied'}
               className={`inline-flex items-center justify-center w-7 h-7 rounded-lg transition-colors shrink-0
                 ${applied
                   ? 'bg-emerald-600/15 text-emerald-400 border border-emerald-600/25 hover:bg-emerald-600/25'
-                  : 'bg-gray-800 text-gray-400 hover:text-white hover:bg-gray-700 border border-gray-700'
+                  : 'bg-gray-800 text-gray-400 hover:text-emerald-400 hover:bg-gray-700 border border-gray-700'
                 }`}
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -267,6 +277,26 @@ export default function JobCard({ job, highlight, baseMessage }: Props) {
                   d={applied
                     ? 'M5 13l4 4L19 7'
                     : 'M9 12h6m-3-3v6m9-3a9 9 0 11-18 0 9 9 0 0118 0z'} />
+              </svg>
+            </button>
+          )}
+
+          {job.url && (
+            <button
+              onClick={() => toggleStatus(job.url!, 'rejected', job)}
+              title={rejected ? 'Unmark as rejected' : 'Reject this job'}
+              aria-label={rejected ? 'Unmark as rejected' : 'Reject this job'}
+              className={`inline-flex items-center justify-center w-7 h-7 rounded-lg transition-colors shrink-0
+                ${rejected
+                  ? 'bg-red-600/15 text-red-400 border border-red-600/25 hover:bg-red-600/25'
+                  : 'bg-gray-800 text-gray-400 hover:text-red-400 hover:bg-gray-700 border border-gray-700'
+                }`}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                  d={rejected
+                    ? 'M6 18L18 6M6 6l12 12'
+                    : 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z'} />
               </svg>
             </button>
           )}

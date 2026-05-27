@@ -9,10 +9,12 @@ import AIInsights from '@/components/AIInsights';
 import ApplicationMessage from '@/components/ApplicationMessage';
 import EmailPreview from '@/components/EmailPreview';
 import {
-  subscribeAppliedJobs,
-  getAppliedSnapshot,
+  subscribeJobStatus,
+  getJobStatusSnapshot,
   getServerSnapshot,
-} from '@/lib/appliedJobs';
+  relativeAgo,
+  type JobStatusEntry,
+} from '@/lib/jobStatus';
 
 // ─── Progress steps shown during the scrape + analysis pipeline ───────────────
 const STEPS = [
@@ -43,32 +45,43 @@ export default function DashboardPage() {
   const [sendingEmail, setSendingEmail] = useState(false);
   const [lastOptions, setLastOptions] = useState<ScrapeOptions | null>(null);
 
-  // Applied-jobs filter (session-only — resets on reload by design)
-  const [hideApplied, setHideApplied] = useState(false);
-  const appliedMap = useSyncExternalStore(
-    subscribeAppliedJobs,
-    getAppliedSnapshot,
+  // Status filter (session-only — resets on reload by design)
+  const [hideMarked, setHideMarked] = useState(false);
+  const statusMap = useSyncExternalStore(
+    subscribeJobStatus,
+    getJobStatusSnapshot,
     getServerSnapshot,
   );
 
-  const filterApplied = useCallback(
+  const filterMarked = useCallback(
     (jobs: AnalyzedJob[]) =>
-      hideApplied ? jobs.filter(j => !(j.url && appliedMap[j.url])) : jobs,
-    [hideApplied, appliedMap],
+      hideMarked ? jobs.filter(j => !(j.url && statusMap[j.url])) : jobs,
+    [hideMarked, statusMap],
   );
 
-  const visibleValidJobs   = useMemo(() => filterApplied(result?.validJobs ?? []),   [result, filterApplied]);
-  const visibleBestMatches = useMemo(() => filterApplied(result?.bestMatches ?? []), [result, filterApplied]);
+  const visibleValidJobs   = useMemo(() => filterMarked(result?.validJobs ?? []),   [result, filterMarked]);
+  const visibleBestMatches = useMemo(() => filterMarked(result?.bestMatches ?? []), [result, filterMarked]);
   // Other jobs = all valid jobs MINUS the ones already shown in Top Matches,
   // so the list below the gold cards doesn't duplicate them.
   const otherValidJobs = useMemo(() => {
     const bestUrls = new Set(visibleBestMatches.map(j => j.url).filter(Boolean));
     return visibleValidJobs.filter(j => !j.url || !bestUrls.has(j.url));
   }, [visibleValidJobs, visibleBestMatches]);
-  const appliedCount       = useMemo(
-    () => (result?.validJobs ?? []).filter(j => j.url && appliedMap[j.url]).length,
-    [result, appliedMap],
+  const markedInBatch = useMemo(
+    () => (result?.validJobs ?? []).filter(j => j.url && statusMap[j.url]).length,
+    [result, statusMap],
   );
+
+  // ── All marked jobs across history (for the Applied / Rejected tabs) ────────
+  // Sorted newest-first by setAt timestamp.
+  const sortedEntries = useMemo(
+    () => Object.entries(statusMap)
+      .map(([url, entry]) => ({ url, entry }))
+      .sort((a, b) => (b.entry.setAt > a.entry.setAt ? 1 : -1)),
+    [statusMap],
+  );
+  const appliedEntries  = useMemo(() => sortedEntries.filter(e => e.entry.state === 'applied'),  [sortedEntries]);
+  const rejectedEntries = useMemo(() => sortedEntries.filter(e => e.entry.state === 'rejected'), [sortedEntries]);
 
   // ── Auth guard ───────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -104,11 +117,15 @@ export default function DashboardPage() {
         : STEPS[1].msg;
       animateProgress(STEPS[1].pct, kwMsg);
 
+      // Skip jobs the user has already marked applied or rejected. Read from
+      // the store at call time (not closure) so we don't depend on statusMap.
+      const excludeUrls = Object.keys(getJobStatusSnapshot());
+
       // ── Single API call handles the full pipeline ─────────────────────────
       const res = await fetch('/api/scrape', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(options),
+        body: JSON.stringify({ ...options, excludeUrls }),
       });
 
       if (!res.ok) {
@@ -193,6 +210,8 @@ export default function DashboardPage() {
     insights: undefined,
     application: undefined,
     email: undefined,
+    applied: appliedEntries.length || undefined,
+    rejected: rejectedEntries.length || undefined,
   };
 
   return (
@@ -342,12 +361,12 @@ export default function DashboardPage() {
 
 
               {/* Tab bar */}
-              <div className="shrink-0 flex items-center gap-1 px-4 pt-3 pb-0 border-b border-gray-800">
-                {(['jobs', 'insights', 'application', 'email'] as AppTab[]).map(tab => (
+              <div className="shrink-0 flex items-center gap-1 px-4 pt-3 pb-0 border-b border-gray-800 overflow-x-auto">
+                {(['jobs', 'insights', 'application', 'email', 'applied', 'rejected'] as AppTab[]).map(tab => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`relative flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-t-lg transition-colors capitalize
+                    className={`relative flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-t-lg transition-colors capitalize whitespace-nowrap
                       ${activeTab === tab
                         ? 'text-white bg-gray-800 border-b-2 border-blue-500'
                         : 'text-gray-500 hover:text-gray-300 hover:bg-gray-800/50'
@@ -357,9 +376,12 @@ export default function DashboardPage() {
                     {tab === 'insights' && '🧠'}
                     {tab === 'application' && '✍️'}
                     {tab === 'email' && '📧'}
+                    {tab === 'applied' && <span className="text-emerald-400">✓</span>}
+                    {tab === 'rejected' && <span className="text-red-400">✗</span>}
                     {tab}
                     {tabCounts[tab] !== undefined && (
-                      <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-blue-600 text-white text-[10px] rounded-full">
+                      <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-white text-[10px] rounded-full
+                        ${tab === 'applied' ? 'bg-emerald-600' : tab === 'rejected' ? 'bg-red-600' : 'bg-blue-600'}`}>
                         {tabCounts[tab]}
                       </span>
                     )}
@@ -383,24 +405,24 @@ export default function DashboardPage() {
                 {/* Jobs tab */}
                 {activeTab === 'jobs' && (
                   <div className="space-y-3 animate-slide-up">
-                    {/* Filter chip — only meaningful once at least one job is marked applied */}
-                    {appliedCount > 0 && (
+                    {/* Filter chip — only meaningful once at least one job is marked */}
+                    {markedInBatch > 0 && (
                       <div className="flex items-center justify-end mb-1">
                         <button
-                          onClick={() => setHideApplied(v => !v)}
+                          onClick={() => setHideMarked(v => !v)}
                           className={`inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full border transition-colors
-                            ${hideApplied
+                            ${hideMarked
                               ? 'bg-emerald-600/15 text-emerald-400 border-emerald-600/30 hover:bg-emerald-600/25'
                               : 'bg-gray-900 text-gray-400 border-gray-700 hover:text-white hover:border-gray-600'
                             }`}
                         >
                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                              d={hideApplied
+                              d={hideMarked
                                 ? 'M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21'
                                 : 'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z'} />
                           </svg>
-                          {hideApplied ? `Hidden (${appliedCount} applied)` : `Hide applied (${appliedCount})`}
+                          {hideMarked ? `Hidden (${markedInBatch} marked)` : `Hide marked (${markedInBatch})`}
                         </button>
                       </div>
                     )}
@@ -443,13 +465,13 @@ export default function DashboardPage() {
                     {visibleBestMatches.length === 0 && otherValidJobs.length === 0 && (
                       <div className="text-center py-12 text-gray-600">
                         <p className="text-sm">
-                          {hideApplied && result.validJobs.length > 0
-                            ? 'All jobs in this batch are marked as applied.'
+                          {hideMarked && result.validJobs.length > 0
+                            ? 'All jobs in this batch are already applied or rejected.'
                             : 'No valid jobs found after filtering.'}
                         </p>
                         <p className="text-xs mt-1">
-                          {hideApplied && result.validJobs.length > 0
-                            ? 'Toggle "Hide applied" off to see them.'
+                          {hideMarked && result.validJobs.length > 0
+                            ? 'Toggle "Hide marked" off to see them.'
                             : 'Try different keywords or filters.'}
                         </p>
                       </div>
@@ -499,6 +521,24 @@ export default function DashboardPage() {
                     sent={emailSent}
                   />
                 )}
+
+                {/* Applied tab */}
+                {activeTab === 'applied' && (
+                  <MarkedJobsList
+                    entries={appliedEntries}
+                    state="applied"
+                    baseMessage={result.applicationMessage}
+                  />
+                )}
+
+                {/* Rejected tab */}
+                {activeTab === 'rejected' && (
+                  <MarkedJobsList
+                    entries={rejectedEntries}
+                    state="rejected"
+                    baseMessage={result.applicationMessage}
+                  />
+                )}
               </div>
             </div>
           )}
@@ -511,4 +551,63 @@ export default function DashboardPage() {
 // ─── Utility: single animation frame tick ────────────────────────────────────
 function tick() {
   return new Promise<void>(r => setTimeout(r, 300));
+}
+
+// ─── Applied / Rejected tab body ──────────────────────────────────────────────
+// Renders the list of jobs the user has flagged with a particular state across
+// all past searches. Entries carry a snapshot of the AnalyzedJob, so we can
+// render a full JobCard even if the listing has dropped out of the latest
+// search results. Legacy migrated entries (no snapshot) fall back to a
+// compact URL + timestamp row.
+
+function MarkedJobsList({
+  entries,
+  state,
+  baseMessage,
+}: {
+  entries: Array<{ url: string; entry: JobStatusEntry }>;
+  state: 'applied' | 'rejected';
+  baseMessage?: string;
+}) {
+  const isApplied = state === 'applied';
+  return (
+    <div className="space-y-3 animate-slide-up">
+      <div className="flex items-center gap-2 mb-3">
+        <span className={`text-xs font-semibold uppercase tracking-wider ${isApplied ? 'text-emerald-400' : 'text-red-400'}`}>
+          {isApplied ? '✓ Applied Jobs' : '✗ Rejected Jobs'} ({entries.length})
+        </span>
+        <div className={`flex-1 border-t ${isApplied ? 'border-emerald-500/20' : 'border-red-500/20'}`} />
+      </div>
+      {entries.length === 0 ? (
+        <div className="text-center py-12 text-gray-600">
+          <p className="text-sm">No jobs marked as {state} yet.</p>
+          <p className="text-xs mt-1">
+            Click the {isApplied ? 'green check' : 'red ×'} icon on any job card to track it here.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {entries.map(({ url, entry }) =>
+            entry.job ? (
+              <JobCard key={url} job={entry.job} baseMessage={baseMessage} />
+            ) : (
+              <div key={url} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+                <a
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-medium text-gray-300 hover:text-blue-400 truncate block"
+                >
+                  {url}
+                </a>
+                <p className="text-[10px] text-gray-600 mt-1">
+                  Marked {state} {relativeAgo(entry.setAt)} · legacy entry, limited info
+                </p>
+              </div>
+            ),
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
