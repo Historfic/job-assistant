@@ -353,7 +353,7 @@ export default function JobCard({ job, highlight, baseMessage }: Props) {
               <span className="text-[10px] font-semibold uppercase tracking-widest text-emerald-400">
                 ✦ Quick questions
               </span>
-              <span className="text-[10px] text-gray-600">— your answers make the cover letter yours</span>
+              <span className="text-[10px] text-gray-600">— optional, gives the letter a personal touch</span>
             </div>
 
             {questions.map((q, i) => (

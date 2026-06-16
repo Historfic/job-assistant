@@ -73,8 +73,8 @@ function buildPersonalizePrompt(
 
   const filledAnswers = (qaContext ?? []).filter(qa => qa.answer.trim());
   const answersSection = filledAnswers.length > 0
-    ? `\nApplicant's answers to personalization questions:\n${
-        filledAnswers.map(qa => `Q: ${qa.question}\nA: ${qa.answer.trim()}`).join('\n\n')
+    ? `\nAdditional context from the applicant (use naturally if relevant, don't force it):\n${
+        filledAnswers.map(qa => `- ${qa.answer.trim()}`).join('\n')
       }\n`
     : '';
 
@@ -97,7 +97,8 @@ ${baseMessage}
 """
 
 Write a unique, personalized cover letter that:
-${filledAnswers.length > 0 ? '- Draws directly from the applicant\'s specific answers above as concrete proof points\n' : ''}- Opens with a specific hook referencing something concrete from the job description (NOT a generic "I came across your posting" opener)
+- Is primarily driven by the job description above
+${filledAnswers.length > 0 ? '- Naturally weaves in the applicant\'s context where it strengthens the letter (don\'t quote it verbatim)\n' : ''}- Opens with a specific hook referencing something concrete from the job description (NOT a generic "I came across your posting" opener)
 - Demonstrates understanding of what this specific role actually needs
 - Naturally weaves in 2-3 relevant skills from the job listing
 - Mentions the company name if available

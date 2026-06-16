@@ -16,7 +16,7 @@ function buildQuestionsPrompt(job: AnalyzedJob): string {
   const desc = (job.description ?? '').slice(0, 1500);
   const skills = job.analysis.skills.join(', ') || 'Not listed';
 
-  return `Generate 4-5 targeted questions to help personalize a cover letter for this job.
+  return `Generate exactly 2-3 short questions to help personalize a cover letter for this job. Keep it light — these are just quick prompts to give the letter a personal touch, not a full interview.
 
 Job Title: ${job.title ?? 'Not specified'}
 Company: ${job.companyName ?? 'Not specified'}
@@ -26,14 +26,11 @@ Job Description:
 ${desc}
 """
 
-Create questions that will surface concrete, compelling details for a cover letter. Make each question specific to THIS job's requirements — not generic.
+Pick only the 2-3 most useful questions based on what the job actually asks for. Focus on:
+- A quick note on relevant experience or a standout example (if the job has specific skill requirements)
+- Anything personal that would make the letter feel genuine (availability, why this role, etc.)
 
-Cover these areas:
-1. Direct experience with the top 1-2 required skills (ask for a specific result or example)
-2. A relevant achievement or project that proves they can do the work
-3. What makes them uniquely qualified vs. other applicants
-4. Availability and working hours (important for remote roles)
-5. Any specific requirement from the job description worth addressing directly
+Do NOT ask about things not relevant to this specific job. Fewer, better questions over many generic ones.
 
 Return ONLY a JSON array, no explanation:
 [
@@ -52,31 +49,21 @@ function localFallback(job: AnalyzedJob): CoverLetterQuestion[] {
   const q1: CoverLetterQuestion = skills.length > 0
     ? {
         id: 'q1',
-        question: `How many years of experience do you have with ${skills[0]}${skills[1] ? ` and ${skills[1]}` : ''}? Share a specific project or result you're proud of.`,
-        placeholder: 'e.g. 3 years — built a reporting dashboard that cut manual work by 40%',
+        question: `What's your experience with ${skills[0]}${skills[1] ? ` or ${skills[1]}` : ''}? A quick example is fine.`,
+        placeholder: 'e.g. 3 years, built a client dashboard — or just a sentence about it',
       }
     : {
         id: 'q1',
-        question: `What is your most relevant experience for the ${title} position?`,
-        placeholder: 'Describe your background and a key result',
+        question: `What's your most relevant experience for the ${title} position?`,
+        placeholder: 'A sentence or two is enough',
       };
 
   return [
     q1,
     {
       id: 'q2',
-      question: 'Describe a specific achievement or project that directly matches what this job requires.',
-      placeholder: 'e.g. Managed social media for a 10k-follower brand and grew engagement by 25%',
-    },
-    {
-      id: 'q3',
-      question: 'What makes you a stronger fit for this role compared to other applicants?',
-      placeholder: 'e.g. I combine technical skills with direct client-facing communication experience',
-    },
-    {
-      id: 'q4',
-      question: 'What is your availability and preferred working hours?',
-      placeholder: 'e.g. Full-time, available 8am–6pm PHT, flexible for US timezone overlap',
+      question: 'Anything specific you want the cover letter to mention? (optional)',
+      placeholder: 'e.g. availability, a past result, why you want this role',
     },
   ];
 }
