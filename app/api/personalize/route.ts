@@ -55,12 +55,28 @@ async function fetchFullDescription(url: string, sessionCookie?: string): Promis
   }
 }
 
-function buildPersonalizePrompt(job: AnalyzedJob, baseMessage: string): string {
+interface QAPair {
+  question: string;
+  answer: string;
+}
+
+function buildPersonalizePrompt(
+  job: AnalyzedJob,
+  baseMessage: string,
+  qaContext?: QAPair[],
+): string {
   const raw = job.description ?? '';
   const head = raw.slice(0, 1000);
   const tail = raw.length > 1800 ? '\n\n[...]\n\n' + raw.slice(-800) : '';
   const description = head + tail;
   const skills = job.analysis.skills.join(', ') || 'Not listed';
+
+  const filledAnswers = (qaContext ?? []).filter(qa => qa.answer.trim());
+  const answersSection = filledAnswers.length > 0
+    ? `\nApplicant's answers to personalization questions:\n${
+        filledAnswers.map(qa => `Q: ${qa.question}\nA: ${qa.answer.trim()}`).join('\n\n')
+      }\n`
+    : '';
 
   return `You are writing a personalized job application message for a remote job on OnlineJobs.ph.
 
@@ -74,18 +90,18 @@ ${description}
 """
 ${job.analysis.requires_cv ? '\nNote: This job requires a CV/resume.' : ''}
 ${job.analysis.platform_redirect ? `\nNote: This job asks to apply via ${job.analysis.redirect_platform}.` : ''}
-
-Here is the applicant's background for reference:
+${answersSection}
+Here is the applicant's general background for reference:
 """
 ${baseMessage}
 """
 
 Write a unique, personalized cover letter that:
-- Opens with a specific hook referencing something concrete from the job description (NOT a generic "I came across your posting" opener)
+${filledAnswers.length > 0 ? '- Draws directly from the applicant\'s specific answers above as concrete proof points\n' : ''}- Opens with a specific hook referencing something concrete from the job description (NOT a generic "I came across your posting" opener)
 - Demonstrates understanding of what this specific role actually needs
 - Naturally weaves in 2-3 relevant skills from the job listing
 - Mentions the company name if available
-- Stays under 180 words
+- Stays under 200 words
 - Sounds human and enthusiastic, not robotic
 ${job.analysis.requires_cv ? '- Mentions that CV is attached' : ''}
 ${job.analysis.platform_redirect ? `- Mentions willingness to continue on ${job.analysis.redirect_platform}` : ''}
@@ -94,12 +110,12 @@ ${job.analysis.platform_redirect ? `- Mentions willingness to continue on ${job.
 - Returns ONLY the message text, nothing else`;
 }
 
-async function personalizeWithClaude(job: AnalyzedJob, baseMessage: string, apiKey: string): Promise<string> {
+async function personalizeWithClaude(job: AnalyzedJob, baseMessage: string, apiKey: string, qaContext?: QAPair[]): Promise<string> {
   const client = new Anthropic({ apiKey });
   const response = await client.messages.create({
     model: 'claude-haiku-4-5',
-    max_tokens: 400,
-    messages: [{ role: 'user', content: buildPersonalizePrompt(job, baseMessage) }],
+    max_tokens: 450,
+    messages: [{ role: 'user', content: buildPersonalizePrompt(job, baseMessage, qaContext) }],
   });
 
   const block = response.content[0];
@@ -107,9 +123,9 @@ async function personalizeWithClaude(job: AnalyzedJob, baseMessage: string, apiK
   return stripEmDashes(block.text.trim());
 }
 
-async function personalizeWithOpenRouter(job: AnalyzedJob, baseMessage: string, apiKey: string): Promise<string> {
+async function personalizeWithOpenRouter(job: AnalyzedJob, baseMessage: string, apiKey: string, qaContext?: QAPair[]): Promise<string> {
   const models = ['google/gemma-4-31b-it:free', 'google/gemma-4-26b-a4b-it:free'];
-  const prompt = buildPersonalizePrompt(job, baseMessage);
+  const prompt = buildPersonalizePrompt(job, baseMessage, qaContext);
 
   for (const model of models) {
     for (let attempt = 0; attempt < 2; attempt++) {
@@ -141,7 +157,7 @@ async function personalizeWithOpenRouter(job: AnalyzedJob, baseMessage: string, 
   throw new Error('OpenRouter: all models rate limited or failed');
 }
 
-function personalizeLocally(job: AnalyzedJob, baseMessage: string): string {
+function personalizeLocally(job: AnalyzedJob, baseMessage: string, qaContext?: QAPair[]): string {
   const title   = job.title ?? 'this position';
   const company = job.companyName;
   const skills  = job.analysis.skills.slice(0, 3);
@@ -170,16 +186,26 @@ function personalizeLocally(job: AnalyzedJob, baseMessage: string): string {
     ? `I bring hands-on experience with ${skills.join(', ')}, which maps directly to what this role requires.`
     : 'I bring a strong track record in remote work, fast turnaround, and high-quality output.';
 
+  // If the user answered questions, use their first answer as the proof point
+  const firstAnswer = qaContext?.find(qa => qa.answer.trim())?.answer.trim();
+  const proofLine = firstAnswer
+    ? `To give you a concrete example: ${firstAnswer}`
+    : null;
+
   // Pull the middle/closing from the base message (skip its generic opener)
   const baseLines = baseMessage.split('\n').filter(Boolean);
   const middle = baseLines.slice(1).join('\n\n');
 
-  return stripEmDashes([opener, skillLine, middle].filter(Boolean).join('\n\n'));
+  return stripEmDashes([opener, skillLine, proofLine, middle].filter(Boolean).join('\n\n'));
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { job, baseMessage }: { job: AnalyzedJob; baseMessage: string } = await req.json();
+    const { job, baseMessage, qaContext }: {
+      job: AnalyzedJob;
+      baseMessage: string;
+      qaContext?: QAPair[];
+    } = await req.json();
 
     if (!job || !baseMessage) {
       return NextResponse.json({ error: 'job and baseMessage are required' }, { status: 400 });
@@ -202,33 +228,33 @@ export async function POST(req: NextRequest) {
 
     if (anthropicKey) {
       try {
-        message = await personalizeWithClaude(enrichedJob, baseMessage, anthropicKey);
+        message = await personalizeWithClaude(enrichedJob, baseMessage, anthropicKey, qaContext);
         source = 'claude';
       } catch (err) {
         console.error('[/api/personalize] Claude failed, trying OpenRouter:', err);
         if (openRouterKey) {
           try {
-            message = await personalizeWithOpenRouter(enrichedJob, baseMessage, openRouterKey);
+            message = await personalizeWithOpenRouter(enrichedJob, baseMessage, openRouterKey, qaContext);
             source = 'openrouter';
           } catch (err2) {
             console.error('[/api/personalize] OpenRouter also failed:', err2);
-            message = personalizeLocally(enrichedJob, baseMessage);
+            message = personalizeLocally(enrichedJob, baseMessage, qaContext);
           }
         } else {
-          message = personalizeLocally(enrichedJob, baseMessage);
+          message = personalizeLocally(enrichedJob, baseMessage, qaContext);
         }
       }
     } else if (openRouterKey) {
       try {
-        message = await personalizeWithOpenRouter(enrichedJob, baseMessage, openRouterKey);
+        message = await personalizeWithOpenRouter(enrichedJob, baseMessage, openRouterKey, qaContext);
         source = 'openrouter';
       } catch (err) {
         console.error('[/api/personalize] OpenRouter failed:', err);
-        message = personalizeLocally(enrichedJob, baseMessage);
+        message = personalizeLocally(enrichedJob, baseMessage, qaContext);
       }
     } else {
       console.warn('[/api/personalize] No AI key found — using local fallback. ANTHROPIC_API_KEY set:', Boolean(anthropicKey));
-      message = personalizeLocally(enrichedJob, baseMessage);
+      message = personalizeLocally(enrichedJob, baseMessage, qaContext);
     }
 
     console.log(`[/api/personalize] source=${source} descLen=${enrichedJob.description?.length ?? 0}`);
