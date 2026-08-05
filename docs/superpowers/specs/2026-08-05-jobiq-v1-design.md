@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-05
 **Owner:** Rafael (McGen Digital)
-**Status:** Awaiting approval
+**Status:** Approved by Rafael 2026-08-05 (payments deferred to v2, manual GCash/bank for launch)
 
 ## Overview
 
@@ -193,6 +193,8 @@ Missing keys never crash the app — demo mode covers every gap.
 ## Later (v2+)
 
 - PayMongo (or Xendit) checkout + webhook-driven tier upgrades — schema already ready.
+  Payment methods shown must depend on the client's region (Rafael, 2026-08-05):
+  GCash/Maya/online banking for Philippine buyers, cards for clients abroad.
 - Upwork/LinkedIn saved-search alerts, result caching to cut Apify spend.
 - OnlineJobs.ph profile import to enrich cover letters further.
 - Referral program for the Facebook community.
