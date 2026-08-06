@@ -9,6 +9,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import type { AnalyzedJob } from '@/types';
 import { stripEmDashes } from '@/lib/aiAnalyzer';
+import { getSessionUser } from '@/lib/auth';
+import { getOjConnectionStatus, getOjSessionCookie, markOjExpired } from '@/lib/oj/connection';
+import { verifyOjSession } from '@/lib/oj/exchangeSession';
 
 // ─── Fetch full job description from the detail page ─────────────────────────
 // Called when the job's stored description is missing or too short to
@@ -212,13 +215,47 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'job and baseMessage are required' }, { status: 400 });
     }
 
+    const user = await getSessionUser();
+    if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+
+    // OnlineJobs listings need a connected OJ account (per spec, the connection
+    // is the incentive). LinkedIn/Upwork listings personalize without one —
+    // their descriptions already come from Apify.
+    const jobSource = job.source ?? 'onlinejobs';
+    let ojCookie: string | undefined;
+    if (jobSource === 'onlinejobs') {
+      const status = await getOjConnectionStatus();
+      if (status === null) {
+        return NextResponse.json({
+          error: 'Connect your OnlineJobs.ph account to unlock personalized cover letters.',
+          code: 'OJ_CONNECTION_REQUIRED',
+        }, { status: 403 });
+      }
+      if (status === 'expired') {
+        return NextResponse.json({
+          error: 'Your OnlineJobs.ph session expired. Please reconnect.',
+          code: 'OJ_SESSION_EXPIRED',
+        }, { status: 409 });
+      }
+      ojCookie = (await getOjSessionCookie()) ?? undefined;
+    }
+
     let enrichedJob = job;
-    if (job.url) {
-      const sessionCookie = req.cookies.get('oj_session')?.value;
-      const fullDesc = await fetchFullDescription(job.url, sessionCookie);
+    if (jobSource === 'onlinejobs' && job.url) {
+      const fullDesc = await fetchFullDescription(job.url, ojCookie);
       console.log(`[personalize] fetched ${fullDesc.length} chars. Last 300: "${fullDesc.slice(-300)}"`);
       if (fullDesc.length > 0) {
         enrichedJob = { ...job, description: fullDesc };
+      } else if (ojCookie) {
+        // Empty fetch with a cookie present — check whether the session died.
+        const stillValid = await verifyOjSession(ojCookie);
+        if (!stillValid) {
+          await markOjExpired();
+          return NextResponse.json({
+            error: 'Your OnlineJobs.ph session expired. Please reconnect.',
+            code: 'OJ_SESSION_EXPIRED',
+          }, { status: 409 });
+        }
       }
     }
 
