@@ -37,17 +37,28 @@ export async function getJobsFromSources(
     }),
   );
 
-  const jobs: RawJob[] = [];
+  const perSourceJobs: RawJob[][] = [];
   const errors: SourceError[] = [];
   let isLive = false;
   results.forEach((r, i) => {
     const source = sources[i];
     if (r.status === 'fulfilled') {
-      jobs.push(...r.value);
+      perSourceJobs.push(r.value);
       if (isLiveEnabled(source) && r.value.length > 0) isLive = true;
     } else {
       errors.push({ source, message: (r.reason as Error)?.message ?? 'Unknown error' });
     }
   });
+
+  // Round-robin interleave across sources so a multi-source search doesn't
+  // get dominated by whichever source happens to be first (spec: fair mix).
+  const jobs: RawJob[] = [];
+  const maxLen = Math.max(0, ...perSourceJobs.map(arr => arr.length));
+  for (let i = 0; i < maxLen; i++) {
+    for (const arr of perSourceJobs) {
+      if (i < arr.length) jobs.push(arr[i]);
+    }
+  }
+
   return { jobs, errors, isLive };
 }

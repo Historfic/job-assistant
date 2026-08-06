@@ -239,14 +239,15 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Trim to requested limit
-    const finalJobs = validJobs.slice(0, targetCount);
-
     // Re-score with final keyword context
-    finalJobs.forEach(j => { j.score = scoreJob(j, j.analysis, keyword); });
+    validJobs.forEach(j => { j.score = scoreJob(j, j.analysis, keyword); });
 
     // Sort by score descending
-    finalJobs.sort((a, b) => b.score - a.score);
+    validJobs.sort((a, b) => b.score - a.score);
+
+    // Trim to requested limit (after scoring/sorting, so a multi-source
+    // search isn't dominated by whichever source happened to fill the array first)
+    const finalJobs = validJobs.slice(0, targetCount);
 
     // Best matches: top 3
     const bestMatches = finalJobs.slice(0, 3);

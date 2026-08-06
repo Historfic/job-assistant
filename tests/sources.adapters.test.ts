@@ -3,6 +3,7 @@ import { pickString } from '@/lib/sources/apify';
 import { mapLinkedInItem } from '@/lib/sources/linkedin';
 import { mapUpworkItem } from '@/lib/sources/upwork';
 import { mockJobsFor } from '@/lib/sources/mock';
+import { getJobsFromSources } from '@/lib/sources';
 
 describe('pickString', () => {
   it('returns the first non-empty string among candidate keys', () => {
@@ -51,5 +52,17 @@ describe('mockJobsFor', () => {
       expect(j.source).toBe('linkedin');
       expect(j.url).toContain('linkedin.com');
     });
+  });
+});
+
+describe('getJobsFromSources', () => {
+  it('interleaves jobs round-robin across sources instead of concatenating', async () => {
+    delete process.env.DEMO_MODE; // demo/mock mode (isLiveEnabled requires DEMO_MODE === 'false')
+    const { jobs } = await getJobsFromSources(
+      ['onlinejobs', 'linkedin', 'upwork'],
+      { keyword: 'react', limit: 5 },
+    );
+    const firstThreeSources = jobs.slice(0, 3).map(j => j.source);
+    expect(new Set(firstThreeSources).size).toBe(3);
   });
 });
