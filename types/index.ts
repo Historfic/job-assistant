@@ -1,3 +1,31 @@
+// ─── Job Sources ──────────────────────────────────────────────────────────────
+
+export type JobSource = 'onlinejobs' | 'linkedin' | 'upwork';
+
+export interface SourceError {
+  source: JobSource;
+  message: string;
+}
+
+// ─── Accounts & Tiers ─────────────────────────────────────────────────────────
+
+export interface AppUser {
+  id: string;
+  email: string;
+  tier: 'free' | 'pro';
+}
+
+export interface SearchLimits {
+  remainingToday: number;
+  perDay: number;
+}
+
+export interface MeResponse {
+  user: AppUser;
+  ojConnection: { status: 'active' | 'expired' } | null;
+  limits: SearchLimits;
+}
+
 // ─── Core Job Types ────────────────────────────────────────────────────────────
 
 export interface RawJob {
@@ -12,6 +40,7 @@ export interface RawJob {
   query?: string;
   hourlyRate?: number | null;
   salaryReason?: string;
+  source?: JobSource; // absent = 'onlinejobs' (legacy)
 }
 
 // Per-job AI analysis shape — matches the spec in the product brief
@@ -51,6 +80,7 @@ export interface ScrapeOptions {
   remoteOnly?: boolean;
   datePosted?: string;
   excludeUrls?: string[]; // jobs the user has already applied to or rejected
+  sources?: JobSource[]; // defaults to ['onlinejobs']
 }
 
 // Full result returned from the /api/scrape endpoint
@@ -71,6 +101,8 @@ export interface ProcessResult {
     excludedAsMarked: number;   // how many scraped URLs were skipped because user already applied/rejected
   };
   isLiveData: boolean; // false = mock/demo data, true = scraped from onlinejobs.ph
+  sourceErrors?: SourceError[]; // per-source failures (other sources still returned)
+  limits?: SearchLimits;        // remaining daily searches after this one
 }
 
 // ─── UI State ─────────────────────────────────────────────────────────────────
