@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     status: 'active',
     consent_at: new Date().toISOString(),
     connected_at: new Date().toISOString(),
-  });
+  }, { onConflict: 'user_id' });
   if (error) {
     console.error('[/api/oj/connect] upsert failed:', error.message);
     return NextResponse.json({ error: 'Could not save the connection. Try again.' }, { status: 500 });
