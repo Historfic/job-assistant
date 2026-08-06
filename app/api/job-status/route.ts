@@ -12,6 +12,7 @@ export async function GET() {
   const { data, error } = await createSupabaseServer()
     .from('job_statuses')
     .select('job_url,status,snapshot,created_at')
+    .eq('user_id', user.id)
     .order('created_at', { ascending: false });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
@@ -40,9 +41,13 @@ export async function POST(req: NextRequest) {
   const supabase = createSupabaseServer();
 
   if (state === null) {
-    await supabase.from('job_statuses').delete().eq('user_id', user.id).eq('job_url', url);
+    const { error } = await supabase.from('job_statuses').delete().eq('user_id', user.id).eq('job_url', url);
+    if (error) {
+      console.error('[/api/job-status]', error.message);
+      return NextResponse.json({ error: 'Could not save job status' }, { status: 500 });
+    }
   } else {
-    await supabase.from('job_statuses').upsert({
+    const { error } = await supabase.from('job_statuses').upsert({
       user_id: user.id,
       job_url: url,
       status: state,
@@ -52,6 +57,10 @@ export async function POST(req: NextRequest) {
       snapshot: job ?? null,
       created_at: new Date().toISOString(),
     }, { onConflict: 'user_id,job_url' });
+    if (error) {
+      console.error('[/api/job-status]', error.message);
+      return NextResponse.json({ error: 'Could not save job status' }, { status: 500 });
+    }
   }
   return NextResponse.json({ ok: true });
 }
