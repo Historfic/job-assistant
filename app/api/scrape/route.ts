@@ -12,11 +12,15 @@
 //   - If valid < requested → scrape another batch (up to MAX_PASSES times)
 
 import { NextRequest, NextResponse } from 'next/server';
-import type { RawJob, ScrapeOptions, ProcessResult, AnalyzedJob } from '@/types';
+import type { RawJob, ScrapeOptions, ProcessResult, AnalyzedJob, SearchLimits } from '@/types';
 import { evaluateSalary } from '@/lib/salaryEvaluator';
 import { analyzeJobs, generateApplicationMessage, scoreJob } from '@/lib/aiAnalyzer';
 import { scrapeFromOnlineJobs, enrichJobsWithDetails } from '@/lib/sources/onlinejobs';
 import { getSessionUser } from '@/lib/auth';
+import { normalizeSources } from '@/lib/sources/types';
+import { allowedSources, TIER_LIMITS, manilaDayStartUtc, nextManilaMidnightUtc } from '@/lib/tiers';
+import { isSupabaseConfigured } from '@/lib/supabase/config';
+import { createSupabaseServer } from '@/lib/supabase/server';
 
 export const maxDuration = 60; // Vercel: allow up to 60s for scraping + AI
 
@@ -102,6 +106,43 @@ export async function POST(req: NextRequest) {
     // OnlineJobs.ph works without a session — public pages. Task 7 wires the
     // optional connected-account cookie back in for richer detail fetches.
     const sessionCookie: string | undefined = undefined;
+
+    // ── Tier: which sources may this user search? ────────────────────────────
+    const sources = normalizeSources(options.sources);
+    const blocked = sources.filter(s => !allowedSources(user.tier).includes(s));
+    if (blocked.length > 0) {
+      return NextResponse.json({
+        error: `LinkedIn and Upwork search is a Pro feature. Upgrade to Pro — ₱299/month — early access via our Facebook page.`,
+        code: 'TIER_SOURCES',
+        blocked,
+      }, { status: 403 });
+    }
+
+    // ── Daily rate limit (Manila day), logged in `searches` ──────────────────
+    let limits: SearchLimits = { remainingToday: 999, perDay: 999 }; // demo mode
+    if (isSupabaseConfigured()) {
+      const supabase = createSupabaseServer();
+      const dayStart = manilaDayStartUtc(new Date()).toISOString();
+      const { count } = await supabase
+        .from('searches')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', dayStart);
+      const perDay = TIER_LIMITS[user.tier].searchesPerDay;
+      const used = count ?? 0;
+      if (used >= perDay) {
+        return NextResponse.json({
+          error: `Daily search limit reached (${perDay}/day on ${user.tier === 'pro' ? 'Pro' : 'Free'}). Resets at midnight Manila time.`,
+          code: 'RATE_LIMIT',
+          resetAt: nextManilaMidnightUtc(new Date()).toISOString(),
+        }, { status: 429 });
+      }
+      await supabase.from('searches').insert({
+        user_id: user.id,
+        sources,
+        keyword: keyword.trim(),
+      });
+      limits = { remainingToday: Math.max(0, perDay - used - 1), perDay };
+    }
 
     const openRouterKey = process.env.OPENROUTER_API_KEY;
     const targetCount = Math.min(Math.max(limit, 1), 30);
@@ -231,6 +272,7 @@ export async function POST(req: NextRequest) {
         excludedAsMarked,
       },
       isLiveData,
+      limits,
     };
 
     return NextResponse.json(result);
