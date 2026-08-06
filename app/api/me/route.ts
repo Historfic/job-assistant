@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
+import { getOjConnectionStatus } from '@/lib/oj/connection';
 import type { MeResponse, SearchLimits } from '@/types';
 import { manilaDayStartUtc, TIER_LIMITS } from '@/lib/tiers';
 
@@ -21,11 +22,10 @@ export async function GET() {
     limits = { remainingToday: Math.max(0, perDay - (count ?? 0)), perDay };
   }
 
+  const status = await getOjConnectionStatus();
   const body: MeResponse = {
     user,
-    // Demo mode: report an active connection so personalized letters are demoable.
-    // Task 7 replaces this with the real oj_connections lookup.
-    ojConnection: isSupabaseConfigured() ? null : { status: 'active' },
+    ojConnection: status ? { status } : null,
     limits,
   };
   return NextResponse.json(body);

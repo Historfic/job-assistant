@@ -17,6 +17,7 @@ import { evaluateSalary } from '@/lib/salaryEvaluator';
 import { analyzeJobs, generateApplicationMessage, scoreJob } from '@/lib/aiAnalyzer';
 import { getJobsFromSources } from '@/lib/sources';
 import { getSessionUser } from '@/lib/auth';
+import { getOjSessionCookie } from '@/lib/oj/connection';
 import { normalizeSources } from '@/lib/sources/types';
 import { allowedSources, TIER_LIMITS, manilaDayStartUtc, nextManilaMidnightUtc } from '@/lib/tiers';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
@@ -103,9 +104,8 @@ export async function POST(req: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Not authenticated. Please sign in.' }, { status: 401 });
     }
-    // OnlineJobs.ph works without a session — public pages. Task 7 wires the
-    // optional connected-account cookie back in for richer detail fetches.
-    const sessionCookie: string | undefined = undefined;
+    // Optional richer detail fetches when the user connected OnlineJobs.ph
+    const sessionCookie = (await getOjSessionCookie()) ?? undefined;
 
     // ── Tier: which sources may this user search? ────────────────────────────
     const sources = normalizeSources(options.sources);
