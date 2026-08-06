@@ -85,12 +85,23 @@ export default function DashboardPage() {
 
   // ── Auth guard ───────────────────────────────────────────────────────────────
   useEffect(() => {
-    const stored = localStorage.getItem('jobiq_user');
-    if (!stored) {
-      router.replace('/login');
-      return;
-    }
-    setUser(JSON.parse(stored));
+    fetch('/api/me')
+      .then(res => {
+        if (res.status === 401) { router.replace('/login'); return null; }
+        return res.json();
+      })
+      .then(data => {
+        if (!data) return;
+        const email: string = data.user.email;
+        const name = email.split('@')[0].replace(/[._-]/g, ' ')
+          .split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        setUser({
+          name,
+          email,
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=2563eb&color=fff&bold=true`,
+        });
+      })
+      .catch(() => router.replace('/login'));
   }, [router]);
 
   // ── Progress ticker ──────────────────────────────────────────────────────────
@@ -140,7 +151,6 @@ export default function DashboardPage() {
           msg = `HTTP ${res.status} (non-JSON response): ${snippet || '<empty body>'}`;
         }
         if (res.status === 401) {
-          localStorage.removeItem('jobiq_user');
           router.push('/login');
           return;
         }
@@ -192,8 +202,11 @@ export default function DashboardPage() {
 
   // ── Logout ───────────────────────────────────────────────────────────────────
   async function handleLogout() {
-    localStorage.removeItem('jobiq_user');
-    await fetch('/api/auth/logout', { method: 'POST' });
+    const { isSupabaseConfigured } = await import('@/lib/supabase/config');
+    if (isSupabaseConfigured()) {
+      const { createSupabaseBrowser } = await import('@/lib/supabase/client');
+      await createSupabaseBrowser().auth.signOut();
+    }
     router.push('/login');
   }
 

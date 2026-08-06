@@ -16,6 +16,7 @@ import type { RawJob, ScrapeOptions, ProcessResult, AnalyzedJob } from '@/types'
 import { evaluateSalary } from '@/lib/salaryEvaluator';
 import { analyzeJobs, generateApplicationMessage, scoreJob } from '@/lib/aiAnalyzer';
 import { scrapeFromOnlineJobs, enrichJobsWithDetails } from '@/lib/sources/onlinejobs';
+import { getSessionUser } from '@/lib/auth';
 
 export const maxDuration = 60; // Vercel: allow up to 60s for scraping + AI
 
@@ -93,11 +94,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'keyword is required' }, { status: 400 });
     }
 
-    // Read OJ.ph session from httpOnly cookie set at login
-    const sessionCookie = req.cookies.get('oj_session')?.value;
-    if (!sessionCookie) {
+    // JobIQ auth (middleware also guards; this is defense in depth)
+    const user = await getSessionUser();
+    if (!user) {
       return NextResponse.json({ error: 'Not authenticated. Please sign in.' }, { status: 401 });
     }
+    // OnlineJobs.ph works without a session — public pages. Task 7 wires the
+    // optional connected-account cookie back in for richer detail fetches.
+    const sessionCookie: string | undefined = undefined;
 
     const openRouterKey = process.env.OPENROUTER_API_KEY;
     const targetCount = Math.min(Math.max(limit, 1), 30);
