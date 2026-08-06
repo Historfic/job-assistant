@@ -224,7 +224,7 @@ export async function POST(req: NextRequest) {
     const jobSource = job.source ?? 'onlinejobs';
     let ojCookie: string | undefined;
     if (jobSource === 'onlinejobs') {
-      const status = await getOjConnectionStatus();
+      const status = await getOjConnectionStatus(user.id);
       if (status === null) {
         return NextResponse.json({
           error: 'Connect your OnlineJobs.ph account to unlock personalized cover letters.',
@@ -237,7 +237,7 @@ export async function POST(req: NextRequest) {
           code: 'OJ_SESSION_EXPIRED',
         }, { status: 409 });
       }
-      ojCookie = (await getOjSessionCookie()) ?? undefined;
+      ojCookie = (await getOjSessionCookie(user.id)) ?? undefined;
     }
 
     let enrichedJob = job;
@@ -250,7 +250,7 @@ export async function POST(req: NextRequest) {
         // Empty fetch with a cookie present — check whether the session died.
         const stillValid = await verifyOjSession(ojCookie);
         if (!stillValid) {
-          await markOjExpired();
+          await markOjExpired(user.id);
           return NextResponse.json({
             error: 'Your OnlineJobs.ph session expired. Please reconnect.',
             code: 'OJ_SESSION_EXPIRED',

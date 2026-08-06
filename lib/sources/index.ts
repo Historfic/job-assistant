@@ -29,6 +29,9 @@ export async function getJobsFromSources(
   const results = await Promise.allSettled(
     sources.map(async source => {
       if (!isLiveEnabled(source)) {
+        if (process.env.DEMO_MODE === 'false' && source !== 'onlinejobs') {
+          throw new Error('APIFY_TOKEN is not set — this source was skipped');
+        }
         // Mocks mirror the adapters' pagination behavior
         if ((opts.page ?? 0) > 0 && source !== 'onlinejobs') return [] as RawJob[];
         return mockJobsFor(source, opts.keyword, opts.limit);

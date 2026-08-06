@@ -17,12 +17,13 @@ export async function GET() {
     const { count } = await supabase
       .from('searches')
       .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
       .gte('created_at', dayStart);
     const perDay = TIER_LIMITS[user.tier].searchesPerDay;
     limits = { remainingToday: Math.max(0, perDay - (count ?? 0)), perDay };
   }
 
-  const status = await getOjConnectionStatus();
+  const status = await getOjConnectionStatus(user.id);
   const body: MeResponse = {
     user,
     ojConnection: status ? { status } : null,

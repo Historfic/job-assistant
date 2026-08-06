@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { pickString } from '@/lib/sources/apify';
 import { mapLinkedInItem } from '@/lib/sources/linkedin';
 import { mapUpworkItem } from '@/lib/sources/upwork';
@@ -64,5 +64,27 @@ describe('getJobsFromSources', () => {
     );
     const firstThreeSources = jobs.slice(0, 3).map(j => j.source);
     expect(new Set(firstThreeSources).size).toBe(3);
+  });
+});
+
+describe('getJobsFromSources live mode without token', () => {
+  const saved: Record<string, string | undefined> = {};
+  beforeEach(() => {
+    saved.DEMO_MODE = process.env.DEMO_MODE;
+    saved.APIFY_TOKEN = process.env.APIFY_TOKEN;
+    process.env.DEMO_MODE = 'false';
+    delete process.env.APIFY_TOKEN;
+  });
+  afterEach(() => {
+    if (saved.DEMO_MODE === undefined) delete process.env.DEMO_MODE; else process.env.DEMO_MODE = saved.DEMO_MODE;
+    if (saved.APIFY_TOKEN === undefined) delete process.env.APIFY_TOKEN; else process.env.APIFY_TOKEN = saved.APIFY_TOKEN;
+  });
+
+  it('reports an error for apify sources instead of silently mocking', async () => {
+    const result = await getJobsFromSources(['linkedin'], { keyword: 'react', limit: 3 });
+    expect(result.jobs).toEqual([]);
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0].source).toBe('linkedin');
+    expect(result.errors[0].message).toContain('APIFY_TOKEN');
   });
 });

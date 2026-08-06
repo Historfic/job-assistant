@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Not authenticated. Please sign in.' }, { status: 401 });
     }
     // Optional richer detail fetches when the user connected OnlineJobs.ph
-    const sessionCookie = (await getOjSessionCookie()) ?? undefined;
+    const sessionCookie = (await getOjSessionCookie(user.id)) ?? undefined;
 
     // ── Tier: which sources may this user search? ────────────────────────────
     const sources = normalizeSources(options.sources);
@@ -126,6 +126,7 @@ export async function POST(req: NextRequest) {
       const { count } = await supabase
         .from('searches')
         .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
         .gte('created_at', dayStart);
       const perDay = TIER_LIMITS[user.tier].searchesPerDay;
       const used = count ?? 0;
