@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
     const recipient = (EMAIL_RE.test(trimmed) ? trimmed : '') || user?.email || FALLBACK_TO_EMAIL;
     if (!EMAIL_RE.test(recipient)) {
       return NextResponse.json(
-        { error: 'A valid recipient email is required.' },
+        { error: 'No recipient email available' },
         { status: 400 },
       );
     }
