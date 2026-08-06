@@ -12,6 +12,7 @@ import {
   subscribeJobStatus,
   getJobStatusSnapshot,
   getServerSnapshot,
+  refreshJobStatuses,
   relativeAgo,
   type JobStatusEntry,
 } from '@/lib/jobStatus';
@@ -82,6 +83,9 @@ export default function DashboardPage() {
   );
   const appliedEntries  = useMemo(() => sortedEntries.filter(e => e.entry.state === 'applied'),  [sortedEntries]);
   const rejectedEntries = useMemo(() => sortedEntries.filter(e => e.entry.state === 'rejected'), [sortedEntries]);
+
+  // Pull cross-device applied/rejected history from the account
+  useEffect(() => { void refreshJobStatuses(); }, []);
 
   // ── Auth guard ───────────────────────────────────────────────────────────────
   useEffect(() => {
