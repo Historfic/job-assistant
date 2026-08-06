@@ -10,7 +10,10 @@ create table public.profiles (
 );
 alter table public.profiles enable row level security;
 create policy "profiles_select_own" on public.profiles for select using (auth.uid() = id);
-create policy "profiles_update_own" on public.profiles for update using (auth.uid() = id);
+-- No UPDATE policy on purpose: v1 has no client-side profile editing, and
+-- tier upgrades are performed manually in the Supabase dashboard (service
+-- role bypasses RLS). Without an UPDATE policy, authenticated users cannot
+-- modify their own row — including self-upgrading `tier`.
 
 -- Auto-create a profile on signup. Tier upgrades to 'pro' are done manually in
 -- the Supabase dashboard until payments ship (see spec: payments deferred).
