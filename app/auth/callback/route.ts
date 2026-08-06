@@ -5,7 +5,17 @@ import { createSupabaseServer } from '@/lib/supabase/server';
 export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get('code');
   const nextParam = req.nextUrl.searchParams.get('next') ?? '/dashboard';
-  const next = nextParam.startsWith('/') && !nextParam.startsWith('//') ? nextParam : '/dashboard';
+  // Same-origin only: URL parsing treats "\" like "/" so prefix checks alone
+  // can be bypassed (e.g. next=/\evil.example). Resolve and compare origins.
+  let next = '/dashboard';
+  try {
+    const resolved = new URL(nextParam, req.nextUrl.origin);
+    if (resolved.origin === req.nextUrl.origin) {
+      next = resolved.pathname + resolved.search + resolved.hash;
+    }
+  } catch {
+    // keep /dashboard
+  }
   if (code) {
     const supabase = createSupabaseServer();
     await supabase.auth.exchangeCodeForSession(code);
