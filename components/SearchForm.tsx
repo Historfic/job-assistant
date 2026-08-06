@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import type { ScrapeOptions } from '@/types';
+import type { JobSource, ScrapeOptions } from '@/types';
+import SourceSelector from '@/components/dashboard/SourceSelector';
 
 interface Props {
   onSearch: (opts: ScrapeOptions) => void;
   loading: boolean;
+  tier: 'free' | 'pro';
 }
 
 // ─── Input primitives ──────────────────────────────────────────────────────────
@@ -40,7 +42,9 @@ function Select({ children, ...props }: React.SelectHTMLAttributes<HTMLSelectEle
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 
-export default function SearchForm({ onSearch, loading }: Props) {
+export default function SearchForm({ onSearch, loading, tier }: Props) {
+  const [sources, setSources] = useState<JobSource[]>(['onlinejobs']);
+
   // Required fields
   const [keyword, setKeyword] = useState('AI automation');
   const [minSalary, setMinSalary] = useState('10');
@@ -60,6 +64,7 @@ export default function SearchForm({ onSearch, loading }: Props) {
     if (!keyword.trim() || loading) return;
 
     onSearch({
+      sources,
       keyword: keyword.trim(),
       minSalary: minSalary ? Number(minSalary) : undefined,
       maxSalary: maxSalary ? Number(maxSalary) : undefined,
@@ -90,6 +95,8 @@ export default function SearchForm({ onSearch, loading }: Props) {
             required
           />
         </div>
+
+        <SourceSelector selected={sources} tier={tier} onChange={setSources} />
 
         <div className="grid grid-cols-2 gap-2">
           <div>
