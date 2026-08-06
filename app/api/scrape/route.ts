@@ -12,10 +12,10 @@
 //   - If valid < requested → scrape another batch (up to MAX_PASSES times)
 
 import { NextRequest, NextResponse } from 'next/server';
-import type { RawJob, ScrapeOptions, ProcessResult, AnalyzedJob, SearchLimits } from '@/types';
+import type { RawJob, ScrapeOptions, ProcessResult, AnalyzedJob, SearchLimits, SourceError } from '@/types';
 import { evaluateSalary } from '@/lib/salaryEvaluator';
 import { analyzeJobs, generateApplicationMessage, scoreJob } from '@/lib/aiAnalyzer';
-import { scrapeFromOnlineJobs, enrichJobsWithDetails } from '@/lib/sources/onlinejobs';
+import { getJobsFromSources } from '@/lib/sources';
 import { getSessionUser } from '@/lib/auth';
 import { normalizeSources } from '@/lib/sources/types';
 import { allowedSources, TIER_LIMITS, manilaDayStartUtc, nextManilaMidnightUtc } from '@/lib/tiers';
@@ -158,6 +158,7 @@ export async function POST(req: NextRequest) {
     let excludedAsMarked = 0;
     let passes = 0;
     let isLiveData = false;
+    const sourceErrors: SourceError[] = [];
 
     // ── Scrape + analyze loop ─────────────────────────────────────────────────
     // Each pass scrapes the next page of OnlineJobs.ph results (page-size 30)
@@ -168,14 +169,17 @@ export async function POST(req: NextRequest) {
       passes++;
       const needed = Math.ceil((targetCount - validJobs.length) * BATCH_FACTOR) + 5;
 
-      let rawBatch: RawJob[] = [];
-
-      rawBatch = await scrapeFromOnlineJobs(keyword, sessionCookie, needed, currentPage);
-
-      if (rawBatch.length > 0) {
-        rawBatch = await enrichJobsWithDetails(rawBatch, sessionCookie);
-        isLiveData = true;
+      const batch = await getJobsFromSources(sources, {
+        keyword,
+        limit: needed,
+        page: currentPage,
+        ojSessionCookie: sessionCookie,
+      });
+      for (const e of batch.errors) {
+        if (!sourceErrors.some(x => x.source === e.source)) sourceErrors.push(e);
       }
+      if (batch.isLive) isLiveData = true;
+      const rawBatch: RawJob[] = batch.jobs;
 
       if (rawBatch.length === 0) break;
 
@@ -273,6 +277,7 @@ export async function POST(req: NextRequest) {
       },
       isLiveData,
       limits,
+      sourceErrors,
     };
 
     return NextResponse.json(result);
