@@ -4,6 +4,7 @@ import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { getOjConnectionStatus } from '@/lib/oj/connection';
 import type { MeResponse, SearchLimits } from '@/types';
 import { manilaDayStartUtc, TIER_LIMITS } from '@/lib/tiers';
+import { isAdminEmail } from '@/lib/admin';
 
 export async function GET() {
   const user = await getSessionUser();
@@ -31,6 +32,7 @@ export async function GET() {
     user,
     ojConnection: status ? { status } : null,
     limits,
+    isAdmin: isAdminEmail(user.email),
   };
   return NextResponse.json(body);
 }

@@ -64,8 +64,11 @@ export default function AccountMenu({ me, avatar, onLogout, onConnectClick, onDi
             )}
           </div>
 
-          <div className="border-t border-gray-800 pt-2.5">
+          <div className="border-t border-gray-800 pt-2.5 flex items-center justify-between">
             <button onClick={onLogout} className="text-[11px] text-gray-500 hover:text-white">Sign out</button>
+            {me.isAdmin && (
+              <a href="/admin" className="text-[11px] text-blue-400 hover:text-blue-300">Customers</a>
+            )}
           </div>
         </div>
       )}
