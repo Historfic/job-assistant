@@ -4,6 +4,7 @@
   "description": "AI-powered job application assistant — scrapes OnlineJobs.ph and generates smart applications",
   "private": true,
   "scripts": {
+    "predev": "node scripts/free-port.js",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
