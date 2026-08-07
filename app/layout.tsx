@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'JobIQ — AI-Powered Job Assistant',
-  description: 'Scrape OnlineJobs.ph, analyze listings with AI, and generate tailored application messages.',
+  description: 'Job search for Filipino freelancers — OnlineJobs.ph, LinkedIn, and Upwork in one click, ranked by AI, with ready-to-send applications.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -2,24 +2,26 @@
 
 import { useEffect, useState, useCallback, useSyncExternalStore, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import type { User, ScrapeOptions, ProcessResult, AppTab, AnalyzedJob } from '@/types';
+import type { User, ScrapeOptions, ProcessResult, AppTab, AnalyzedJob, MeResponse } from '@/types';
 import SearchForm from '@/components/SearchForm';
 import JobCard from '@/components/JobCard';
 import AIInsights from '@/components/AIInsights';
 import ApplicationMessage from '@/components/ApplicationMessage';
 import EmailPreview from '@/components/EmailPreview';
+import AccountMenu from '@/components/dashboard/AccountMenu';
+import OjConnectModal from '@/components/dashboard/OjConnectModal';
+import MarkedJobsList from '@/components/dashboard/MarkedJobsList';
 import {
   subscribeJobStatus,
   getJobStatusSnapshot,
   getServerSnapshot,
-  relativeAgo,
-  type JobStatusEntry,
+  refreshJobStatuses,
 } from '@/lib/jobStatus';
 
 // ─── Progress steps shown during the scrape + analysis pipeline ───────────────
 const STEPS = [
   { pct: 8,  msg: 'Launching scraper...' },
-  { pct: 25, msg: (kw: string) => `Searching OnlineJobs.ph for "${kw}"...` },
+  { pct: 25, msg: (kw: string) => `Searching your selected sources for "${kw}"...` },
   { pct: 45, msg: 'Running AI analysis on each listing...' },
   { pct: 65, msg: 'Filtering file-upload jobs & checking redirects...' },
   { pct: 80, msg: 'Scoring and ranking results...' },
@@ -30,6 +32,8 @@ const STEPS = [
 export default function DashboardPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [me, setMe] = useState<MeResponse | null>(null);
+  const [ojModalOpen, setOjModalOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Pipeline state
@@ -83,15 +87,32 @@ export default function DashboardPage() {
   const appliedEntries  = useMemo(() => sortedEntries.filter(e => e.entry.state === 'applied'),  [sortedEntries]);
   const rejectedEntries = useMemo(() => sortedEntries.filter(e => e.entry.state === 'rejected'), [sortedEntries]);
 
+  // Pull cross-device applied/rejected history from the account
+  useEffect(() => { void refreshJobStatuses(); }, []);
+
   // ── Auth guard ───────────────────────────────────────────────────────────────
-  useEffect(() => {
-    const stored = localStorage.getItem('jobiq_user');
-    if (!stored) {
-      router.replace('/login');
-      return;
-    }
-    setUser(JSON.parse(stored));
+  const refreshMe = useCallback(() => {
+    fetch('/api/me')
+      .then(res => {
+        if (res.status === 401) { router.replace('/login'); return null; }
+        return res.json();
+      })
+      .then(data => {
+        if (!data) return;
+        setMe(data);
+        const email: string = data.user.email;
+        const name = email.split('@')[0].replace(/[._-]/g, ' ')
+          .split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        setUser({
+          name,
+          email,
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=2563eb&color=fff&bold=true`,
+        });
+      })
+      .catch(() => router.replace('/login'));
   }, [router]);
+
+  useEffect(() => { refreshMe(); }, [refreshMe]);
 
   // ── Progress ticker ──────────────────────────────────────────────────────────
   function animateProgress(targetPct: number, msg: string) {
@@ -140,7 +161,6 @@ export default function DashboardPage() {
           msg = `HTTP ${res.status} (non-JSON response): ${snippet || '<empty body>'}`;
         }
         if (res.status === 401) {
-          localStorage.removeItem('jobiq_user');
           router.push('/login');
           return;
         }
@@ -161,6 +181,7 @@ export default function DashboardPage() {
 
       setResult(data);
       setActiveTab('jobs');
+      if (data.limits) setMe(prev => (prev ? { ...prev, limits: data.limits! } : prev));
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -192,8 +213,11 @@ export default function DashboardPage() {
 
   // ── Logout ───────────────────────────────────────────────────────────────────
   async function handleLogout() {
-    localStorage.removeItem('jobiq_user');
-    await fetch('/api/auth/logout', { method: 'POST' });
+    const { isSupabaseConfigured } = await import('@/lib/supabase/config');
+    if (isSupabaseConfigured()) {
+      const { createSupabaseBrowser } = await import('@/lib/supabase/client');
+      await createSupabaseBrowser().auth.signOut();
+    }
     router.push('/login');
   }
 
@@ -257,23 +281,18 @@ export default function DashboardPage() {
           )}
 
           {/* User avatar */}
-          <div className="flex items-center gap-2">
-            <img src={user.avatar} alt={user.name} className="w-7 h-7 rounded-full" />
-            <div className="hidden sm:block">
-              <p className="text-xs font-medium leading-none">{user.name}</p>
-              <p className="text-xs text-gray-600 leading-none mt-0.5">{user.email}</p>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="ml-1 text-xs text-gray-600 hover:text-gray-400 transition-colors"
-              title="Sign out"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-            </button>
-          </div>
+          {me && user && (
+            <AccountMenu
+              me={me}
+              avatar={user.avatar}
+              onLogout={handleLogout}
+              onConnectClick={() => setOjModalOpen(true)}
+              onDisconnect={async () => {
+                await fetch('/api/oj/disconnect', { method: 'POST' });
+                refreshMe();
+              }}
+            />
+          )}
         </div>
       </header>
 
@@ -285,7 +304,7 @@ export default function DashboardPage() {
           className={`${sidebarOpen ? 'w-72' : 'w-0 overflow-hidden'} shrink-0 border-r border-gray-800 flex flex-col transition-all duration-200 bg-gray-950`}
         >
           <div className="flex-1 overflow-y-auto p-4">
-            <SearchForm onSearch={handleSearch} loading={loading} />
+            <SearchForm onSearch={handleSearch} loading={loading} tier={me?.user.tier ?? 'free'} />
           </div>
         </aside>
 
@@ -359,6 +378,19 @@ export default function DashboardPage() {
           {result && !loading && (
             <div className="flex-1 flex flex-col min-h-0 overflow-hidden animate-fade-in">
 
+              {result.sourceErrors && result.sourceErrors.length > 0 && (
+                <div className="shrink-0 mx-4 mt-3 px-3 py-2 bg-orange-500/10 border border-orange-500/20 rounded-xl text-xs text-orange-300 flex items-center justify-between">
+                  <span>
+                    {result.sourceErrors.map(e => e.source).join(', ')} failed to load — showing results from the other sources.
+                  </span>
+                  <button
+                    onClick={() => setResult(r => (r ? { ...r, sourceErrors: [] } : r))}
+                    className="underline hover:no-underline ml-3"
+                  >
+                    dismiss
+                  </button>
+                </div>
+              )}
 
               {/* Tab bar */}
               <div className="shrink-0 flex items-center gap-1 px-4 pt-3 pb-0 border-b border-gray-800 overflow-x-auto">
@@ -560,6 +592,8 @@ export default function DashboardPage() {
           )}
         </main>
       </div>
+
+      <OjConnectModal open={ojModalOpen} onClose={() => setOjModalOpen(false)} onConnected={refreshMe} />
     </div>
   );
 }
@@ -567,63 +601,4 @@ export default function DashboardPage() {
 // ─── Utility: single animation frame tick ────────────────────────────────────
 function tick() {
   return new Promise<void>(r => setTimeout(r, 300));
-}
-
-// ─── Applied / Rejected tab body ──────────────────────────────────────────────
-// Renders the list of jobs the user has flagged with a particular state across
-// all past searches. Entries carry a snapshot of the AnalyzedJob, so we can
-// render a full JobCard even if the listing has dropped out of the latest
-// search results. Legacy migrated entries (no snapshot) fall back to a
-// compact URL + timestamp row.
-
-function MarkedJobsList({
-  entries,
-  state,
-  baseMessage,
-}: {
-  entries: Array<{ url: string; entry: JobStatusEntry }>;
-  state: 'applied' | 'rejected';
-  baseMessage?: string;
-}) {
-  const isApplied = state === 'applied';
-  return (
-    <div className="space-y-3 animate-slide-up">
-      <div className="flex items-center gap-2 mb-3">
-        <span className={`text-xs font-semibold uppercase tracking-wider ${isApplied ? 'text-emerald-400' : 'text-red-400'}`}>
-          {isApplied ? '✓ Applied Jobs' : '✗ Rejected Jobs'} ({entries.length})
-        </span>
-        <div className={`flex-1 border-t ${isApplied ? 'border-emerald-500/20' : 'border-red-500/20'}`} />
-      </div>
-      {entries.length === 0 ? (
-        <div className="text-center py-12 text-gray-600">
-          <p className="text-sm">No jobs marked as {state} yet.</p>
-          <p className="text-xs mt-1">
-            Click the {isApplied ? 'green check' : 'red ×'} icon on any job card to track it here.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {entries.map(({ url, entry }) =>
-            entry.job ? (
-              <JobCard key={url} job={entry.job} baseMessage={baseMessage} />
-            ) : (
-              <div key={url} className="bg-gray-900 border border-gray-800 rounded-xl p-4">
-                <a
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs font-medium text-gray-300 hover:text-blue-400 truncate block"
-                >
-                  {url}
-                </a>
-                <p className="text-[10px] text-gray-600 mt-1">
-                  Marked {state} {relativeAgo(entry.setAt)} · legacy entry, limited info
-                </p>
-              </div>
-            ),
-          )}
-        </div>
-      )}
-    </div>
-  );
 }

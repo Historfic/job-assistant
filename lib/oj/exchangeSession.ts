@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+// ─── OnlineJobs.ph credential → ci_session exchange ───────────────────────────
+// The password is used transiently in this function only. It is NEVER stored,
+// logged, or returned. Only the resulting ci_session cookie value leaves here.
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
 
@@ -28,12 +30,7 @@ function extractCiSession(cookiePairs: string[]): string | null {
   return entry ? entry.slice('ci_session='.length) : null;
 }
 
-function nameFromEmail(email: string): string {
-  const local = email.split('@')[0].replace(/[._-]/g, ' ');
-  return local.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
-}
-
-async function verifySession(ciSession: string): Promise<boolean> {
+export async function verifyOjSession(ciSession: string): Promise<boolean> {
   try {
     // Use the job search page — it's accessible from Vercel IPs (the scraper uses it)
     // and it shows a logout link only when the user is authenticated.
@@ -60,13 +57,12 @@ async function verifySession(ciSession: string): Promise<boolean> {
 
 const LOGIN_URL = 'https://www.onlinejobs.ph/login';
 
-export async function POST(req: NextRequest) {
-  try {
-    const { email, password } = await req.json();
-    if (!email || !password) {
-      return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
-    }
+export type OjExchangeResult =
+  | { ok: true; ciSession: string }
+  | { ok: false; error: string; status: number };
 
+export async function exchangeOjSession(email: string, password: string): Promise<OjExchangeResult> {
+  try {
     const { load } = await import('cheerio');
     let warmCookies: string[] = [];
 
@@ -94,24 +90,12 @@ export async function POST(req: NextRequest) {
         signal: AbortSignal.timeout(10000),
       });
 
-      console.log(`[auth/login] login page: ${loginPageRes.status}`);
+      console.log(`[oj/exchangeSession] login page: ${loginPageRes.status}`);
 
       if (loginPageRes.ok) {
         loginPageCookies = collectSetCookies(loginPageRes.headers);
         const html = await loginPageRes.text();
         const $ = load(html);
-
-        // Log the form action so we know where to POST
-        const formAction = $('form').first().attr('action');
-        console.log(`[auth/login] form action: ${formAction}`);
-
-        // Log all input fields to debug field names
-        $('input').each((_, el) => {
-          const name = $(el).attr('name');
-          const type = $(el).attr('type');
-          const value = $(el).attr('value') ?? '';
-          console.log(`[auth/login] input: name="${name}" type="${type}" value="${type === 'hidden' ? value : '***'}"`);
-        });
 
         $('input[type="hidden"]').each((_, el) => {
           const name = $(el).attr('name');
@@ -120,7 +104,7 @@ export async function POST(req: NextRequest) {
         });
       }
     } catch (e) {
-      console.warn('[auth/login] could not fetch login page:', e);
+      console.warn('[oj/exchangeSession] could not fetch login page:', e);
     }
 
     // Merge warm + login-page cookies for the POST request
@@ -154,11 +138,11 @@ export async function POST(req: NextRequest) {
     });
 
     const postLocation = postRes.headers.get('location') ?? '';
-    console.log(`[auth/login] POST: ${postRes.status}, location: ${postLocation}`);
+    console.log(`[oj/exchangeSession] POST: ${postRes.status}, location: ${postLocation}`);
 
     // Wrong credentials → redirect back to login page
     if (postRes.status === 200 || postLocation.includes('/login') || postLocation.includes('/error')) {
-      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
+      return { ok: false, error: 'Invalid email or password', status: 401 };
     }
 
     // OJ.ph sets the authenticated session cookie on the redirect destination,
@@ -183,41 +167,29 @@ export async function POST(req: NextRequest) {
     });
 
     const followCookies = collectSetCookies(followRes.headers);
-    console.log(`[auth/login] follow status: ${followRes.status}, cookies: ${followCookies.map(c => c.split('=')[0]).join(', ')}`);
+    console.log(`[oj/exchangeSession] follow status: ${followRes.status}, cookies: ${followCookies.map(c => c.split('=')[0]).join(', ')}`);
 
     followCookies.forEach(c => { cookieMap[c.split('=')[0]] = c; });
     const allCookies = Object.values(cookieMap);
     const ciSession = extractCiSession(allCookies);
 
-    console.log(`[auth/login] ci_session: ${ciSession ? 'found' : 'not found'}`);
+    console.log(`[oj/exchangeSession] ci_session: ${ciSession ? 'found' : 'not found'}`);
 
     if (!ciSession) {
-      return NextResponse.json({ error: 'Could not establish session. Please try again.' }, { status: 502 });
+      return { ok: false, error: 'Could not establish session. Please try again.', status: 502 };
     }
 
     // Step 4: verify the session is actually authenticated
-    const authenticated = await verifySession(ciSession);
-    console.log(`[auth/login] session verified: ${authenticated}`);
+    const authenticated = await verifyOjSession(ciSession);
+    console.log(`[oj/exchangeSession] session verified: ${authenticated}`);
 
     if (!authenticated) {
-      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
+      return { ok: false, error: 'Invalid email or password', status: 401 };
     }
 
-    const name = nameFromEmail(email);
-    const avatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=2563eb&color=fff&bold=true`;
-    const user = { name, email, avatar };
-
-    const response = NextResponse.json({ success: true, user });
-    response.cookies.set('oj_session', ciSession, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 7 * 24 * 60 * 60,
-    });
-    return response;
+    return { ok: true, ciSession };
   } catch (err) {
-    console.error('[/api/auth/login]', err);
-    return NextResponse.json({ error: 'Login failed. Please try again.' }, { status: 500 });
+    console.error('[oj/exchangeSession]', err);
+    return { ok: false, error: 'Login failed. Please try again.', status: 500 };
   }
 }

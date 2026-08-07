@@ -89,19 +89,40 @@ export function getServerSnapshot(): Snapshot {
 }
 
 /**
+ * Pure reducer: returns a NEW snapshot with the toggle applied.
+ * Same state → entry removed; other state → switched; absent → added.
+ */
+export function applyToggle(
+  current: Snapshot,
+  url: string,
+  state: JobState,
+  job?: AnalyzedJob,
+): Snapshot {
+  const next = { ...current };
+  if (next[url]?.state === state) {
+    delete next[url];
+  } else {
+    next[url] = { state, setAt: new Date().toISOString(), job };
+  }
+  return next;
+}
+
+/**
  * Toggle a job into the given state. If already in that state, the entry is
  * removed (toggle-off). If in the other state, it's switched. Pass `job` to
  * store a snapshot of the AnalyzedJob for later rendering in the tabs.
  */
 export function toggleStatus(url: string, state: JobState, job?: AnalyzedJob): void {
   hydrate();
-  const next = { ...snapshot };
-  if (next[url]?.state === state) {
-    delete next[url];
-  } else {
-    next[url] = { state, setAt: new Date().toISOString(), job };
-  }
-  commit(next);
+  const next = applyToggle(snapshot, url, state, job);
+  commit(next); // localStorage stays as the offline/demo cache
+
+  // Fire-and-forget server sync; demo mode / offline just keeps localStorage.
+  void fetch('/api/job-status', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url, state: next[url]?.state ?? null, job }),
+  }).catch(() => {});
 }
 
 export function getStatus(url: string | null | undefined): JobStatusEntry | null {
@@ -117,6 +138,24 @@ export function isMarked(url: string | null | undefined): boolean {
 export function getMarkedUrls(): string[] {
   hydrate();
   return Object.keys(snapshot);
+}
+
+/**
+ * Pull the account's server-side entries (cross-device). No-op in demo mode
+ * (server returns entries: null) or when the fetch fails.
+ */
+export async function refreshJobStatuses(): Promise<void> {
+  try {
+    const res = await fetch('/api/job-status');
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.entries && typeof data.entries === 'object') {
+      hydrated = true;
+      commit(data.entries as Snapshot);
+    }
+  } catch {
+    // offline/demo — localStorage remains the source of truth
+  }
 }
 
 // ── Relative-time helper ────────────────────────────────────────────────────

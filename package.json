@@ -4,13 +4,17 @@
   "description": "AI-powered job application assistant — scrapes OnlineJobs.ph and generates smart applications",
   "private": true,
   "scripts": {
+    "predev": "node scripts/free-port.js",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest run"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.91.1",
+    "@supabase/ssr": "^0.12.4",
+    "@supabase/supabase-js": "^2.112.1",
     "cheerio": "^1.0.0",
     "next": "14.2.5",
     "nodemailer": "^6.9.13",
@@ -27,6 +31,7 @@
     "eslint-config-next": "14.2.5",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.10"
   }
 }

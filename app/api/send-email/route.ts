@@ -4,10 +4,11 @@
 // When SMTP_USER + SMTP_PASS are set in .env: sends a real HTML email via Gmail.
 // Otherwise:               simulates success (logs to console) for demo/Vercel.
 //
-// Recipient comes from the request body (`toEmail`). The TO_EMAIL env var is
-// only used as a fallback when the client doesn't supply one.
+// Recipient resolution: request body (`toEmail`) → signed-in account's email
+// → TO_EMAIL env var (last-resort fallback) → 400 if nothing resolves.
 
 import { NextRequest, NextResponse } from 'next/server';
+import { getSessionUser } from '@/lib/auth';
 import type { ProcessResult, ScrapeOptions } from '@/types';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -135,10 +136,11 @@ export async function POST(req: NextRequest) {
     }
 
     const trimmed = (toEmail ?? '').trim();
-    const recipient = EMAIL_RE.test(trimmed) ? trimmed : FALLBACK_TO_EMAIL;
+    const user = await getSessionUser();
+    const recipient = (EMAIL_RE.test(trimmed) ? trimmed : '') || user?.email || FALLBACK_TO_EMAIL;
     if (!EMAIL_RE.test(recipient)) {
       return NextResponse.json(
-        { error: 'A valid recipient email is required.' },
+        { error: 'No recipient email available' },
         { status: 400 },
       );
     }
