@@ -37,7 +37,7 @@ export default async function LandingPage() {
           className="inline-block px-8 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 font-medium text-sm transition-colors">
           {ctaLabel}
         </Link>
-        <p className="text-[11px] text-gray-600 mt-3">Free plan available. No credit card needed.</p>
+        <p className="text-[11px] text-gray-600 mt-3">Try it free — 3 searches on us. No credit card needed.</p>
       </section>
 
       {/* ── How it works ── */}
@@ -64,30 +64,24 @@ export default async function LandingPage() {
       </section>
 
       {/* ── Pricing ── */}
-      <section className="px-5 py-14 max-w-3xl mx-auto">
-        <h2 className="text-center text-xl font-semibold mb-8">Simple pricing</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
-            <p className="text-sm font-semibold mb-1">Free</p>
-            <p className="text-2xl font-bold mb-4">₱0</p>
-            <ul className="text-xs text-gray-400 space-y-2">
-              <li>✓ OnlineJobs.ph search — 3 searches/day</li>
-              <li>✓ AI analysis &amp; job scoring</li>
-              <li>✓ Application message generator</li>
-              <li>✓ Personalized cover letters (connect your OnlineJobs.ph account)</li>
-            </ul>
-          </div>
-          <div className="bg-gray-900 border border-blue-600/40 rounded-2xl p-6 relative">
-            <span className="absolute -top-2.5 left-5 px-2 py-0.5 bg-blue-600 rounded-full text-[10px] font-bold uppercase">Best value</span>
-            <p className="text-sm font-semibold mb-1">Pro</p>
-            <p className="text-2xl font-bold mb-1">₱299<span className="text-sm text-gray-500 font-normal">/month</span></p>
-            <p className="text-[11px] text-blue-300 mb-4">₱299/month — early access via our Facebook page</p>
-            <ul className="text-xs text-gray-400 space-y-2">
-              <li>✓ Everything in Free</li>
-              <li>✓ LinkedIn + Upwork search</li>
-              <li>✓ 20 searches/day</li>
-            </ul>
-          </div>
+      <section className="px-5 py-14 max-w-md mx-auto">
+        <h2 className="text-center text-xl font-semibold mb-2">One price. Yours forever.</h2>
+        <p className="text-center text-xs text-gray-500 mb-8">No subscription. No monthly fees. Pay once, keep it for good.</p>
+        <div className="bg-gray-900 border border-blue-600/40 rounded-2xl p-6 relative">
+          <span className="absolute -top-2.5 left-5 px-2 py-0.5 bg-blue-600 rounded-full text-[10px] font-bold uppercase">Full access</span>
+          <p className="text-3xl font-bold mb-1">₱999<span className="text-sm text-gray-500 font-normal"> one-time</span></p>
+          <p className="text-[11px] text-blue-300 mb-4">Pay via our Facebook page — GCash or bank transfer</p>
+          <ul className="text-xs text-gray-400 space-y-2">
+            <li>✓ OnlineJobs.ph + LinkedIn + Upwork in one search</li>
+            <li>✓ 20 searches every day, forever</li>
+            <li>✓ AI analysis &amp; job scoring</li>
+            <li>✓ Ready-to-send application messages</li>
+            <li>✓ Personalized cover letters per job</li>
+            <li>✓ Applied-jobs tracking across devices</li>
+          </ul>
+          <p className="text-[11px] text-gray-600 mt-4 pt-3 border-t border-gray-800">
+            Not sure yet? Sign up free and get <strong className="text-gray-400">3 preview searches</strong> before you decide.
+          </p>
         </div>
       </section>
 

@@ -29,7 +29,7 @@ export default function SourceSelector({ selected, tier, onChange }: {
           return (
             <button
               key={id} type="button" onClick={() => toggle(id, locked)}
-              title={locked ? 'Pro feature — upgrade to search this source' : undefined}
+              title={locked ? 'Unlocks with full access' : undefined}
               className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors
                 ${locked
                   ? 'bg-gray-900 text-gray-600 border-gray-800 cursor-not-allowed'
@@ -44,7 +44,7 @@ export default function SourceSelector({ selected, tier, onChange }: {
       </div>
       {tier === 'free' && (
         <p className="text-[10px] text-gray-700 mt-1.5">
-          LinkedIn + Upwork are Pro. ₱299/month — early access via our Facebook page.
+          LinkedIn + Upwork unlock with full access — ₱999 one-time.
         </p>
       )}
     </div>

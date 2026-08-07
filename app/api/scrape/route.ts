@@ -19,7 +19,7 @@ import { getJobsFromSources } from '@/lib/sources';
 import { getSessionUser } from '@/lib/auth';
 import { getOjSessionCookie } from '@/lib/oj/connection';
 import { normalizeSources } from '@/lib/sources/types';
-import { allowedSources, TIER_LIMITS, manilaDayStartUtc, nextManilaMidnightUtc } from '@/lib/tiers';
+import { allowedSources, TIER_LIMITS, FULL_ACCESS_COPY, manilaDayStartUtc, nextManilaMidnightUtc } from '@/lib/tiers';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { createSupabaseServer } from '@/lib/supabase/server';
 
@@ -112,27 +112,36 @@ export async function POST(req: NextRequest) {
     const blocked = sources.filter(s => !allowedSources(user.tier).includes(s));
     if (blocked.length > 0) {
       return NextResponse.json({
-        error: `LinkedIn and Upwork search is a Pro feature. Upgrade to Pro — ₱299/month — early access via our Facebook page.`,
+        error: `LinkedIn and Upwork are part of full access. ${FULL_ACCESS_COPY}`,
         code: 'TIER_SOURCES',
         blocked,
       }, { status: 403 });
     }
 
-    // ── Daily rate limit (Manila day), logged in `searches` ──────────────────
+    // ── Search limit, logged in `searches` ────────────────────────────────────
+    // Free preview: 3 lifetime searches. Full access: 20 per Manila day.
     let limits: SearchLimits = { remainingToday: 999, perDay: 999 }; // demo mode
     if (isSupabaseConfigured()) {
       const supabase = createSupabaseServer();
-      const dayStart = manilaDayStartUtc(new Date()).toISOString();
-      const { count } = await supabase
+      const { searches: maxSearches, scope } = TIER_LIMITS[user.tier];
+      let countQuery = supabase
         .from('searches')
         .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .gte('created_at', dayStart);
-      const perDay = TIER_LIMITS[user.tier].searchesPerDay;
+        .eq('user_id', user.id);
+      if (scope === 'day') {
+        countQuery = countQuery.gte('created_at', manilaDayStartUtc(new Date()).toISOString());
+      }
+      const { count } = await countQuery;
       const used = count ?? 0;
-      if (used >= perDay) {
+      if (used >= maxSearches) {
+        if (scope === 'lifetime') {
+          return NextResponse.json({
+            error: `Your ${maxSearches} free preview searches are used up. ${FULL_ACCESS_COPY}`,
+            code: 'RATE_LIMIT',
+          }, { status: 429 });
+        }
         return NextResponse.json({
-          error: `Daily search limit reached (${perDay}/day on ${user.tier === 'pro' ? 'Pro' : 'Free'}). Resets at midnight Manila time.`,
+          error: `Daily search limit reached (${maxSearches}/day). Resets at midnight Manila time.`,
           code: 'RATE_LIMIT',
           resetAt: nextManilaMidnightUtc(new Date()).toISOString(),
         }, { status: 429 });
@@ -142,7 +151,7 @@ export async function POST(req: NextRequest) {
         sources,
         keyword: keyword.trim(),
       });
-      limits = { remainingToday: Math.max(0, perDay - used - 1), perDay };
+      limits = { remainingToday: Math.max(0, maxSearches - used - 1), perDay: maxSearches };
     }
 
     const openRouterKey = process.env.OPENROUTER_API_KEY;

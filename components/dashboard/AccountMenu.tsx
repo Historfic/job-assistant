@@ -17,9 +17,9 @@ export default function AccountMenu({ me, avatar, onLogout, onConnectClick, onDi
     <div className="relative">
       <button onClick={() => setOpen(o => !o)} className="flex items-center gap-2">
         <img src={avatar} alt={user.email} className="w-7 h-7 rounded-full" />
-        <span className={`hidden sm:inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase
+        <span className={`hidden sm:inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase whitespace-nowrap
           ${user.tier === 'pro' ? 'bg-yellow-500/15 text-yellow-400' : 'bg-gray-800 text-gray-400'}`}>
-          {user.tier}
+          {user.tier === 'pro' ? 'Full access' : 'Free preview'}
         </span>
       </button>
 
@@ -30,14 +30,16 @@ export default function AccountMenu({ me, avatar, onLogout, onConnectClick, onDi
             <p className="text-[10px] text-gray-500 mt-0.5">
               {limits.remainingToday >= 999
                 ? 'Unlimited searches (demo)'
-                : `${limits.remainingToday} of ${limits.perDay} searches left today`}
+                : user.tier === 'pro'
+                  ? `${limits.remainingToday} of ${limits.perDay} searches left today`
+                  : `${limits.remainingToday} of ${limits.perDay} free preview searches left`}
             </p>
           </div>
 
           {user.tier === 'free' && (
             <div className="px-2.5 py-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
               <p className="text-[10px] text-yellow-200">
-                Upgrade to Pro — ₱299/month — early access via our Facebook page.
+                Get full access — ₱999 one-time — via our Facebook page.
               </p>
             </div>
           )}
