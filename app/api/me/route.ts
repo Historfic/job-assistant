@@ -4,6 +4,7 @@ import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { getOjConnectionStatus } from '@/lib/oj/connection';
 import type { MeResponse, SearchLimits } from '@/types';
 import { manilaDayStartUtc, TIER_LIMITS } from '@/lib/tiers';
+import { isAdminEmail } from '@/lib/admin';
 
 export async function GET() {
   const user = await getSessionUser();
@@ -13,14 +14,17 @@ export async function GET() {
   if (isSupabaseConfigured()) {
     const { createSupabaseServer } = await import('@/lib/supabase/server');
     const supabase = createSupabaseServer();
-    const dayStart = manilaDayStartUtc(new Date()).toISOString();
-    const { count } = await supabase
+    // Free preview counts lifetime searches; full access counts the Manila day.
+    const { searches: maxSearches, scope } = TIER_LIMITS[user.tier];
+    let countQuery = supabase
       .from('searches')
       .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .gte('created_at', dayStart);
-    const perDay = TIER_LIMITS[user.tier].searchesPerDay;
-    limits = { remainingToday: Math.max(0, perDay - (count ?? 0)), perDay };
+      .eq('user_id', user.id);
+    if (scope === 'day') {
+      countQuery = countQuery.gte('created_at', manilaDayStartUtc(new Date()).toISOString());
+    }
+    const { count } = await countQuery;
+    limits = { remainingToday: Math.max(0, maxSearches - (count ?? 0)), perDay: maxSearches };
   }
 
   const status = await getOjConnectionStatus(user.id);
@@ -28,6 +32,7 @@ export async function GET() {
     user,
     ojConnection: status ? { status } : null,
     limits,
+    isAdmin: isAdminEmail(user.email),
   };
   return NextResponse.json(body);
 }

@@ -1,14 +1,19 @@
 import { describe, it, expect } from 'vitest';
-import { TIER_LIMITS, allowedSources, manilaDayStartUtc, nextManilaMidnightUtc } from '@/lib/tiers';
+import { TIER_LIMITS, FULL_ACCESS_COPY, allowedSources, manilaDayStartUtc, nextManilaMidnightUtc } from '@/lib/tiers';
 
-describe('tier limits', () => {
-  it('free tier: onlinejobs only, 3/day', () => {
-    expect(TIER_LIMITS.free.searchesPerDay).toBe(3);
+describe('access limits (one-time payment model)', () => {
+  it('free preview: onlinejobs only, 3 lifetime searches', () => {
+    expect(TIER_LIMITS.free.searches).toBe(3);
+    expect(TIER_LIMITS.free.scope).toBe('lifetime');
     expect(allowedSources('free')).toEqual(['onlinejobs']);
   });
-  it('pro tier: all sources, 20/day', () => {
-    expect(TIER_LIMITS.pro.searchesPerDay).toBe(20);
+  it('full access (paid): all sources, 20 per day', () => {
+    expect(TIER_LIMITS.pro.searches).toBe(20);
+    expect(TIER_LIMITS.pro.scope).toBe('day');
     expect(allowedSources('pro')).toEqual(['onlinejobs', 'linkedin', 'upwork']);
+  });
+  it('paywall copy states the one-time price', () => {
+    expect(FULL_ACCESS_COPY).toContain('₱999 one-time');
   });
 });
 

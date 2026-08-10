@@ -20,10 +20,21 @@ export interface SearchLimits {
   perDay: number;
 }
 
+// One row of the admin customer console
+export interface AdminCustomer {
+  id: string;
+  email: string;
+  fullName: string | null;
+  paid: boolean;
+  searchesUsed: number;
+  createdAt: string;
+}
+
 export interface MeResponse {
   user: AppUser;
   ojConnection: { status: 'active' | 'expired' } | null;
   limits: SearchLimits;
+  isAdmin?: boolean; // true only for ADMIN_EMAILS accounts
 }
 
 // ─── Core Job Types ────────────────────────────────────────────────────────────

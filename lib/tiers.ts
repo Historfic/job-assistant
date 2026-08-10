@@ -1,13 +1,24 @@
-// ─── Tiers & Daily Limits ─────────────────────────────────────────────────────
+// ─── Access & Search Limits ───────────────────────────────────────────────────
+// One product, one-time payment (₱999). profiles.tier semantics:
+//   'free' = unpaid preview — 3 LIFETIME searches, OnlineJobs.ph only
+//   'pro'  = paid full access — all sources, 20 searches per Manila day
 // One "search" = one submission of the search form, regardless of how many
 // sources are selected. Day boundaries use Asia/Manila (UTC+8, no DST).
-// Until payments ship, Rafael flips profiles.tier to 'pro' by hand in Supabase.
+// Until automated checkout ships, Rafael marks accounts paid by flipping
+// profiles.tier to 'pro' in Supabase after a GCash/bank payment via the
+// Easy Freelancing Facebook page.
 
 import type { JobSource } from '@/types';
 
-export const TIER_LIMITS: Record<'free' | 'pro', { searchesPerDay: number; sources: JobSource[] }> = {
-  free: { searchesPerDay: 3,  sources: ['onlinejobs'] },
-  pro:  { searchesPerDay: 20, sources: ['onlinejobs', 'linkedin', 'upwork'] },
+export const FULL_ACCESS_COPY = 'Get full access — ₱999 one-time — via our Facebook page.';
+
+export const TIER_LIMITS: Record<'free' | 'pro', {
+  searches: number;
+  scope: 'lifetime' | 'day';
+  sources: JobSource[];
+}> = {
+  free: { searches: 3,  scope: 'lifetime', sources: ['onlinejobs'] },
+  pro:  { searches: 20, scope: 'day',      sources: ['onlinejobs', 'linkedin', 'upwork'] },
 };
 
 export function allowedSources(tier: 'free' | 'pro'): JobSource[] {

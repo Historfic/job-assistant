@@ -1,0 +1,171 @@
+'use client';
+
+import { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import type { AdminCustomer } from '@/types';
+
+// Customer console. Paste a payer's email, click Activate — the account is
+// created (if new), an invite email goes out, and paid access is on.
+export default function AdminPage() {
+  const router = useRouter();
+  const [customers, setCustomers] = useState<AdminCustomer[] | null>(null);
+  const [email, setEmail] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [query, setQuery] = useState('');
+
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/customers');
+      if (res.status === 404 || res.status === 401) { router.replace('/dashboard'); return; }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Could not load customers');
+      setCustomers(data.customers);
+    } catch (err) {
+      setError((err as Error).message);
+      setCustomers([]);
+    }
+  }, [router]);
+
+  useEffect(() => { void load(); }, [load]);
+
+  async function activate(e: React.FormEvent) {
+    e.preventDefault();
+    if (busy || !email.trim()) return;
+    setBusy(true); setError(''); setNotice('');
+    try {
+      const res = await fetch('/api/admin/activate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Activation failed');
+      setNotice(data.invited
+        ? `${data.email} is activated — invite email sent so they can set their password.`
+        : `${data.email} already had an account and now has full access.`);
+      setEmail('');
+      await load();
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function deactivate(c: AdminCustomer) {
+    if (!confirm(`Remove full access from ${c.email}? Their account and history stay intact.`)) return;
+    setError(''); setNotice('');
+    try {
+      const res = await fetch('/api/admin/deactivate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: c.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Could not update this account');
+      setNotice(`${c.email} is back on the free preview.`);
+      await load();
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
+  const visible = (customers ?? []).filter(c =>
+    !query.trim() || c.email.toLowerCase().includes(query.trim().toLowerCase()));
+  const paidCount = (customers ?? []).filter(c => c.paid).length;
+
+  return (
+    <div className="min-h-screen bg-gray-950 text-white">
+      <header className="flex items-center justify-between px-5 py-4 border-b border-gray-800">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-sm">J</div>
+          <span className="font-semibold">JobIQ admin</span>
+        </div>
+        <button onClick={() => router.push('/dashboard')} className="text-xs text-gray-400 hover:text-white transition-colors">
+          Back to app
+        </button>
+      </header>
+
+      <main className="max-w-3xl mx-auto px-5 py-8 space-y-6">
+        {/* Activate a payer */}
+        <section className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+          <h1 className="text-base font-semibold mb-1">Activate a customer</h1>
+          <p className="text-xs text-gray-500 mb-4">
+            Paste the email they sent after paying. New customers get an invite email to set their own password.
+          </p>
+          <form onSubmit={activate} className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="email" required value={email} onChange={e => setEmail(e.target.value)}
+              placeholder="customer@gmail.com"
+              className="flex-1 bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-blue-500"
+            />
+            <button type="submit" disabled={busy || !email.trim()}
+              className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:bg-gray-800 disabled:text-gray-600 text-sm font-medium transition-colors">
+              {busy ? 'Activating…' : 'Activate'}
+            </button>
+          </form>
+          {notice && (
+            <p className="mt-3 px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-xs text-emerald-300">{notice}</p>
+          )}
+          {error && (
+            <p className="mt-3 px-3 py-2 bg-red-500/10 border border-red-500/20 rounded-lg text-xs text-red-400">{error}</p>
+          )}
+        </section>
+
+        {/* Customer list */}
+        <section className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <div>
+              <h2 className="text-sm font-semibold">Customers</h2>
+              <p className="text-[11px] text-gray-500 mt-0.5">
+                {customers === null ? 'Loading…' : `${customers.length} signed up · ${paidCount} paid`}
+              </p>
+            </div>
+            <input
+              value={query} onChange={e => setQuery(e.target.value)} placeholder="Search email"
+              className="w-40 sm:w-56 bg-gray-950 border border-gray-700 rounded-lg px-3 py-1.5 text-xs text-white placeholder-gray-600 focus:outline-none focus:border-blue-500"
+            />
+          </div>
+
+          {customers !== null && visible.length === 0 && (
+            <p className="text-xs text-gray-600 py-6 text-center">
+              {customers.length === 0 ? 'No signups yet.' : 'No customer matches that search.'}
+            </p>
+          )}
+
+          <div className="space-y-2">
+            {visible.map(c => (
+              <div key={c.id} className="flex items-center justify-between gap-3 px-3 py-2.5 bg-gray-950 border border-gray-800 rounded-xl">
+                <div className="min-w-0">
+                  <p className="text-xs font-medium truncate">{c.email}</p>
+                  <p className="text-[10px] text-gray-600 mt-0.5 tabular-nums">
+                    {c.searchesUsed} search{c.searchesUsed === 1 ? '' : 'es'} · joined {new Date(c.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase whitespace-nowrap
+                    ${c.paid ? 'bg-yellow-500/15 text-yellow-400' : 'bg-gray-800 text-gray-500'}`}>
+                    {c.paid ? 'Full access' : 'Free preview'}
+                  </span>
+                  {c.paid ? (
+                    <button onClick={() => deactivate(c)} className="text-[11px] text-gray-500 hover:text-red-400 transition-colors">
+                      Revoke
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => { setEmail(c.email); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                      className="text-[11px] text-blue-400 hover:text-blue-300 transition-colors">
+                      Activate
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}

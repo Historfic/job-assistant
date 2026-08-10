@@ -1,8 +1,9 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
-// Protects the dashboard and every API route. When Supabase is not configured
-// the app is in demo mode and everything is open.
+// Protects the dashboard, the admin console, and every API route. When
+// Supabase is not configured the app is in demo mode and everything is open
+// (the admin routes stay closed there — they check ADMIN_EMAILS themselves).
 export async function middleware(req: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -34,5 +35,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/api/:path*'],
+  matcher: ['/dashboard/:path*', '/admin/:path*', '/api/:path*'],
 };
