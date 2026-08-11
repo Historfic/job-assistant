@@ -11,6 +11,7 @@ import EmailPreview from '@/components/EmailPreview';
 import AccountMenu from '@/components/dashboard/AccountMenu';
 import OjConnectModal from '@/components/dashboard/OjConnectModal';
 import MarkedJobsList from '@/components/dashboard/MarkedJobsList';
+import UpgradeButton from '@/components/dashboard/UpgradeButton';
 import {
   subscribeJobStatus,
   getJobStatusSnapshot,
@@ -20,12 +21,12 @@ import {
 
 // ─── Progress steps shown during the scrape + analysis pipeline ───────────────
 const STEPS = [
-  { pct: 8,  msg: 'Launching scraper...' },
-  { pct: 25, msg: (kw: string) => `Searching your selected sources for "${kw}"...` },
-  { pct: 45, msg: 'Running AI analysis on each listing...' },
-  { pct: 65, msg: 'Filtering file-upload jobs & checking redirects...' },
-  { pct: 80, msg: 'Scoring and ranking results...' },
-  { pct: 92, msg: 'Generating application message...' },
+  { pct: 8,  msg: 'Getting started...' },
+  { pct: 25, msg: (kw: string) => `Searching for "${kw}" jobs...` },
+  { pct: 45, msg: 'Reading each job post...' },
+  { pct: 65, msg: 'Filtering out the time-wasters...' },
+  { pct: 80, msg: 'Ranking your best matches...' },
+  { pct: 92, msg: 'Writing your application message...' },
   { pct: 100, msg: 'Done!' },
 ];
 
@@ -42,6 +43,7 @@ export default function DashboardPage() {
   const [progress, setProgress] = useState(0);
   const [statusMsg, setStatusMsg] = useState('');
   const [error, setError] = useState('');
+  const [paywalled, setPaywalled] = useState(false); // error is a limit, not a fault
 
   // Result state
   const [result, setResult] = useState<ProcessResult | null>(null);
@@ -126,6 +128,7 @@ export default function DashboardPage() {
     setMobileSearchOpen(false); // reveal results immediately on phones
     setLoading(true);
     setError('');
+    setPaywalled(false);
     setResult(null);
     setEmailSent(false);
     setProgress(0);
@@ -157,7 +160,10 @@ export default function DashboardPage() {
         const text = await res.text();
         let msg: string;
         try {
-          msg = (JSON.parse(text) as { error?: string }).error ?? `HTTP ${res.status}`;
+          const body = JSON.parse(text) as { error?: string; code?: string };
+          msg = body.error ?? `HTTP ${res.status}`;
+          // Paywall and tier limits get a buy button, not just red text.
+          setPaywalled(body.code === 'TIER_SOURCES' || body.code === 'RATE_LIMIT');
         } catch {
           const snippet = text.slice(0, 200).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
           msg = `HTTP ${res.status} (non-JSON response): ${snippet || '<empty body>'}`;
@@ -280,18 +286,26 @@ export default function DashboardPage() {
             <span className="text-sm font-semibold">JobIQ</span>
           </div>
 
-          <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
-            Live
-          </span>
+          {/* Tells the truth about where the results came from. Nothing to show
+              before the first search. */}
+          {result && (
+            <span className={`hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border
+              ${result.isLiveData
+                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>
+              {result.isLiveData ? 'Live jobs' : 'Sample jobs'}
+            </span>
+          )}
         </div>
 
         {/* Right: stats + user */}
         <div className="flex items-center gap-4">
           {result && (
             <div className="hidden md:flex items-center gap-4 text-xs text-gray-500">
-              <span><span className="text-white font-medium">{result.validJobs.length}</span> valid jobs</span>
-              <span><span className="text-red-400 font-medium">{result.removedJobs.length}</span> removed</span>
-              <span>Scraped <span className="text-white font-medium">{result.stats.totalScraped}</span></span>
+              <span><span className="text-white font-medium">{result.validJobs.length}</span> jobs for you</span>
+              {result.removedJobs.length > 0 && (
+                <span><span className="text-gray-400 font-medium">{result.removedJobs.length}</span> filtered out</span>
+              )}
             </div>
           )}
 
@@ -369,14 +383,31 @@ export default function DashboardPage() {
             </div>
           )}
 
+          {/* Paywall — a limit reached is an offer, not a failure */}
+          {error && paywalled && (
+            <div className="shrink-0 mx-4 sm:mx-5 mt-4 px-4 py-4 bg-blue-500/10 border border-blue-500/25 rounded-xl animate-fade-in">
+              <p className="text-sm text-blue-100 font-medium mb-1">{error}</p>
+              <p className="text-xs text-blue-300/70 mb-3">
+                One payment. No subscription. Yours for good.
+              </p>
+              <div className="flex items-center gap-3 flex-wrap">
+                <UpgradeButton />
+                <button onClick={() => { setError(''); setPaywalled(false); }}
+                  className="text-xs text-gray-500 hover:text-gray-300 transition-colors">
+                  Not now
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Error banner */}
-          {error && (
-            <div className="shrink-0 mx-5 mt-4 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-sm text-red-400 flex items-start gap-2 animate-fade-in">
+          {error && !paywalled && (
+            <div className="shrink-0 mx-4 sm:mx-5 mt-4 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-sm text-red-400 flex items-start gap-2 animate-fade-in">
               <svg className="w-4 h-4 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
               <div>
-                <strong>Error</strong>: {error}
+                {error}
                 <button onClick={() => setError('')} className="ml-2 underline text-xs hover:no-underline">dismiss</button>
               </div>
             </div>
@@ -495,11 +526,11 @@ export default function DashboardPage() {
                           <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                         </svg>
                         <p className="text-xs text-yellow-200 leading-relaxed">
-                          Found <strong>{result.validJobs.length}</strong> of {result.stats.targetRequested} requested.
+                          We found <strong>{result.validJobs.length}</strong> good matches out of the {result.stats.targetRequested} you asked for.
                           {result.stats.excludedAsMarked > 0 && (
-                            <> Skipped <strong>{result.stats.excludedAsMarked}</strong> already in your Applied/Rejected lists.</>
+                            <> We skipped <strong>{result.stats.excludedAsMarked}</strong> you&apos;ve already applied to or rejected.</>
                           )}
-                          {' '}Scraped {result.stats.scrapePasses} page{result.stats.scrapePasses !== 1 ? 's' : ''} ({result.stats.totalScraped} listings). Try a different keyword or loosen filters for more.
+                          {' '}Try a different keyword, or loosen your salary and job-type filters to see more.
                         </p>
                       </div>
                     )}
@@ -576,21 +607,22 @@ export default function DashboardPage() {
                       </div>
                     )}
 
-                    {/* Removed jobs debug section */}
+                    {/* Filtering is a feature, not debug output — show the user
+                        what we saved them from opening, and why. */}
                     {result.removedJobs.length > 0 && (
                       <details className="mt-6 group">
                         <summary className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer hover:text-gray-400 transition-colors list-none">
                           <svg className="w-3.5 h-3.5 group-open:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                           </svg>
-                          {result.removedJobs.length} removed jobs (debug)
+                          We filtered out {result.removedJobs.length} listing{result.removedJobs.length === 1 ? '' : 's'} — see why
                         </summary>
                         <div className="mt-2 space-y-2 pl-4 border-l border-gray-800">
                           {result.removedJobs.map((r, i) => (
-                            <div key={i} className="bg-red-500/5 border border-red-500/10 rounded-lg p-3">
-                              <p className="text-xs font-medium text-red-400/80">{r.job.title}</p>
-                              <p className="text-xs text-gray-600 mt-0.5">Removed: {r.reason}</p>
-                              <p className="text-xs text-gray-700">{r.job.companyName}</p>
+                            <div key={i} className="bg-gray-900 border border-gray-800 rounded-lg p-3">
+                              <p className="text-xs font-medium text-gray-400">{r.job.title}</p>
+                              <p className="text-xs text-gray-600 mt-0.5">{r.reason}</p>
+                              {r.job.companyName && <p className="text-xs text-gray-700">{r.job.companyName}</p>}
                             </div>
                           ))}
                         </div>

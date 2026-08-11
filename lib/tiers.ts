@@ -12,6 +12,15 @@ import type { JobSource } from '@/types';
 
 export const FULL_ACCESS_COPY = 'Get full access — ₱999 one-time — via our Facebook page.';
 
+/**
+ * Where "Get full access" sends people. Set NEXT_PUBLIC_BUY_URL to your
+ * Facebook page, Messenger link, or (later) a PayMongo payment link — no code
+ * change needed to switch. Falls back to the Easy Freelancing page search so
+ * the button is never a dead end.
+ */
+export const BUY_URL =
+  process.env.NEXT_PUBLIC_BUY_URL || 'https://www.facebook.com/search/top?q=easy%20freelancing';
+
 export const TIER_LIMITS: Record<'free' | 'pro', {
   searches: number;
   scope: 'lifetime' | 'day';

@@ -1,6 +1,7 @@
 'use client';
 
 import type { JobSource } from '@/types';
+import UpgradeButton from '@/components/dashboard/UpgradeButton';
 
 const SOURCES: Array<{ id: JobSource; label: string }> = [
   { id: 'onlinejobs', label: 'OnlineJobs.ph' },
@@ -43,9 +44,12 @@ export default function SourceSelector({ selected, tier, onChange }: {
         })}
       </div>
       {tier === 'free' && (
-        <p className="text-[10px] text-gray-700 mt-1.5">
-          LinkedIn + Upwork unlock with full access — ₱999 one-time.
-        </p>
+        <div className="mt-2">
+          <p className="text-[10px] text-gray-600 mb-1.5">
+            LinkedIn and Upwork unlock with full access.
+          </p>
+          <UpgradeButton size="sm" className="w-full" />
+        </div>
       )}
     </div>
   );
