@@ -1,0 +1,32 @@
+# Sends JobIQ daily job alerts.
+#
+# GitHub Actions is the scheduler because it's free and independent of where
+# the app is hosted. It just calls the app's cron endpoint, which does the work.
+#
+# Setup (once), in the repo's Settings → Secrets and variables → Actions:
+#   Secret   CRON_SECRET  — same value as the app's CRON_SECRET env var
+#   Variable APP_URL      — the app's public address, e.g. https://jobiq.onrender.com
+name: Daily job alerts
+
+on:
+  schedule:
+    # 23:00 UTC = 07:00 Manila, so alerts land before the working day.
+    - cron: '0 23 * * *'
+  workflow_dispatch: {} # lets you trigger a run by hand to test
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger alert run
+        run: |
+          if [ -z "${{ vars.APP_URL }}" ]; then
+            echo "APP_URL variable is not set — skipping."; exit 0
+          fi
+          code=$(curl -sS -o response.txt -w '%{http_code}' -X POST \
+            "${{ vars.APP_URL }}/api/cron/alerts" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            --max-time 300)
+          echo "HTTP $code"
+          cat response.txt
+          [ "$code" = "200" ]

@@ -21,6 +21,10 @@ export async function middleware(req: NextRequest) {
     },
   });
 
+  // Scheduled jobs have no user session — they authenticate with CRON_SECRET
+  // inside the route itself.
+  if (req.nextUrl.pathname.startsWith('/api/cron/')) return res;
+
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     if (req.nextUrl.pathname.startsWith('/api/')) {

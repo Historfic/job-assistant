@@ -13,6 +13,7 @@ import OjConnectModal from '@/components/dashboard/OjConnectModal';
 import MarkedJobsList from '@/components/dashboard/MarkedJobsList';
 import UpgradeButton from '@/components/dashboard/UpgradeButton';
 import ProfileModal from '@/components/dashboard/ProfileModal';
+import AlertToggle from '@/components/dashboard/AlertToggle';
 import {
   subscribeJobStatus,
   getJobStatusSnapshot,
@@ -541,6 +542,8 @@ export default function DashboardPage() {
                         </p>
                       </div>
                     )}
+
+                    <AlertToggle options={lastOptions} />
 
                     {/* Filter chip — only meaningful once at least one job is marked */}
                     {markedInBatch > 0 && (
