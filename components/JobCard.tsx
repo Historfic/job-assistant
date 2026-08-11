@@ -253,6 +253,9 @@ export default function JobCard({ job, highlight, baseMessage }: Props) {
           )}
           <div className="flex-1" />
 
+          {/* Actions stay grouped so they wrap as one block on narrow screens
+              instead of stranding a lone icon on its own row. */}
+          <div className="flex items-center gap-2">
           {/* Personalize button */}
           <button
             onClick={handlePersonalizeButton}
@@ -327,6 +330,7 @@ export default function JobCard({ job, highlight, baseMessage }: Props) {
               </svg>
             </button>
           )}
+          </div>
         </div>
 
         {/* ── Panel: error ───────────────────────────────────────────────────── */}

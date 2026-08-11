@@ -34,7 +34,8 @@ export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [me, setMe] = useState<MeResponse | null>(null);
   const [ojModalOpen, setOjModalOpen] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(true);   // desktop inline sidebar
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false); // mobile overlay drawer
 
   // Pipeline state
   const [loading, setLoading] = useState(false);
@@ -122,6 +123,7 @@ export default function DashboardPage() {
 
   // ── Main search pipeline ─────────────────────────────────────────────────────
   const handleSearch = useCallback(async (options: ScrapeOptions) => {
+    setMobileSearchOpen(false); // reveal results immediately on phones
     setLoading(true);
     setError('');
     setResult(null);
@@ -239,15 +241,28 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="h-screen bg-gray-950 text-white flex flex-col overflow-hidden">
+    // 100dvh (not 100vh) so mobile browser chrome doesn't clip the layout
+    <div className="h-[100dvh] bg-gray-950 text-white flex flex-col overflow-hidden">
 
       {/* ── Top Header ───────────────────────────────────────────────────────── */}
       <header className="shrink-0 flex items-center justify-between px-4 py-2.5 border-b border-gray-800 bg-gray-950 z-10">
         <div className="flex items-center gap-3">
-          {/* Sidebar toggle (mobile) */}
+          {/* Search drawer toggle (mobile) — the sidebar is an overlay below lg */}
+          <button
+            onClick={() => setMobileSearchOpen(true)}
+            aria-label="Open search"
+            className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-gray-800 transition-colors lg:hidden"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </button>
+
+          {/* Sidebar collapse (desktop only) */}
           <button
             onClick={() => setSidebarOpen(o => !o)}
-            className="p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-gray-800 transition-colors lg:hidden"
+            aria-label="Toggle sidebar"
+            className="hidden lg:block p-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-gray-800 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -299,14 +314,38 @@ export default function DashboardPage() {
       {/* ── Body ─────────────────────────────────────────────────────────────── */}
       <div className="flex flex-1 min-h-0 overflow-hidden">
 
-        {/* ── Sidebar ──────────────────────────────────────────────────────── */}
+        {/* ── Sidebar (desktop, inline & collapsible) ──────────────────────── */}
         <aside
-          className={`${sidebarOpen ? 'w-72' : 'w-0 overflow-hidden'} shrink-0 border-r border-gray-800 flex flex-col transition-all duration-200 bg-gray-950`}
+          className={`${sidebarOpen ? 'lg:w-72' : 'lg:w-0 overflow-hidden'} hidden lg:flex w-0 shrink-0 border-r border-gray-800 flex-col transition-all duration-200 bg-gray-950`}
         >
           <div className="flex-1 overflow-y-auto p-4">
             <SearchForm onSearch={handleSearch} loading={loading} tier={me?.user.tier ?? 'free'} />
           </div>
         </aside>
+
+        {/* ── Search drawer (mobile) ───────────────────────────────────────── */}
+        {mobileSearchOpen && (
+          <div className="lg:hidden fixed inset-0 z-40 flex" role="dialog" aria-modal="true">
+            <div className="absolute inset-0 bg-black/60" onClick={() => setMobileSearchOpen(false)} />
+            <div className="relative w-[86%] max-w-xs bg-gray-950 border-r border-gray-800 flex flex-col animate-slide-in-left">
+              <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b border-gray-800">
+                <span className="text-sm font-semibold">Search jobs</span>
+                <button
+                  onClick={() => setMobileSearchOpen(false)}
+                  aria-label="Close search"
+                  className="p-1.5 -mr-1.5 rounded-lg text-gray-500 hover:text-white hover:bg-gray-800 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4">
+                <SearchForm onSearch={handleSearch} loading={loading} tier={me?.user.tier ?? 'free'} />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── Main content ─────────────────────────────────────────────────── */}
         <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -354,15 +393,27 @@ export default function DashboardPage() {
               </div>
               <h2 className="text-base font-semibold text-gray-300 mb-2">Ready to find jobs</h2>
               <p className="text-sm text-gray-600 max-w-xs">
-                Fill in the search form on the left and click <strong className="text-gray-500">Find Jobs</strong> to start the AI-powered search.
+                <span className="lg:hidden">Tap <strong className="text-gray-500">Search jobs</strong> to pick your keyword and filters.</span>
+                <span className="hidden lg:inline">
+                  Fill in the search form on the left and click <strong className="text-gray-500">Find Jobs</strong> to start the AI-powered search.
+                </span>
               </p>
+              <button
+                onClick={() => setMobileSearchOpen(true)}
+                className="lg:hidden mt-5 inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-sm font-medium transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                Search jobs
+              </button>
 
               {/* Feature cards */}
               <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-xl w-full">
                 {[
-                  { icon: '🕷️', title: 'Smart Scraper', desc: 'Pulls live listings from OnlineJobs.ph with salary & type filters' },
-                  { icon: '🤖', title: 'AI Analysis', desc: 'Detects file uploads, redirects, required skills per listing' },
-                  { icon: '✍️', title: 'Auto Apply', desc: 'Generates one reusable, human-sounding cover letter' },
+                  { icon: '🔎', title: 'Three sites, one search', desc: 'OnlineJobs.ph, LinkedIn and Upwork — searched together, with salary and job-type filters' },
+                  { icon: '🤖', title: 'Ranked by AI', desc: 'Every listing is scored for fit, and time-wasters are filtered out before you see them' },
+                  { icon: '✍️', title: 'Application written for you', desc: 'A ready-to-send message, plus a personalised cover letter for any job' },
                 ].map(f => (
                   <div key={f.title} className="bg-gray-900 border border-gray-800 rounded-xl p-4 text-left">
                     <div className="text-xl mb-2">{f.icon}</div>
@@ -592,6 +643,20 @@ export default function DashboardPage() {
           )}
         </main>
       </div>
+
+      {/* Floating new-search button (mobile) — the header icon is easy to miss
+          once results fill the screen. Hidden while the drawer is already open. */}
+      {result && !loading && !mobileSearchOpen && (
+        <button
+          onClick={() => setMobileSearchOpen(true)}
+          className="lg:hidden fixed bottom-5 right-5 z-30 inline-flex items-center gap-2 pl-4 pr-5 py-3 rounded-full bg-blue-600 hover:bg-blue-500 shadow-lg shadow-black/40 text-sm font-medium transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          New search
+        </button>
+      )}
 
       <OjConnectModal open={ojModalOpen} onClose={() => setOjModalOpen(false)} onConnected={refreshMe} />
     </div>
