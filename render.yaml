@@ -45,6 +45,10 @@ services:
       # Messenger link, or later a PayMongo payment link)
       - key: NEXT_PUBLIC_BUY_URL
         sync: false
+      # Google OAuth client ID, so the sign-in prompt shows this site's domain
+      # rather than the Supabase project address
+      - key: NEXT_PUBLIC_GOOGLE_CLIENT_ID
+        sync: false
       - key: OPENROUTER_API_KEY
         sync: false
       - key: ANTHROPIC_API_KEY

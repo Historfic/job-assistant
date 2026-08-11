@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
+import GoogleSignIn from '@/components/auth/GoogleSignIn';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -33,16 +34,6 @@ export default function LoginPage() {
     }
   }
 
-  async function handleGoogle() {
-    setError('');
-    const { createSupabaseBrowser } = await import('@/lib/supabase/client');
-    const supabase = createSupabaseBrowser();
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    });
-    if (error) setError(error.message);
-  }
 
   return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
@@ -101,12 +92,7 @@ export default function LoginPage() {
 
           {!demoMode && (
             <>
-              <button
-                onClick={handleGoogle}
-                className="mt-3 w-full py-2.5 rounded-xl border border-gray-700 hover:border-gray-500 text-sm font-medium text-gray-300 transition-colors"
-              >
-                Continue with Google
-              </button>
+              <GoogleSignIn onError={setError} />
               <div className="mt-4 flex items-center justify-between text-xs">
                 <Link href="/forgot-password" className="text-gray-500 hover:text-gray-300">Forgot password?</Link>
                 <Link href="/signup" className="text-blue-400 hover:text-blue-300">Create account</Link>
