@@ -12,12 +12,14 @@ import AccountMenu from '@/components/dashboard/AccountMenu';
 import OjConnectModal from '@/components/dashboard/OjConnectModal';
 import MarkedJobsList from '@/components/dashboard/MarkedJobsList';
 import UpgradeButton from '@/components/dashboard/UpgradeButton';
+import ProfileModal from '@/components/dashboard/ProfileModal';
 import {
   subscribeJobStatus,
   getJobStatusSnapshot,
   getServerSnapshot,
   refreshJobStatuses,
 } from '@/lib/jobStatus';
+import { refreshCareerProfile, getCareerProfileSnapshot } from '@/lib/careerProfile';
 
 // ─── Progress steps shown during the scrape + analysis pipeline ───────────────
 const STEPS = [
@@ -35,6 +37,7 @@ export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [me, setMe] = useState<MeResponse | null>(null);
   const [ojModalOpen, setOjModalOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);   // desktop inline sidebar
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false); // mobile overlay drawer
 
@@ -92,6 +95,9 @@ export default function DashboardPage() {
 
   // Pull cross-device applied/rejected history from the account
   useEffect(() => { void refreshJobStatuses(); }, []);
+
+  // Pull the saved CV / experience so cover letters can use it
+  useEffect(() => { void refreshCareerProfile(); }, []);
 
   // ── Auth guard ───────────────────────────────────────────────────────────────
   const refreshMe = useCallback(() => {
@@ -320,6 +326,7 @@ export default function DashboardPage() {
                 await fetch('/api/oj/disconnect', { method: 'POST' });
                 refreshMe();
               }}
+              onProfileClick={() => setProfileOpen(true)}
             />
           )}
         </div>
@@ -689,6 +696,8 @@ export default function DashboardPage() {
           New search
         </button>
       )}
+
+      <ProfileModal open={profileOpen} onClose={() => setProfileOpen(false)} />
 
       <OjConnectModal open={ojModalOpen} onClose={() => setOjModalOpen(false)} onConnected={refreshMe} />
     </div>

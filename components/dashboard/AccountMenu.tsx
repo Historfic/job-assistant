@@ -4,12 +4,13 @@ import { useState } from 'react';
 import type { MeResponse } from '@/types';
 import UpgradeButton from '@/components/dashboard/UpgradeButton';
 
-export default function AccountMenu({ me, avatar, onLogout, onConnectClick, onDisconnect }: {
+export default function AccountMenu({ me, avatar, onLogout, onConnectClick, onDisconnect, onProfileClick }: {
   me: MeResponse;
   avatar: string;
   onLogout: () => void;
   onConnectClick: () => void;
   onDisconnect: () => void;
+  onProfileClick: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const { user, ojConnection, limits } = me;
@@ -45,6 +46,15 @@ export default function AccountMenu({ me, avatar, onLogout, onConnectClick, onDi
               <UpgradeButton size="sm" className="w-full" />
             </div>
           )}
+
+          <div className="border-t border-gray-800 pt-2.5">
+            <button
+              onClick={() => { setOpen(false); onProfileClick(); }}
+              className="w-full text-left text-[11px] text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              Your experience — used to write your cover letters
+            </button>
+          </div>
 
           <div className="border-t border-gray-800 pt-2.5">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-600 mb-1.5">OnlineJobs.ph</p>

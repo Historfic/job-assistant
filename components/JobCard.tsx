@@ -3,6 +3,7 @@
 import { useState, useSyncExternalStore } from 'react';
 import type { AnalyzedJob } from '@/types';
 import type { CoverLetterQuestion } from '@/app/api/generate-questions/route';
+import { getCareerProfileSnapshot } from '@/lib/careerProfile';
 import {
   subscribeJobStatus,
   getJobStatusSnapshot,
@@ -97,7 +98,13 @@ export default function JobCard({ job, highlight, baseMessage }: Props) {
       const res = await fetch('/api/personalize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ job, baseMessage: baseMessage ?? '', qaContext }),
+        body: JSON.stringify({
+          job,
+          baseMessage: baseMessage ?? '',
+          qaContext,
+          // The user's saved CV, so the letter cites real experience
+          careerProfile: getCareerProfileSnapshot(),
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed');

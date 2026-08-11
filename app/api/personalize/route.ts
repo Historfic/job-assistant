@@ -63,16 +63,38 @@ interface QAPair {
   answer: string;
 }
 
+interface CareerProfile {
+  headline?: string;
+  cvText?: string;
+}
+
 function buildPersonalizePrompt(
   job: AnalyzedJob,
   baseMessage: string,
   qaContext?: QAPair[],
+  careerProfile?: CareerProfile,
 ): string {
   const raw = job.description ?? '';
   const head = raw.slice(0, 1000);
   const tail = raw.length > 1800 ? '\n\n[...]\n\n' + raw.slice(-800) : '';
   const description = head + tail;
   const skills = job.analysis.skills.join(', ') || 'Not listed';
+
+  // The saved CV is the strongest signal we have about this applicant, so it
+  // carries more weight than the generic base message.
+  const cv = (careerProfile?.cvText ?? '').trim();
+  const headline = (careerProfile?.headline ?? '').trim();
+  const cvSection = cv
+    ? [
+        '',
+        "The applicant's real background (use concrete details from this; never invent experience):",
+        '"""',
+        headline ? headline + '\n' : '',
+        cv.slice(0, 4000),
+        '"""',
+        '',
+      ].join('\n')
+    : '';
 
   const filledAnswers = (qaContext ?? []).filter(qa => qa.answer.trim());
   const answersSection = filledAnswers.length > 0
@@ -93,7 +115,7 @@ ${description}
 """
 ${job.analysis.requires_cv ? '\nNote: This job requires a CV/resume.' : ''}
 ${job.analysis.platform_redirect ? `\nNote: This job asks to apply via ${job.analysis.redirect_platform}.` : ''}
-${answersSection}
+${cvSection}${answersSection}
 Here is the applicant's general background for reference:
 """
 ${baseMessage}
@@ -101,7 +123,7 @@ ${baseMessage}
 
 Write a unique, personalized cover letter that:
 - Is primarily driven by the job description above
-${filledAnswers.length > 0 ? '- Naturally weaves in the applicant\'s context where it strengthens the letter (don\'t quote it verbatim)\n' : ''}- Opens with a specific hook referencing something concrete from the job description (NOT a generic "I came across your posting" opener)
+${cv ? "- Cites real, specific experience from the applicant's background above wherever it matches what this job needs. Never invent experience they did not list.\n" : ''}${filledAnswers.length > 0 ? '- Naturally weaves in the applicant\'s context where it strengthens the letter (don\'t quote it verbatim)\n' : ''}- Opens with a specific hook referencing something concrete from the job description (NOT a generic "I came across your posting" opener)
 - Demonstrates understanding of what this specific role actually needs
 - Naturally weaves in 2-3 relevant skills from the job listing
 - Mentions the company name if available
@@ -114,12 +136,12 @@ ${job.analysis.platform_redirect ? `- Mentions willingness to continue on ${job.
 - Returns ONLY the message text, nothing else`;
 }
 
-async function personalizeWithClaude(job: AnalyzedJob, baseMessage: string, apiKey: string, qaContext?: QAPair[]): Promise<string> {
+async function personalizeWithClaude(job: AnalyzedJob, baseMessage: string, apiKey: string, qaContext?: QAPair[], careerProfile?: CareerProfile): Promise<string> {
   const client = new Anthropic({ apiKey });
   const response = await client.messages.create({
     model: 'claude-haiku-4-5',
     max_tokens: 450,
-    messages: [{ role: 'user', content: buildPersonalizePrompt(job, baseMessage, qaContext) }],
+    messages: [{ role: 'user', content: buildPersonalizePrompt(job, baseMessage, qaContext, careerProfile) }],
   });
 
   const block = response.content[0];
@@ -127,9 +149,9 @@ async function personalizeWithClaude(job: AnalyzedJob, baseMessage: string, apiK
   return stripEmDashes(block.text.trim());
 }
 
-async function personalizeWithOpenRouter(job: AnalyzedJob, baseMessage: string, apiKey: string, qaContext?: QAPair[]): Promise<string> {
+async function personalizeWithOpenRouter(job: AnalyzedJob, baseMessage: string, apiKey: string, qaContext?: QAPair[], careerProfile?: CareerProfile): Promise<string> {
   const models = ['google/gemma-4-31b-it:free', 'google/gemma-4-26b-a4b-it:free'];
-  const prompt = buildPersonalizePrompt(job, baseMessage, qaContext);
+  const prompt = buildPersonalizePrompt(job, baseMessage, qaContext, careerProfile);
 
   for (const model of models) {
     for (let attempt = 0; attempt < 2; attempt++) {
@@ -161,11 +183,24 @@ async function personalizeWithOpenRouter(job: AnalyzedJob, baseMessage: string, 
   throw new Error('OpenRouter: all models rate limited or failed');
 }
 
-function personalizeLocally(job: AnalyzedJob, baseMessage: string, qaContext?: QAPair[]): string {
+function personalizeLocally(
+  job: AnalyzedJob,
+  baseMessage: string,
+  qaContext?: QAPair[],
+  careerProfile?: CareerProfile,
+): string {
   const title   = job.title ?? 'this position';
   const company = job.companyName;
   const skills  = job.analysis.skills.slice(0, 3);
   const desc    = job.description ?? '';
+
+  // Which of the job's required skills does the applicant's CV actually
+  // mention? Only those can be claimed honestly without an AI to reason.
+  const cvText = (careerProfile?.cvText ?? '').toLowerCase();
+  const headline = (careerProfile?.headline ?? '').trim();
+  const provenSkills = cvText
+    ? job.analysis.skills.filter(s => cvText.includes(s.toLowerCase())).slice(0, 3)
+    : [];
 
   // Extract a concrete detail from the job description for the opener
   const sentences = desc.split(/[.!?]/).map(s => s.trim()).filter(s => s.length > 40 && s.length < 150);
@@ -185,10 +220,23 @@ function personalizeLocally(job: AnalyzedJob, baseMessage: string, qaContext?: Q
       : `I'm applying for your ${title} role and am confident I can deliver exactly what you're looking for.`;
   }
 
-  // Skills paragraph
-  const skillLine = skills.length > 0
-    ? `I bring hands-on experience with ${skills.join(', ')}, which maps directly to what this role requires.`
-    : 'I bring a strong track record in remote work, fast turnaround, and high-quality output.';
+  // Skills paragraph — prefer skills the CV actually backs up, and lead with
+  // who they are rather than a generic claim. Headlines are often written like
+  // "Virtual Assistant · 4 years · e-commerce", so only the role reads well in
+  // a sentence; the rest is kept as a trailing clause.
+  const [roleRaw, ...headlineRest] = headline.split(/\s*[·|,]\s*/).filter(Boolean);
+  const role = (roleRaw ?? '').replace(/^i\s+am\s+an?\s*/i, '').trim();
+  const whoLine = role
+    ? `I work as a ${role}${headlineRest.length ? ` (${headlineRest.join(', ')})` : ''}.`
+    : null;
+
+  const skillLine = provenSkills.length > 0
+    ? `I have hands-on experience with ${provenSkills.join(', ')}, which is exactly what this role calls for.`
+    : skills.length > 0
+      ? `I bring hands-on experience with ${skills.join(', ')}, which maps directly to what this role requires.`
+      : 'I bring a strong track record in remote work, fast turnaround, and high-quality output.';
+
+  const closingLine = "I'd be glad to talk through how I can help. Thanks for your time.";
 
   // If the user answered questions, use their first answer as the proof point
   const firstAnswer = qaContext?.find(qa => qa.answer.trim())?.answer.trim();
@@ -200,15 +248,21 @@ function personalizeLocally(job: AnalyzedJob, baseMessage: string, qaContext?: Q
   const baseLines = baseMessage.split('\n').filter(Boolean);
   const middle = baseLines.slice(1).join('\n\n');
 
-  return stripEmDashes([opener, skillLine, proofLine, middle].filter(Boolean).join('\n\n'));
+  // With a CV saved, the applicant's own words replace the generic filler that
+  // the base message would otherwise contribute.
+  const body = cvText
+    ? [opener, whoLine, skillLine, proofLine, closingLine]
+    : [opener, skillLine, proofLine, middle];
+  return stripEmDashes(body.filter(Boolean).join('\n\n'));
 }
 
 export async function POST(req: NextRequest) {
   try {
-    const { job, baseMessage, qaContext }: {
+    const { job, baseMessage, qaContext, careerProfile }: {
       job: AnalyzedJob;
       baseMessage: string;
       qaContext?: QAPair[];
+      careerProfile?: CareerProfile;
     } = await req.json();
 
     if (!job || !baseMessage) {
@@ -266,33 +320,33 @@ export async function POST(req: NextRequest) {
 
     if (anthropicKey) {
       try {
-        message = await personalizeWithClaude(enrichedJob, baseMessage, anthropicKey, qaContext);
+        message = await personalizeWithClaude(enrichedJob, baseMessage, anthropicKey, qaContext, careerProfile);
         source = 'claude';
       } catch (err) {
         console.error('[/api/personalize] Claude failed, trying OpenRouter:', err);
         if (openRouterKey) {
           try {
-            message = await personalizeWithOpenRouter(enrichedJob, baseMessage, openRouterKey, qaContext);
+            message = await personalizeWithOpenRouter(enrichedJob, baseMessage, openRouterKey, qaContext, careerProfile);
             source = 'openrouter';
           } catch (err2) {
             console.error('[/api/personalize] OpenRouter also failed:', err2);
-            message = personalizeLocally(enrichedJob, baseMessage, qaContext);
+            message = personalizeLocally(enrichedJob, baseMessage, qaContext, careerProfile);
           }
         } else {
-          message = personalizeLocally(enrichedJob, baseMessage, qaContext);
+          message = personalizeLocally(enrichedJob, baseMessage, qaContext, careerProfile);
         }
       }
     } else if (openRouterKey) {
       try {
-        message = await personalizeWithOpenRouter(enrichedJob, baseMessage, openRouterKey, qaContext);
+        message = await personalizeWithOpenRouter(enrichedJob, baseMessage, openRouterKey, qaContext, careerProfile);
         source = 'openrouter';
       } catch (err) {
         console.error('[/api/personalize] OpenRouter failed:', err);
-        message = personalizeLocally(enrichedJob, baseMessage, qaContext);
+        message = personalizeLocally(enrichedJob, baseMessage, qaContext, careerProfile);
       }
     } else {
       console.warn('[/api/personalize] No AI key found — using local fallback. ANTHROPIC_API_KEY set:', Boolean(anthropicKey));
-      message = personalizeLocally(enrichedJob, baseMessage, qaContext);
+      message = personalizeLocally(enrichedJob, baseMessage, qaContext, careerProfile);
     }
 
     console.log(`[/api/personalize] source=${source} descLen=${enrichedJob.description?.length ?? 0}`);
