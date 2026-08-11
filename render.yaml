@@ -30,8 +30,20 @@ services:
         sync: false
       - key: OJ_SESSION_ENCRYPTION_KEY
         sync: false
+      # Public address of this service, used in alert emails and auth links.
+      # Set it to the Render URL once the service exists.
+      - key: NEXT_PUBLIC_APP_URL
+        sync: false
       # Optional — the app degrades gracefully when these are absent
       - key: DEMO_MODE
+        sync: false
+      # Daily job alerts: shared secret with the scheduler. Alerts stay off
+      # until this matches the CRON_SECRET in the GitHub Actions secret.
+      - key: CRON_SECRET
+        sync: false
+      # Where the "Get full access" button sends buyers (Facebook page,
+      # Messenger link, or later a PayMongo payment link)
+      - key: NEXT_PUBLIC_BUY_URL
         sync: false
       - key: OPENROUTER_API_KEY
         sync: false
@@ -42,4 +54,8 @@ services:
       - key: SMTP_USER
         sync: false
       - key: SMTP_PASS
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
         sync: false
