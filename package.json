@@ -1,7 +1,7 @@
 {
   "name": "job-assistant",
   "version": "1.0.0",
-  "description": "AI-powered job application assistant — scrapes OnlineJobs.ph and generates smart applications",
+  "description": "AI-powered job application assistant \u2014 scrapes OnlineJobs.ph and generates smart applications",
   "private": true,
   "scripts": {
     "predev": "node scripts/free-port.js",
@@ -33,5 +33,8 @@
     "tailwindcss": "^3.4.1",
     "typescript": "^5",
     "vitest": "^4.1.10"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

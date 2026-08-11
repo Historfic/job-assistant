@@ -1,0 +1,45 @@
+# Render deployment for JobIQ.
+#
+# Why a web service (a real Node server) rather than serverless: a live search
+# scrapes three sites and runs AI analysis, which takes 15-30s. Serverless free
+# tiers cap requests at ~10s and would abort it mid-search.
+#
+# Secrets are NOT listed here — set them in the Render dashboard so they never
+# reach git. See .env.example for the full list and what each one does.
+services:
+  - type: web
+    name: jobiq
+    runtime: node
+    plan: free            # upgrade to "starter" to stop the service sleeping
+    region: singapore     # closest region to the Philippines
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    autoDeploy: true      # redeploy on every push to the default branch
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      # Required — set the values in the dashboard (Environment tab)
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: ADMIN_EMAILS
+        sync: false
+      - key: OJ_SESSION_ENCRYPTION_KEY
+        sync: false
+      # Optional — the app degrades gracefully when these are absent
+      - key: DEMO_MODE
+        sync: false
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: APIFY_TOKEN
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
