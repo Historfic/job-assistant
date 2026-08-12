@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Logo from '@/components/Logo';
 import { getSessionUser } from '@/lib/auth';
 
 // Marketing landing page — the Meta-ads destination. Mobile-first: Facebook
@@ -13,7 +14,7 @@ export default async function LandingPage() {
       {/* ── Nav ── */}
       <nav className="flex items-center justify-between px-5 py-4 max-w-5xl mx-auto">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-sm">J</div>
+          <Logo size={28} boxed />
           <span className="font-semibold">JobIQ</span>
         </div>
         <Link href={user ? '/dashboard' : '/login'} className="text-sm text-gray-400 hover:text-white transition-colors">

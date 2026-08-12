@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Logo from '@/components/Logo';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
@@ -47,7 +48,7 @@ export default function SignupPage() {
     <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="flex items-center gap-2 justify-center mb-6">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">J</div>
+          <Logo size={32} boxed />
           <span className="text-lg font-semibold text-white">JobIQ</span>
         </div>
 

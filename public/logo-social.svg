@@ -1,0 +1,8 @@
+<!-- Square mark for Facebook / social profiles. 512x512 so it stays sharp
+     when a platform scales it up. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="118" fill="#0a0a0f"/>
+  <rect x="96"  y="139" width="320" height="64" rx="32" fill="#ffffff"/>
+  <rect x="96"  y="256" width="224" height="64" rx="32" fill="#6b9bff"/>
+  <rect x="96"  y="373" width="139" height="64" rx="32" fill="#3b4a6b"/>
+</svg>

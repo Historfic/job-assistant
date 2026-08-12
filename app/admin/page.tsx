@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Logo from '@/components/Logo';
 import { useRouter } from 'next/navigation';
 import type { AdminCustomer } from '@/types';
 
@@ -80,7 +81,7 @@ export default function AdminPage() {
     <div className="min-h-screen bg-gray-950 text-white">
       <header className="flex items-center justify-between px-5 py-4 border-b border-gray-800">
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-sm">J</div>
+          <Logo size={28} boxed />
           <span className="font-semibold">JobIQ admin</span>
         </div>
         <button onClick={() => router.push('/dashboard')} className="text-xs text-gray-400 hover:text-white transition-colors">

@@ -16,6 +16,7 @@ import { normalizeSources } from '@/lib/sources/types';
 import { evaluateSalary } from '@/lib/salaryEvaluator';
 import { sendMail } from '@/lib/mailer';
 import { buildAlertHtml, buildAlertSubject } from '@/lib/alertEmail';
+import { publicOrigin } from '@/lib/publicUrl';
 import type { JobSource, RawJob } from '@/types';
 
 export const maxDuration = 300; // many alerts, each doing network work
@@ -60,7 +61,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Could not load alerts' }, { status: 500 });
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? req.nextUrl.origin;
+  const appUrl = publicOrigin(req);
   let emailed = 0;
   let checked = 0;
 

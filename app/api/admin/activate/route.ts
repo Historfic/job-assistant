@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth';
 import { isAdminEmail } from '@/lib/admin';
 import { isAdminConfigured, createSupabaseAdmin } from '@/lib/supabase/admin';
+import { publicOrigin } from '@/lib/publicUrl';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -49,7 +50,9 @@ export async function POST(req: NextRequest) {
   }
 
   // New customer: invite creates the auth user AND emails a set-password link.
-  const origin = req.nextUrl.origin;
+  // Public address, not the internal one the proxy hands us — this URL is
+  // emailed to a paying customer.
+  const origin = publicOrigin(req);
   const { data: invited, error: inviteError } = await supabase.auth.admin.inviteUserByEmail(
     target,
     { redirectTo: `${origin}/auth/callback?next=/auth/reset` },

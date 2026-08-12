@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useSyncExternalStore, useMemo } from 
 import { useRouter } from 'next/navigation';
 import type { User, ScrapeOptions, ProcessResult, AppTab, AnalyzedJob, MeResponse } from '@/types';
 import SearchForm from '@/components/SearchForm';
+import Logo from '@/components/Logo';
 import JobCard from '@/components/JobCard';
 import AIInsights from '@/components/AIInsights';
 import ApplicationMessage from '@/components/ApplicationMessage';
@@ -284,12 +285,7 @@ export default function DashboardPage() {
 
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-blue-600 rounded-md flex items-center justify-center">
-              <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                  d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-            </div>
+            <Logo size={22} />
             <span className="text-sm font-semibold">JobIQ</span>
           </div>
 
