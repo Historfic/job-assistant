@@ -73,6 +73,32 @@ export default function AdminPage() {
     }
   }
 
+  // Permanent, so it takes the email typed back rather than a single click.
+  async function removeAccount(c: AdminCustomer) {
+    const typed = window.prompt(
+      `This permanently deletes ${c.email} and everything they've saved — searches, applied jobs, CV, alerts. It cannot be undone.\n\nType their email to confirm:`,
+    );
+    if (typed === null) return;
+    if (typed.trim().toLowerCase() !== c.email.toLowerCase()) {
+      setError('The email you typed did not match. Nothing was deleted.');
+      return;
+    }
+    setError(''); setNotice('');
+    try {
+      const res = await fetch('/api/admin/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: c.id, email: c.email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Could not delete this account');
+      setNotice(`${data.email} has been deleted, along with all their data.`);
+      await load();
+    } catch (err) {
+      setError((err as Error).message);
+    }
+  }
+
   const visible = (customers ?? []).filter(c =>
     !query.trim() || c.email.toLowerCase().includes(query.trim().toLowerCase()));
   const paidCount = (customers ?? []).filter(c => c.paid).length;
@@ -151,7 +177,7 @@ export default function AdminPage() {
                     {c.paid ? 'Full access' : 'Free preview'}
                   </span>
                   {c.paid ? (
-                    <button onClick={() => deactivate(c)} className="text-[11px] text-gray-500 hover:text-red-400 transition-colors">
+                    <button onClick={() => deactivate(c)} className="text-[11px] text-gray-500 hover:text-yellow-400 transition-colors">
                       Revoke
                     </button>
                   ) : (
@@ -161,6 +187,14 @@ export default function AdminPage() {
                       Activate
                     </button>
                   )}
+                  <button
+                    onClick={() => removeAccount(c)}
+                    title={`Delete ${c.email} and all their data`}
+                    aria-label={`Delete ${c.email}`}
+                    className="text-[11px] text-gray-600 hover:text-red-400 transition-colors"
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             ))}
