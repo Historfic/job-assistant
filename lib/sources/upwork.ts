@@ -2,9 +2,11 @@ import type { RawJob } from '@/types';
 import type { SourceAdapter, SourceSearchOptions } from './types';
 import { runApifyActor, pickString } from './apify';
 
-// Env-overridable: set APIFY_UPWORK_ACTOR to the Upwork-jobs scraper slug you
-// picked on the Apify Store (owner~actor-name).
-const DEFAULT_ACTOR = 'memo23~apify-upwork-jobs-scraper';
+// Input below matches neatrat/upwork-job-scraper's schema: `query` and
+// `perPage`, not the `searchQuery`/`maxItems` an earlier actor used. Override
+// with APIFY_UPWORK_ACTOR if you switch actors — and check its input names,
+// since they differ between them.
+const DEFAULT_ACTOR = 'neatrat~upwork-job-scraper';
 
 export function mapUpworkItem(
   item: Record<string, unknown>,
@@ -14,13 +16,17 @@ export function mapUpworkItem(
   return {
     id: `upwork-${idx}-${Date.now()}`,
     source: 'upwork',
-    title: pickString(item, ['title', 'jobTitle']),
-    companyName: pickString(item, ['clientName', 'company']), // usually anonymous on Upwork
-    employmentType: pickString(item, ['jobType', 'engagement', 'type']),
-    url: pickString(item, ['link', 'url', 'jobUrl']),
-    salary: pickString(item, ['hourlyRate', 'budget', 'price', 'salary']),
-    description: pickString(item, ['description', 'descriptionText', 'snippet']),
-    datePosted: pickString(item, ['postedOn', 'publishedAt', 'datePosted']),
+    title: pickString(item, ['title', 'jobTitle', 'name']),
+    // Upwork clients are usually anonymous; fall back to their country so the
+    // card isn't blank.
+    companyName: pickString(item, ['clientName', 'client', 'company', 'clientCountry', 'country']),
+    employmentType: pickString(item, ['jobType', 'type', 'engagement', 'contractType']),
+    url: pickString(item, ['url', 'link', 'jobUrl', 'jobLink']),
+    salary: pickString(item, [
+      'hourlyRate', 'hourlyRateText', 'budget', 'amount', 'price', 'salary', 'fixedPrice',
+    ]),
+    description: pickString(item, ['description', 'descriptionText', 'snippet', 'jobDescription']),
+    datePosted: pickString(item, ['publishedOn', 'postedOn', 'publishedAt', 'datePosted', 'createdOn']),
     query: keyword,
   };
 }
@@ -31,9 +37,10 @@ export const upworkAdapter: SourceAdapter = {
     if ((opts.page ?? 0) > 0) return [];
     const actor = process.env.APIFY_UPWORK_ACTOR ?? DEFAULT_ACTOR;
     const items = await runApifyActor(actor, {
-      searchQuery: opts.keyword,
-      maxItems: Math.min(opts.limit, 25),
-      proxy: { useApifyProxy: true },
+      query: opts.keyword,
+      perPage: Math.min(opts.limit, 25),
+      pagesToScrape: 1,
+      sort: 'newest',
     });
     return items
       .map((it, i) => mapUpworkItem(it as Record<string, unknown>, i, opts.keyword))
