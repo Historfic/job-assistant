@@ -88,3 +88,27 @@ describe('getJobsFromSources live mode without token', () => {
     expect(result.errors[0].message).toContain('APIFY_TOKEN');
   });
 });
+
+describe('mapUpworkItem url', () => {
+  it('rebuilds the permalink from subId, not the markup-laden search url', () => {
+    const job = mapUpworkItem({
+      title: 'Social Media Virtual Assistant',
+      subId: '~022087880195093014006',
+      url: 'https://www.upwork.com/jobs/Social-Media-span-class-highlight-Virtual-span-Dropshipping_~022087880195093014006/?referrer_url_path=/nx/search/jobs/',
+    }, 0, 'virtual assistant');
+    expect(job.url).toBe('https://www.upwork.com/jobs/~022087880195093014006');
+    expect(job.url).not.toContain('span-class-highlight');
+  });
+
+  it('falls back to the raw url when subId is absent', () => {
+    const job = mapUpworkItem(
+      { title: 'X', url: 'https://www.upwork.com/jobs/~0123' }, 0, 'x');
+    expect(job.url).toBe('https://www.upwork.com/jobs/~0123');
+  });
+
+  it('shows the client average rate when budget is N/A', () => {
+    const job = mapUpworkItem(
+      { title: 'X', budget: 'N/A', clientAvgHourlyRate: '$12.50/hr' }, 0, 'x');
+    expect(job.salary).toBe('$12.50/hr');
+  });
+});
