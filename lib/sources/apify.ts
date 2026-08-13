@@ -1,9 +1,15 @@
 // ─── Apify REST helper ────────────────────────────────────────────────────────
 // run-sync-get-dataset-items starts an actor run and returns its dataset in
-// one call. 60s budget per the spec — on failure the caller shows a
-// per-source banner and other sources still render.
+// one call.
+//
+// The budget is 110s, not the 60s we started with: the Upwork actor regularly
+// runs past a minute and was being killed mid-run, so that source came back
+// empty while the others succeeded. Sources run in parallel, so this raises the
+// worst case for a search rather than adding to every one. On failure the
+// caller still shows a per-source notice and the other sources render.
 
 const APIFY_BASE = 'https://api.apify.com/v2';
+const DEFAULT_TIMEOUT_MS = 110_000;
 
 export function pickString(item: Record<string, unknown>, keys: string[]): string | null {
   for (const k of keys) {
@@ -16,7 +22,7 @@ export function pickString(item: Record<string, unknown>, keys: string[]): strin
 export async function runApifyActor(
   actorId: string,
   input: unknown,
-  timeoutMs = 60_000,
+  timeoutMs = DEFAULT_TIMEOUT_MS,
 ): Promise<unknown[]> {
   const token = process.env.APIFY_TOKEN;
   if (!token) throw new Error('APIFY_TOKEN is not set');

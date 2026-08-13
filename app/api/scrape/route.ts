@@ -23,7 +23,10 @@ import { allowedSources, TIER_LIMITS, FULL_ACCESS_COPY, manilaDayStartUtc, nextM
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { createSupabaseServer } from '@/lib/supabase/server';
 
-export const maxDuration = 60; // Vercel: allow up to 60s for scraping + AI
+// Three sources scraped in parallel plus AI analysis runs past two minutes on a
+// slow day. Render imposes no per-request cap, so this only matters if the app
+// is ever hosted somewhere serverless.
+export const maxDuration = 300;
 
 const MAX_PASSES   = 3;   // maximum scrape iterations
 const BATCH_FACTOR = 1.5; // over-fetch to compensate for filtered-out jobs
