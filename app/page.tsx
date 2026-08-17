@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import Logo from '@/components/Logo';
 import { getSessionUser } from '@/lib/auth';
-import { BUY_URL } from '@/lib/tiers';
 
 // Marketing landing page — the Meta-ads destination. Mobile-first, because
 // Facebook traffic is overwhelmingly on phones, and dark to match the app so
@@ -220,10 +219,10 @@ export default async function LandingPage() {
             <p className="text-[13px] font-semibold text-emerald-400 mt-4.5">
               Land one client and it pays for months.
             </p>
-            <a href={BUY_URL} target="_blank" rel="noopener noreferrer"
+            <Link href="/get-access"
               className="inline-block mt-5 px-8 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 font-semibold text-white transition-colors">
               Get full access
-            </a>
+            </Link>
             <p className="text-xs text-gray-600 mt-3">
               Not sure? Sign up free and take 3 searches first.
             </p>
