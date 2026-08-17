@@ -21,9 +21,9 @@ export default function PaymentPicker({ methods }: { methods: PaymentMethod[] })
   }
 
   return (
-    <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
       {methods.length > 1 && (
-        <div className="flex border-b border-gray-800" role="tablist">
+        <div className="flex border-b border-slate-200" role="tablist">
           {methods.map(m => (
             <button
               key={m.id}
@@ -32,8 +32,8 @@ export default function PaymentPicker({ methods }: { methods: PaymentMethod[] })
               onClick={() => setActive(m.id)}
               className={`flex-1 px-3 py-3 text-sm font-semibold transition-colors
                 ${m.id === active
-                  ? 'text-white bg-gray-800/60 border-b-2 border-blue-500'
-                  : 'text-gray-500 hover:text-gray-300'}`}
+                  ? 'text-slate-900 bg-slate-50 border-b-2 border-blue-600'
+                  : 'text-slate-400 hover:text-slate-600'}`}
             >
               {m.label}
             </button>
@@ -43,12 +43,12 @@ export default function PaymentPicker({ methods }: { methods: PaymentMethod[] })
 
       {current && (
         <div className="p-5">
-          <p className="text-xs text-gray-500 mb-4">{current.hint}</p>
+          <p className="text-xs text-slate-500 mb-4">{current.hint}</p>
 
           {current.hasQr && (
             <div className="flex justify-center mb-5">
               {/* White plate: QR codes need light behind them to scan reliably */}
-              <div className="bg-white p-3 rounded-2xl">
+              <div className="bg-white p-3 rounded-2xl border border-slate-200">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={current.qrSrc}
@@ -85,15 +85,15 @@ function Field({ label, value, onCopy, copied }: {
   label: string; value: string; onCopy?: () => void; copied?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between gap-3 bg-gray-950 border border-gray-800 rounded-lg px-3.5 py-2.5">
+    <div className="flex items-center justify-between gap-3 bg-slate-50 border border-slate-200 rounded-lg px-3.5 py-2.5">
       <div className="min-w-0">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-600">{label}</p>
-        <p className="text-sm text-white font-medium truncate tabular-nums">{value}</p>
+        <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">{label}</p>
+        <p className="text-sm text-slate-900 font-medium truncate tabular-nums">{value}</p>
       </div>
       {onCopy && (
         <button
           onClick={onCopy}
-          className="shrink-0 text-[11px] font-semibold text-blue-400 hover:text-blue-300 transition-colors"
+          className="shrink-0 text-[11px] font-semibold text-blue-600 hover:text-blue-700 transition-colors"
         >
           {copied ? 'Copied' : 'Copy'}
         </button>

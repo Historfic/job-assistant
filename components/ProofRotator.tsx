@@ -58,26 +58,26 @@ export default function ProofRotator() {
           <figure
             key={i}
             aria-hidden={i !== index}
-            className={`absolute inset-0 bg-gray-950 border rounded-2xl p-6 flex flex-col justify-between
+            className={`absolute inset-0 bg-white border rounded-2xl p-6 flex flex-col justify-between
               transition-opacity duration-700 ease-in-out
               motion-reduce:transition-none
               ${i === index ? 'opacity-100' : 'opacity-0 pointer-events-none'}
-              ${s.placeholder ? 'border-dashed border-gray-700' : 'border-gray-800'}`}
+              ${s.placeholder ? 'border-dashed border-slate-300' : 'border-slate-200'}`}
           >
             {s.placeholder && (
-              <span className="absolute top-3 right-3 text-[9px] font-bold uppercase tracking-widest text-gray-700">
+              <span className="absolute top-3 right-3 text-[9px] font-bold uppercase tracking-widest text-slate-300">
                 Placeholder
               </span>
             )}
-            <blockquote className="text-[15px] leading-relaxed text-gray-300">
+            <blockquote className="text-[15px] leading-relaxed text-slate-700">
               &ldquo;{s.quote}&rdquo;
             </blockquote>
             <figcaption className="flex items-center gap-3 mt-4">
               {/* Swap for a real photo — a face lifts trust more than any copy */}
-              <span className="w-9 h-9 rounded-full bg-gray-800 border border-gray-700 shrink-0" />
+              <span className="w-9 h-9 rounded-full bg-slate-200 border border-slate-300 shrink-0" />
               <span className="min-w-0">
-                <span className="block text-[13px] font-semibold text-white truncate">{s.name}</span>
-                <span className="block text-[11.5px] text-gray-600 truncate">{s.role}</span>
+                <span className="block text-[13px] font-semibold text-slate-900 truncate">{s.name}</span>
+                <span className="block text-[11.5px] text-slate-500 truncate">{s.role}</span>
               </span>
             </figcaption>
           </figure>
@@ -92,7 +92,7 @@ export default function ProofRotator() {
             aria-label={`Show quote ${i + 1}`}
             aria-current={i === index}
             className={`h-1.5 rounded-full transition-all duration-300
-              ${i === index ? 'w-6 bg-blue-500' : 'w-1.5 bg-gray-700 hover:bg-gray-600'}`}
+              ${i === index ? 'w-6 bg-blue-600' : 'w-1.5 bg-slate-300 hover:bg-slate-400'}`}
           />
         ))}
       </div>
