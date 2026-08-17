@@ -41,12 +41,12 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="flex items-center gap-2 justify-center mb-6">
           <Logo size={32} boxed />
-          <span className="text-lg font-semibold text-white">JobIQ</span>
+          <span className="text-lg font-semibold text-white">EasyClient</span>
         </div>
 
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
           <h1 className="text-base font-semibold text-white mb-1">Welcome back</h1>
-          <p className="text-xs text-gray-500 mb-5">Sign in to your JobIQ account.</p>
+          <p className="text-xs text-gray-500 mb-5">Sign in to your EasyClient account.</p>
 
           {demoMode && (
             <div className="mb-4 px-3 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-xl">

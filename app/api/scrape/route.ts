@@ -102,7 +102,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'keyword is required' }, { status: 400 });
     }
 
-    // JobIQ auth (middleware also guards; this is defense in depth)
+    // EasyClient auth (middleware also guards; this is defense in depth)
     const user = await getSessionUser();
     if (!user) {
       return NextResponse.json({ error: 'Not authenticated. Please sign in.' }, { status: 401 });

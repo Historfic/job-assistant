@@ -37,7 +37,7 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-sm">
         <div className="flex items-center gap-2 justify-center mb-6">
           <Logo size={32} boxed />
-          <span className="text-lg font-semibold text-white">JobIQ</span>
+          <span className="text-lg font-semibold text-white">EasyClient</span>
         </div>
 
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">

@@ -7,7 +7,7 @@
 // Without CRON_SECRET set the endpoint is disabled entirely rather than open.
 //
 // Deliberately cheap: alerts skip AI analysis and reuse the raw source
-// adapters. Every run costs real money and this is a one-time-payment product.
+// adapters. Every run costs real money on a fixed monthly subscription.
 
 import { NextRequest, NextResponse } from 'next/server';
 import { isAdminConfigured, createSupabaseAdmin } from '@/lib/supabase/admin';

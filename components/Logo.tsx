@@ -1,4 +1,4 @@
-// JobIQ mark — three bars, longest on top: the ranked shortlist the product
+// EasyClient mark — three bars, longest on top: the ranked shortlist the product
 // produces. Kept as plain geometry so it stays crisp at favicon size.
 //
 // `boxed` wraps it on a dark rounded square for light backgrounds (social
@@ -23,14 +23,14 @@ export default function Logo({
 
   if (!boxed) {
     return (
-      <svg width={size} height={size} viewBox="0 0 48 48" role="img" aria-label="JobIQ" className={className}>
+      <svg width={size} height={size} viewBox="0 0 48 48" role="img" aria-label="EasyClient" className={className}>
         {bars}
       </svg>
     );
   }
 
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" role="img" aria-label="JobIQ" className={className}>
+    <svg width={size} height={size} viewBox="0 0 48 48" role="img" aria-label="EasyClient" className={className}>
       <rect width="48" height="48" rx="11" fill="#0a0a0f" />
       {bars}
     </svg>

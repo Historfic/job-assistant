@@ -37,14 +37,14 @@ export function buildAlertHtml(
 
   return `
   <div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px 20px;color:#111827;">
-    <p style="font-size:13px;color:#6b7280;margin:0 0 4px 0;">JobIQ</p>
+    <p style="font-size:13px;color:#6b7280;margin:0 0 4px 0;">EasyClient</p>
     <h1 style="font-size:19px;margin:0 0 18px 0;">New ${escapeHtml(keyword)} jobs for you</h1>
     <table role="presentation" cellpadding="0" cellspacing="0" width="100%">${rows}</table>
     <p style="margin:22px 0 0 0;">
-      <a href="${escapeHtml(appUrl)}/dashboard" style="background:#2563eb;color:#fff;text-decoration:none;padding:11px 20px;border-radius:10px;font-size:14px;display:inline-block;">Open JobIQ</a>
+      <a href="${escapeHtml(appUrl)}/dashboard" style="background:#2563eb;color:#fff;text-decoration:none;padding:11px 20px;border-radius:10px;font-size:14px;display:inline-block;">Open EasyClient</a>
     </p>
     <p style="color:#9ca3af;font-size:12px;margin-top:26px;line-height:1.5;">
-      You're getting this because you turned on daily alerts in JobIQ.
+      You're getting this because you turned on daily alerts in EasyClient.
       Turn them off any time from your account menu.
     </p>
   </div>`;

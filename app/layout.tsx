@@ -9,17 +9,17 @@ const DESCRIPTION =
 
 export const metadata: Metadata = {
   icons: { icon: '/icon.svg', apple: '/logo-social.svg' },
-  title: 'JobIQ — Find your next online job',
+  title: 'EasyClient — Find your next online job',
   description: DESCRIPTION,
   // What Facebook shows when someone shares the link — the ads land here, so
   // the preview card matters as much as the page.
   openGraph: {
-    title: 'JobIQ — Find your next online job',
+    title: 'EasyClient — Find your next online job',
     description: DESCRIPTION,
-    siteName: 'JobIQ',
+    siteName: 'EasyClient',
     locale: 'en_PH',
     type: 'website',
-    images: [{ url: '/logo-social.svg', width: 512, height: 512, alt: 'JobIQ' }],
+    images: [{ url: '/logo-social.svg', width: 512, height: 512, alt: 'EasyClient' }],
   },
 };
 

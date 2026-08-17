@@ -162,7 +162,7 @@ async function personalizeWithOpenRouter(job: AnalyzedJob, baseMessage: string, 
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
           'HTTP-Referer': 'https://job-assistant.vercel.app',
-          'X-Title': 'JobIQ Assistant',
+          'X-Title': 'EasyClient Assistant',
         },
         body: JSON.stringify({
           model,

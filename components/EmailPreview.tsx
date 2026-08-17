@@ -81,7 +81,7 @@ export default function EmailPreview({ result, options, userEmail, onSend, sendi
 
         {/* Email header bar */}
         <div className="bg-[#1d4ed8] px-6 py-5">
-          <h1 className="text-lg font-bold text-white">JobIQ Job Digest</h1>
+          <h1 className="text-lg font-bold text-white">EasyClient Job Digest</h1>
           <p className="text-blue-200 text-xs mt-1">{date} · Keyword: &ldquo;{options.keyword}&rdquo;</p>
         </div>
 
@@ -178,7 +178,7 @@ export default function EmailPreview({ result, options, userEmail, onSend, sendi
 
         {/* Footer */}
         <div className="bg-gray-100 px-6 py-3 text-center">
-          <p className="text-[10px] text-gray-400">Sent by JobIQ · AI-Powered Job Application Assistant</p>
+          <p className="text-[10px] text-gray-400">Sent by EasyClient · AI-Powered Job Application Assistant</p>
         </div>
       </div>
 

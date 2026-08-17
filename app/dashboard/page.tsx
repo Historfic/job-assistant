@@ -286,7 +286,7 @@ export default function DashboardPage() {
           {/* Logo */}
           <div className="flex items-center gap-2">
             <Logo size={22} />
-            <span className="text-sm font-semibold">JobIQ</span>
+            <span className="text-sm font-semibold">EasyClient</span>
           </div>
 
           {/* Tells the truth about where the results came from. Nothing to show

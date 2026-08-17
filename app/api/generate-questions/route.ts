@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
               Authorization: `Bearer ${openRouterKey}`,
               'Content-Type': 'application/json',
               'HTTP-Referer': 'https://job-assistant.vercel.app',
-              'X-Title': 'JobIQ Assistant',
+              'X-Title': 'EasyClient Assistant',
             },
             body: JSON.stringify({
               model,

@@ -49,7 +49,7 @@ function buildEmailHtml(result: ProcessResult, options: ScrapeOptions): string {
 
     <!-- Header -->
     <div style="background:#1d4ed8;padding:28px 32px;">
-      <h1 style="margin:0;color:#fff;font-size:20px;font-weight:700;">JobIQ Job Digest</h1>
+      <h1 style="margin:0;color:#fff;font-size:20px;font-weight:700;">EasyClient Job Digest</h1>
       <p style="margin:6px 0 0;color:#bfdbfe;font-size:13px;">${date} · Keyword: "${options.keyword}"</p>
     </div>
 
@@ -114,7 +114,7 @@ function buildEmailHtml(result: ProcessResult, options: ScrapeOptions): string {
 
     <!-- Footer -->
     <div style="background:#f3f4f6;padding:16px 32px;text-align:center;border-top:1px solid #e5e7eb;">
-      <p style="margin:0;font-size:11px;color:#9ca3af;">Sent by JobIQ · AI-Powered Job Assistant</p>
+      <p style="margin:0;font-size:11px;color:#9ca3af;">Sent by EasyClient · AI-Powered Job Assistant</p>
     </div>
   </div>
 </body>
@@ -146,7 +146,7 @@ export async function POST(req: NextRequest) {
     }
 
     const htmlBody = buildEmailHtml(result, options);
-    const subject = `[JobIQ] ${result.validJobs.length} job${result.validJobs.length !== 1 ? 's' : ''} found for "${options.keyword}" · ${new Date().toLocaleDateString()}`;
+    const subject = `[EasyClient] ${result.validJobs.length} job${result.validJobs.length !== 1 ? 's' : ''} found for "${options.keyword}" · ${new Date().toLocaleDateString()}`;
 
     // ── Real send (if SMTP credentials are configured) ───────────────────────
     if (process.env.SMTP_USER && process.env.SMTP_PASS) {
@@ -162,7 +162,7 @@ export async function POST(req: NextRequest) {
       });
 
       await transporter.sendMail({
-        from: `"JobIQ Assistant" <${process.env.SMTP_USER}>`,
+        from: `"EasyClient Assistant" <${process.env.SMTP_USER}>`,
         to: recipient,
         subject,
         html: htmlBody,

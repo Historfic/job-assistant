@@ -49,7 +49,7 @@ export default function SignupPage() {
       <div className="w-full max-w-sm">
         <div className="flex items-center gap-2 justify-center mb-6">
           <Logo size={32} boxed />
-          <span className="text-lg font-semibold text-white">JobIQ</span>
+          <span className="text-lg font-semibold text-white">EasyClient</span>
         </div>
 
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
@@ -57,7 +57,7 @@ export default function SignupPage() {
             <>
               <h1 className="text-base font-semibold text-white mb-1">Check your email</h1>
               <p className="text-xs text-gray-500 mb-5">
-                We sent a confirmation link to {email}. Click it to activate your JobIQ account.
+                We sent a confirmation link to {email}. Click it to activate your EasyClient account.
               </p>
               <Link
                 href="/login"
@@ -69,7 +69,7 @@ export default function SignupPage() {
           ) : (
             <>
               <h1 className="text-base font-semibold text-white mb-1">Create your account</h1>
-              <p className="text-xs text-gray-500 mb-5">Start finding jobs with JobIQ.</p>
+              <p className="text-xs text-gray-500 mb-5">Start finding jobs with EasyClient.</p>
 
               {demoMode && (
                 <div className="mb-4 px-3 py-2.5 bg-blue-500/10 border border-blue-500/20 rounded-xl">

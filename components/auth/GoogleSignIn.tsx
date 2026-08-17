@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 // <project>.supabase.co, and Google's prompt then reads "Sign in to
 // seddaaomlpnwjqmyvwmh.supabase.co" — which looks like a phishing attempt to
 // anyone who didn't build this. Google Identity Services keeps the whole
-// exchange on our origin, so the prompt shows JobIQ instead.
+// exchange on our origin, so the prompt shows EasyClient instead.
 //
 // Without NEXT_PUBLIC_GOOGLE_CLIENT_ID we fall back to the old redirect flow,
 // so nothing breaks if the client ID isn't configured.

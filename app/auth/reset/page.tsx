@@ -36,12 +36,12 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-sm">
         <div className="flex items-center gap-2 justify-center mb-6">
           <Logo size={32} boxed />
-          <span className="text-lg font-semibold text-white">JobIQ</span>
+          <span className="text-lg font-semibold text-white">EasyClient</span>
         </div>
 
         <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6">
           <h1 className="text-base font-semibold text-white mb-1">Set a new password</h1>
-          <p className="text-xs text-gray-500 mb-5">Choose a new password for your JobIQ account.</p>
+          <p className="text-xs text-gray-500 mb-5">Choose a new password for your EasyClient account.</p>
 
           {error && (
             <div className="mb-4 px-3 py-2 bg-red-500/10 border border-red-500/20 rounded-lg text-xs text-red-400">

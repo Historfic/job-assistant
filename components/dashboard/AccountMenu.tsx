@@ -41,7 +41,7 @@ export default function AccountMenu({ me, avatar, onLogout, onConnectClick, onDi
           {user.tier === 'free' && (
             <div className="px-2.5 py-2.5 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
               <p className="text-[10px] text-yellow-200 mb-2">
-                One payment unlocks LinkedIn, Upwork and 20 searches a day — forever.
+                Unlock LinkedIn, Upwork and 20 searches a day.
               </p>
               <UpgradeButton size="sm" className="w-full" />
             </div>

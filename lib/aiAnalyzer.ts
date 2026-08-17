@@ -148,7 +148,7 @@ async function analyzeJobWithOpenRouter(job: RawJob, apiKey: string): Promise<Jo
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
       'HTTP-Referer': 'https://job-assistant.vercel.app',
-      'X-Title': 'JobIQ Assistant',
+      'X-Title': 'EasyClient Assistant',
     },
     body: JSON.stringify({
       model: 'google/gemma-4-31b-it:free',
@@ -308,7 +308,7 @@ IMPORTANT: Do NOT use em dashes (—) or en dashes (–) anywhere. Use commas, p
           'Authorization': `Bearer ${openRouterKey}`,
           'Content-Type': 'application/json',
           'HTTP-Referer': 'https://job-assistant.vercel.app',
-          'X-Title': 'JobIQ Assistant',
+          'X-Title': 'EasyClient Assistant',
         },
         body: JSON.stringify({
           model: 'google/gemma-4-31b-it:free',

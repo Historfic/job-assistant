@@ -54,7 +54,7 @@ export default function OjConnectModal({ open, onClose, onConnected }: {
           <ul className="text-[11px] text-gray-400 space-y-1 list-disc pl-4">
             <li><strong className="text-gray-300">What we store:</strong> an encrypted session token — never your password.</li>
             <li><strong className="text-gray-300">Why:</strong> to fetch full job details from your OnlineJobs.ph account and personalize your cover letters.</li>
-            <li><strong className="text-gray-300">Where:</strong> in JobIQ&apos;s database, encrypted (AES-256).</li>
+            <li><strong className="text-gray-300">Where:</strong> in EasyClient&apos;s database, encrypted (AES-256).</li>
             <li><strong className="text-gray-300">How long:</strong> until you disconnect — deletion is immediate.</li>
             <li><strong className="text-gray-300">Your rights:</strong> you may access, correct, or delete your data anytime.</li>
           </ul>

@@ -108,7 +108,7 @@ export default function AdminPage() {
       <header className="flex items-center justify-between px-5 py-4 border-b border-gray-800">
         <div className="flex items-center gap-2">
           <Logo size={28} boxed />
-          <span className="font-semibold">JobIQ admin</span>
+          <span className="font-semibold">EasyClient admin</span>
         </div>
         <button onClick={() => router.push('/dashboard')} className="text-xs text-gray-400 hover:text-white transition-colors">
           Back to app

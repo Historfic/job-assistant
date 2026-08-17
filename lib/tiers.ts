@@ -1,16 +1,18 @@
 // ─── Access & Search Limits ───────────────────────────────────────────────────
-// One product, one-time payment (₱999). profiles.tier semantics:
+// One product, monthly subscription (₱999/month). profiles.tier semantics:
 //   'free' = unpaid preview — 3 LIFETIME searches, OnlineJobs.ph only
 //   'pro'  = paid full access — all sources, 20 searches per Manila day
 // One "search" = one submission of the search form, regardless of how many
 // sources are selected. Day boundaries use Asia/Manila (UTC+8, no DST).
-// Until automated checkout ships, Rafael marks accounts paid by flipping
-// profiles.tier to 'pro' in Supabase after a GCash/bank payment via the
-// Easy Freelancing Facebook page.
+//
+// Billing is manual: customers pay by GCash each month and are flipped to
+// 'pro' in the admin console. Nothing here expires an account automatically —
+// lapsed subscribers have to be revoked by hand until checkout is automated.
 
 import type { JobSource } from '@/types';
 
-export const FULL_ACCESS_COPY = 'Get full access — ₱999 one-time — via our Facebook page.';
+export const PRICE_COPY = '₱999/month';
+export const FULL_ACCESS_COPY = 'Get full access — ₱999/month — via our Facebook page.';
 
 /**
  * Where "Get full access" sends people. Set NEXT_PUBLIC_BUY_URL to your
