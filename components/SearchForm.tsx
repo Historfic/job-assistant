@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { JobSource, ScrapeOptions } from '@/types';
 import SourceSelector from '@/components/dashboard/SourceSelector';
 
@@ -43,7 +43,22 @@ function Select({ children, ...props }: React.SelectHTMLAttributes<HTMLSelectEle
 // ─── Component ─────────────────────────────────────────────────────────────────
 
 export default function SearchForm({ onSearch, loading, tier }: Props) {
+  // A paying customer's first search should use everything they paid for —
+  // LinkedIn and Upwork are the whole reason for the upgrade, and most people
+  // won't think to switch them on. Their own choice always wins after that.
   const [sources, setSources] = useState<JobSource[]>(['onlinejobs']);
+  const [sourcesChosen, setSourcesChosen] = useState(false);
+
+  useEffect(() => {
+    if (!sourcesChosen && tier === 'pro') {
+      setSources(['onlinejobs', 'linkedin', 'upwork']);
+    }
+  }, [tier, sourcesChosen]);
+
+  function chooseSources(next: JobSource[]) {
+    setSourcesChosen(true);
+    setSources(next);
+  }
 
   // Required fields
   const [keyword, setKeyword] = useState('AI automation');
@@ -96,7 +111,7 @@ export default function SearchForm({ onSearch, loading, tier }: Props) {
           />
         </div>
 
-        <SourceSelector selected={sources} tier={tier} onChange={setSources} />
+        <SourceSelector selected={sources} tier={tier} onChange={chooseSources} />
 
         <div className="grid grid-cols-2 gap-2">
           <div>
