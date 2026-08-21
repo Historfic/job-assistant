@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Logo from '@/components/Logo';
-import ProofRotator from '@/components/ProofRotator';
+import FilipinoStrip from '@/components/FilipinoStrip';
 import { getSessionUser } from '@/lib/auth';
 
 // Marketing landing page — the Meta-ads destination. Read on a phone, mid-scroll,
@@ -182,13 +182,10 @@ export default async function LandingPage() {
         </div>
       </div>
 
-      {/* ── Proof ── */}
+      {/* ── Who it's for ── */}
       <div className="max-w-2xl mx-auto px-5">
         <section className="py-14">
-          <h2 className="text-center text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400 mb-6">
-            From freelancers using it
-          </h2>
-          <ProofRotator />
+          <FilipinoStrip />
         </section>
       </div>
 
