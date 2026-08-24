@@ -1,42 +1,40 @@
-# Video scripts — the two raw clips
+# Video scripts — two ads from two clips
 
-You have two clips of the same thing: working on a MacBook, sipping coffee, not
-looking at the camera. One on a mountain, one in a coffee shop. Roughly 12
-seconds each.
+Two clips of the same thing: working on a MacBook, sipping coffee, not looking
+at the camera. One on a mountain, one in a coffee shop. Roughly 12 seconds each.
 
-Not looking at the camera is an advantage, not a limitation. It reads as
-someone caught working rather than someone performing an ad, and the viewer
-watches instead of bracing to be sold to. Don't reshoot it looking up.
+**Two separate ads.** Each clip carries a different angle, which is exactly what
+Meta needs — two ads that differ only in wording teach the algorithm nothing.
 
----
+Not looking at the camera is an advantage. It reads as someone caught working
+rather than someone performing an ad, so the viewer watches instead of bracing
+to be sold to. Don't reshoot it looking up.
 
-## The key idea: they are not two ads, they are two halves
+| Ad | Clip | Angle | Speaks to |
+|---|---|---|---|
+| **A** | Coffee shop | The grind you're in now | Someone tired of searching |
+| **B** | Mountain | What the work buys | Someone who wants out |
 
-The environments already tell the story. Use them for what they are:
+Both use the same 8-second screen recording in the middle, so you record that
+once and cut it into both.
 
-| Clip | What it says | Where it goes |
-|---|---|---|
-| **Coffee shop** | The everyday grind. This is you now. | **Opening** — the problem |
-| **Mountain** | This is what the work buys. | **Closing** — the payoff |
-
-Same person, same laptop, same coffee — only the place changes. That contrast
-does the emotional work without a single word explaining it.
-
-The 8 seconds in the middle is a screen recording. You don't have it yet, it's
-free, and it's the part that proves the product is real.
+**Each ad opens and closes on the clip.** Use one section at the start and a
+different section at the end — same 12 seconds of footage, two moments. Closing
+on real footage instead of a black card also makes the CTA feel like part of
+the story rather than an interruption.
 
 ---
 
-## Script 1 — Before / After (lead with this)
+# AD A — Coffee shop
 
-**Total: 16 seconds. Uses both clips.**
+**13 seconds. Angle: the daily grind.**
 
 ```
-0:00–0:03   COFFEE SHOP
+0:00–0:03   COFFEE SHOP  (first seconds of the clip)
             Caption: "3 job sites. Isa-isa. Araw-araw."
 
 0:03–0:06   SCREEN RECORDING — typing the search
-            Caption: "Ngayon, isang search na lang."
+            Caption: "Isang search na lang ngayon."
 
 0:06–0:09   SCREEN RECORDING — results appear
             Caption: "OnlineJobs + LinkedIn + Upwork"
@@ -44,172 +42,174 @@ free, and it's the part that proves the product is real.
 0:09–0:11   SCREEN RECORDING — scrolling the ranked list
             Caption: "Ranked. May cover letter na."
 
-0:11–0:14   MOUNTAIN
-            Caption: "Kaya kong magtrabaho kahit saan."
-
-0:14–0:16   TEXT CARD (black or brand blue)
-            "3 free searches. Walang card."
-            easyclients.com
+0:11–0:13   COFFEE SHOP  (a later section of the clip)
+            Caption: "3 free searches. Walang card."
+            Small under it: easyclients.com
 ```
 
-**Ad text above the video:**
+**Primary text** (front-loaded — only ~125 characters show before "See more"):
 ```
-Tatlong job sites, isang search. Mga isang minuto lang.
-3 free searches muna — walang card, walang hihinging payment details.
+45 minutes hanapin, 5 minutes mag-apply. Mali ang ratio.
+
+EasyClient checks OnlineJobs.ph, LinkedIn at Upwork sa isang search — mga isang
+minuto, ranked by fit, tanggal na ang expired.
+
+3 free searches. Walang card.
 ```
 
-Why it works: problem, mechanism, payoff, ask. The mountain lands right after
-the viewer understands what the tool does, so it reads as consequence rather
-than decoration.
+- **Headline:** `3 job sites. 1 search.` (22)
+- **Description:** `Free to try. No card.` (21)
+- **CTA button:** Learn more
+
+Why it works: it opens inside the viewer's actual morning. No aspiration, no
+promise — just their own routine reflected back, then a faster version of it.
 
 ---
 
-## Script 2 — Mountain first (curiosity hook)
+# AD B — Mountain
 
-**Total: 15 seconds. Uses both clips.**
+**15 seconds. Angle: curiosity, then freedom.**
 
 ```
-0:00–0:03   MOUNTAIN
+0:00–0:03   MOUNTAIN  (first seconds of the clip)
             Caption: "Martes ng umaga. Nasa bundok ako."
 
-0:03–0:05   COFFEE SHOP
-            Caption: "Dati, buong umaga sa tatlong job site."
+0:03–0:05   MOUNTAIN  (continue)
+            Caption: "Tapos na akong maghanap ng trabaho."
 
-0:05–0:12   SCREEN RECORDING
-            0:05  "Isang search na lang ngayon."
-            0:08  "Tatlong site. Ranked by fit."
-            0:10  "Kasama na ang cover letter."
+0:05–0:08   SCREEN RECORDING — typing the search
+            Caption: "Isang search. Tatlong site."
 
-0:12–0:15   TEXT CARD
-            "3 free searches. Walang card."
-            easyclients.com
+0:08–0:11   SCREEN RECORDING — results appear
+            Caption: "Ranked by fit. May cover letter."
+
+0:11–0:13   SCREEN RECORDING — scrolling
+            Caption: "Mga isang minuto lang."
+
+0:13–0:15   MOUNTAIN  (a later section of the clip)
+            Caption: "3 free searches. Walang card."
+            Small under it: easyclients.com
 ```
 
-**Ad text:**
+**Primary text:**
 ```
 Bakit nasa bundok ako ng Martes ng umaga? Dahil tapos na ako maghanap.
-Try 3 free searches — walang card.
+
+Isang search sa OnlineJobs.ph, LinkedIn at Upwork. Ranked by fit, kasama na ang
+cover letter, mga isang minuto lang.
+
+3 free searches muna — walang card.
 ```
 
-Why it works: an unexplained image creates a question, and the question buys
-you the next three seconds. Strongest scroll-stopper of the three.
+- **Headline:** `Tapos na maghanap. 1 minuto.` (28)
+- **Description:** `3 free searches. No card.` (25)
+- **CTA button:** Learn more
+
+Why it works: an unexplained image creates a question, and the question buys you
+the next three seconds — the hardest three seconds in the whole ad. Then the
+screen recording answers it with a mechanism instead of a promise.
 
 ---
 
-## Script 3 — Trust (coffee shop only)
+# The screen recording
 
-**Total: 13 seconds.** For the audience that assumes everything online is a
-scam — which in this market is most of them.
-
-```
-0:00–0:03   COFFEE SHOP
-            Caption: "Scam ba 'to? Fair na tanong."
-
-0:03–0:06   SCREEN RECORDING
-            Caption: "3 free searches muna. Walang card."
-
-0:06–0:09   SCREEN RECORDING — hovering a real job link
-            Caption: "Bawat trabaho, may totoong link."
-
-0:09–0:11   SCREEN RECORDING
-            Caption: "I-check mo mismo sa OnlineJobs."
-
-0:11–0:13   TEXT CARD
-            "Subukan bago magtiwala."
-            easyclients.com
-```
-
-Run this one alongside Script 1. Trust and curiosity pull different people, and
-you cannot guess which is bigger in your audience.
-
----
-
-## The screen recording you still need
-
-Eight seconds in the finished ad, so record 45–60 seconds and cut it down.
+Eight seconds in each finished ad, so record 45–60 seconds and cut it down. One
+recording serves both ads.
 
 **What to capture:**
 
 1. The dashboard, already loaded, search box empty
 2. Type `virtual assistant` — slowly enough to read
 3. Hit search
-4. The wait (you'll speed this up 3× in the edit)
+4. The wait (speed this to 3× in the edit)
 5. Results appearing with their fit scores
 6. Slow scroll through 4–5 results
 7. Stop on a high-scoring one with a real salary visible
 
 **Rules:**
 
-- **Do not blur anything.** Real job titles, real salaries, real sources. The
-  specificity is the entire proof.
-- Record on the phone if the site is mobile-friendly — vertical native footage
-  beats a cropped desktop recording, and your audience is on a phone.
-- Close every other tab. A cluttered browser reads as amateur.
-- Use a search that returns good results. Test it once before recording.
-- No cursor jitter. Move deliberately, pause where you want a caption to land.
+- **Blur nothing.** Real job titles, real salaries, real sources. The
+  specificity is the entire proof
+- Record on the phone if the site works there — vertical native footage beats a
+  cropped desktop capture, and your audience is on a phone
+- Close every other tab. A cluttered browser reads as amateur
+- Run the search once before recording so you know it returns good results
+- Move the cursor deliberately. Pause where a caption needs to land
 
 ---
 
-## Text on screen
+# Text on screen
 
 - **6–8 words maximum per card.** People read while scrolling
-- **Hold each card 2 seconds minimum.** Under that it is decoration, not
+- **Hold each card 2 seconds minimum.** Below that it's decoration, not
   communication
-- **White bold sans, heavy dark shadow** — or a solid dark bar behind it.
-  Never thin text over footage
+- **White bold sans with a heavy dark shadow**, or a solid dark bar behind it.
+  Never thin text straight over footage
 - **Middle third of the frame.** Reels and TikTok cover the top ~15% and bottom
-  ~25% with their own UI. Text there gets hidden
-- Caption every screen-recording moment. Nobody knows what they are looking at
+  ~25% with their own UI — text there is invisible, and you won't find out until
+  the ad has run
+- Caption every screen-recording moment. Nobody knows what they're looking at
   otherwise
 
 ---
 
-## Music
+# Music
 
 **Never use a popular song in a paid ad.** Meta will mute or reject it. Pull
-from these instead, all cleared:
+from these instead, all cleared for commercial use:
 
 - **Meta Sound Collection** — facebook.com/sound/collection — for Meta ads
 - **TikTok Commercial Music Library** — inside TikTok Ads Manager
-- **Pixabay Music** / **YouTube Audio Library** — for anything else
+- **Pixabay Music** / **YouTube Audio Library** — anything else
 
 Search: **lo-fi, chill hop, warm acoustic, uplifting minimal — 90 to 110 BPM.**
 Coffee shop at 8am that lifts. Not corporate optimism, not sad piano.
 
-**Cut on the beat.** The transition from coffee shop into the screen recording
+Give the two ads **different tracks**. Coffee shop wants something steady and
+close; the mountain wants more air and a lift.
+
+**Cut on the beat.** The transition from the clip into the screen recording
 should land exactly on a downbeat. That single sync is what separates an edit
 that feels intentional from one that feels assembled.
 
 Organic posts are different: on TikTok and Reels you *can* use trending audio
-when you're not paying to promote. Same clip, trending sound organically,
+when you're not paying to promote it. Same clip, trending sound organically,
 cleared track when money is behind it.
 
-Also test one version with **no music at all**. Meta plays muted by default and
+Also test one version with **no music at all**. Meta plays muted by default, and
 silent captioned ads often win.
 
 ---
 
-## Editing
+# Editing
 
 **CapCut**, free, on the phone. About an hour including learning it.
 
-1. Import both clips and the screen recording
-2. Trim the coffee shop to 3 seconds, mountain to 3 seconds
+1. Import the clip and the screen recording
+2. Trim the clip's opening to 3 seconds and pick a different later section for
+   the closing
 3. Speed the screen recording's loading section to 3×
 4. Drop text cards on the timings above
-5. Add music, drag until a downbeat sits on your first cut
-6. Export
+5. Add music, drag it until a downbeat sits on your first cut
+6. Export, then repeat for the second ad
 
-**Export settings:** 1080×1920, 9:16, 30fps, MP4.
+**Export:** 1080×1920, 9:16, 30fps, MP4.
 
-Same file works for Reels, TikTok, and Meta ads. For feed placements, export a
-1:1 crop as well — check your text still sits inside the square.
+Same file works for Reels, TikTok and Meta ads. For feed placements export a 1:1
+crop too, and check your text still sits inside the square.
 
 ---
 
-## What to run first
+# Running them
 
-1. **Script 1** and **Script 3** as your two Meta ads
-2. **Script 2** organically on TikTok and Reels, with trending audio
+Put **both ads in the same ad set**, same budget, and let them compete. Don't
+split them across ad sets — that divides your data and neither learns.
 
-Give each at least 4 days and ₱800 before judging. Day-one numbers are noise.
+Give each at least **4 days and ₱800** before judging. Meta's learning phase is
+real and day-one numbers are noise.
+
+Watch **cost per signup**, not clicks. A cheap click that never signs up costs
+more than an expensive one that does.
+
+Post both organically on TikTok and Reels as well, with trending audio. That's
+free reach, and it costs you two uploads.
