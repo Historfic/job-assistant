@@ -247,7 +247,11 @@ export default async function LandingPage() {
             </Link>
           </section>
           <footer className="border-t border-gray-800 pt-6 pb-11 text-center text-xs text-gray-600">
-            EasyClient · Made in the Philippines, for Filipino freelancers
+            <p>EasyClient · Made in the Philippines, for Filipino freelancers</p>
+            <p className="mt-2.5 flex items-center justify-center gap-4">
+              <Link href="/privacy" className="hover:text-gray-400 transition-colors">Privacy</Link>
+              <Link href="/terms" className="hover:text-gray-400 transition-colors">Terms</Link>
+            </p>
           </footer>
         </div>
       </div>
