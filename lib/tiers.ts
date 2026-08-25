@@ -11,8 +11,27 @@
 
 import type { JobSource } from '@/types';
 
+/**
+ * Founding-member pricing.
+ *
+ * REGULAR_PRICE_COPY is a real FUTURE price, not a struck-through past one we
+ * never charged — inventing a "was" price is a deceptive sales act under the
+ * Consumer Act (RA 7394) and Meta rejects ads that claim false discounts.
+ *
+ * The promise only stays honest if it is kept: a founding member pays
+ * PRICE_COPY for as long as they stay, even after the price rises for new
+ * members. Raise them later and this was a fake discount with extra steps.
+ *
+ * FOUNDING_SEATS is a number you control by hand, the same way activations are
+ * done by hand. Nothing counts it automatically.
+ */
 export const PRICE_COPY = '₱999/month';
-export const FULL_ACCESS_COPY = 'Get full access — ₱999/month — via our Facebook page.';
+export const REGULAR_PRICE_COPY = '₱1,499/month';
+export const FOUNDING_SEATS = 50;
+export const FOUNDING_NOTE = `Founding price, locked for life. First ${FOUNDING_SEATS} members only.`;
+
+export const FULL_ACCESS_COPY =
+  `Get full access — ₱999/month, locked for life for the first ${FOUNDING_SEATS} members — via our Facebook page.`;
 
 /**
  * Where "Get full access" sends people. Set NEXT_PUBLIC_BUY_URL to your

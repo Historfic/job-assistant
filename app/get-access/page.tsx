@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Logo from '@/components/Logo';
 import { getSessionUser } from '@/lib/auth';
-import { BUY_URL } from '@/lib/tiers';
+import { BUY_URL, FOUNDING_NOTE, REGULAR_PRICE_COPY } from '@/lib/tiers';
 import { paymentMethods } from '@/lib/payment';
 import PaymentPicker from '@/components/PaymentPicker';
 
@@ -39,11 +39,16 @@ export default async function GetAccessPage() {
             All three job sites, 20 searches a day, and daily alerts.
           </p>
 
-          <div className="mt-6 bg-white border-2 border-blue-600 rounded-2xl px-5 py-4 flex items-baseline justify-between gap-3 flex-wrap">
-            <span className="text-[28px] font-extrabold text-slate-900 tabular-nums">
-              ₱999<span className="text-sm font-semibold text-slate-400"> / month</span>
-            </span>
-            <span className="text-xs text-slate-500">No card saved. Cancel by just not paying.</span>
+          <div className="mt-6 bg-white border-2 border-blue-600 rounded-2xl px-5 py-4">
+            <div className="flex items-baseline justify-between gap-3 flex-wrap">
+              <span className="text-[28px] font-extrabold text-slate-900 tabular-nums">
+                ₱999<span className="text-sm font-semibold text-slate-400"> / month</span>
+              </span>
+              <span className="text-xs text-slate-500">No card saved. Cancel by just not paying.</span>
+            </div>
+            <p className="text-[13px] text-blue-600 font-semibold mt-2.5 pt-2.5 border-t border-slate-100">
+              {FOUNDING_NOTE} <span className="text-slate-500 font-normal">Then {REGULAR_PRICE_COPY}.</span>
+            </p>
           </div>
 
           {/* ── Step 1 ── */}

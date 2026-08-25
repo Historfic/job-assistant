@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Logo from '@/components/Logo';
 import FilipinoStrip from '@/components/FilipinoStrip';
 import { getSessionUser } from '@/lib/auth';
+import { FOUNDING_SEATS, REGULAR_PRICE_COPY } from '@/lib/tiers';
 
 // Marketing landing page — the Meta-ads destination. Read on a phone, mid-scroll,
 // by someone who has not decided to care yet: the product's own output does the
@@ -45,6 +46,8 @@ const FAQ: Array<[string, string]> = [
    'No card on file. You send GCash each month. Nothing to cancel.'],
   ['Do you need my OnlineJobs password?',
    'No. Connecting it is optional and we never store passwords.'],
+  ['What happens after the first 50 members?',
+   'The price goes up for new members. Yours does not — if you join at ₱999 you stay at ₱999.'],
 ];
 
 function Icon({ name }: { name: string }) {
@@ -195,12 +198,16 @@ export default async function LandingPage() {
           <section className="py-14">
             <div className="relative bg-slate-50 border-2 border-blue-600 rounded-[18px] p-7 text-center">
               <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10.5px] font-extrabold uppercase tracking-[0.09em] px-3.5 py-1 rounded-full whitespace-nowrap">
-                Full access
+                Founding price
               </span>
               <p className="text-[52px] font-extrabold tracking-tight text-slate-900 leading-none tabular-nums">
                 ₱999<span className="text-[15px] font-semibold text-slate-400 tracking-normal"> / month</span>
               </p>
-              <p className="text-sm text-slate-600 mt-3">GCash · BPI · GoTyme</p>
+              <p className="text-[13.5px] font-bold text-blue-600 mt-2.5">Locked for life</p>
+              <p className="text-sm text-slate-600 mt-1.5">
+                First {FOUNDING_SEATS} members. {REGULAR_PRICE_COPY} after that.
+              </p>
+              <p className="text-sm text-slate-600 mt-4">GCash · BPI · GoTyme</p>
               <p className="text-[13px] text-emerald-700 font-semibold mt-1.5">No card. Nothing to cancel.</p>
               <Link href="/get-access"
                 className="block mt-6 px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-700 font-semibold text-white shadow-lg shadow-blue-600/25 transition-colors">

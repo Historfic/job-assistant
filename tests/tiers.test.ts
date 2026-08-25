@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { TIER_LIMITS, FULL_ACCESS_COPY, allowedSources, manilaDayStartUtc, nextManilaMidnightUtc } from '@/lib/tiers';
+import { TIER_LIMITS, FULL_ACCESS_COPY, PRICE_COPY, REGULAR_PRICE_COPY, FOUNDING_SEATS,
+  allowedSources, manilaDayStartUtc, nextManilaMidnightUtc } from '@/lib/tiers';
 
 describe('access limits (monthly subscription)', () => {
   it('free preview: onlinejobs only, 3 lifetime searches', () => {
@@ -15,6 +16,17 @@ describe('access limits (monthly subscription)', () => {
   it('paywall copy states the monthly price', () => {
     expect(FULL_ACCESS_COPY).toContain('₱999/month');
     expect(FULL_ACCESS_COPY).not.toContain('one-time');
+  });
+  it('founding price is below the regular price it rises to', () => {
+    // A "was" price we never charged would be a false discount. The higher
+    // number has to be the future price, and strictly higher, or the offer is
+    // meaningless.
+    const num = (s: string) => Number(s.replace(/[^0-9]/g, ''));
+    expect(num(REGULAR_PRICE_COPY)).toBeGreaterThan(num(PRICE_COPY));
+  });
+  it('paywall copy carries the founding-seat promise', () => {
+    expect(FULL_ACCESS_COPY).toContain(String(FOUNDING_SEATS));
+    expect(FULL_ACCESS_COPY).toContain('locked for life');
   });
 });
 
