@@ -4,6 +4,7 @@ import { useState, useSyncExternalStore } from 'react';
 import type { AnalyzedJob } from '@/types';
 import type { CoverLetterQuestion } from '@/app/api/generate-questions/route';
 import { getCareerProfileSnapshot } from '@/lib/careerProfile';
+import { SOURCE_LABEL, SOURCE_BADGE, jobSource } from '@/lib/sourceLabels';
 import {
   subscribeJobStatus,
   getJobStatusSnapshot,
@@ -48,6 +49,7 @@ function relativeDate(dateStr: string | null): string {
 export default function JobCard({ job, highlight, baseMessage }: Props) {
   const [expanded, setExpanded] = useState(false);
   const { analysis } = job;
+  const source = jobSource(job);
 
   const statusMap = useSyncExternalStore(
     subscribeJobStatus,
@@ -162,6 +164,10 @@ export default function JobCard({ job, highlight, baseMessage }: Props) {
               </h3>
             </div>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
+              {/* Which site this came from. First thing people ask of a mixed list. */}
+              <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${SOURCE_BADGE[source]}`}>
+                {SOURCE_LABEL[source]}
+              </span>
               <span className="text-xs text-gray-400">{job.companyName ?? 'Unknown Company'}</span>
               {job.employmentType && (
                 <span className="px-1.5 py-0.5 rounded text-[10px] bg-gray-800 text-gray-400 border border-gray-700">

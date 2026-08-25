@@ -76,7 +76,7 @@ export default function AdminPage() {
   // Permanent, so it takes the email typed back rather than a single click.
   async function removeAccount(c: AdminCustomer) {
     const typed = window.prompt(
-      `This permanently deletes ${c.email} and everything they've saved — searches, applied jobs, CV, alerts. It cannot be undone.\n\nType their email to confirm:`,
+      `This permanently deletes ${c.email} and everything they've saved — searches, applied jobs, CV. It cannot be undone.\n\nType their email to confirm:`,
     );
     if (typed === null) return;
     if (typed.trim().toLowerCase() !== c.email.toLowerCase()) {

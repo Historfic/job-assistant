@@ -2,7 +2,7 @@
 // Permanently removes an account and everything attached to it. Every table
 // references auth.users with ON DELETE CASCADE, so removing the auth user also
 // clears their profile, saved CV, OnlineJobs connection, applied/rejected
-// history, search log and job alert.
+// history and search log.
 //
 // Needed both for tidying up test accounts and for honouring erasure requests
 // under the Data Privacy Act (RA 10173).

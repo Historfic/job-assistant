@@ -309,8 +309,8 @@ the sale.
 
     Okay na po! Naka-full access na ang [email].
 
-    20 searches a day, tatlong site, at may daily email alerts kung gusto niyong
-    i-on. Message niyo lang po ako kung may hindi gumagana.
+    20 searches a day sa tatlong site. Message niyo lang po ako kung may hindi
+    gumagana.
 
 **Renewal, sent 3 days before the month ends**
 

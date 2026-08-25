@@ -35,7 +35,6 @@ const FEATURES: Array<[string, string]> = [
   ['rank',    'Ranked by fit'],
   ['filter',  'Time-wasters removed'],
   ['pen',     'Cover letter written'],
-  ['bell',    'Daily email alerts'],
   ['shield',  'See who actually pays'],
 ];
 
@@ -56,7 +55,6 @@ function Icon({ name }: { name: string }) {
     rank:   'M4 6h16M4 12h10M4 18h6',
     filter: 'M6 18L18 6M6 6l12 12',
     pen:    'M15.2 5.2l3.6 3.6M16.7 3.7a2.5 2.5 0 013.6 3.6L6.5 21H3v-3.5z',
-    bell:   'M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1',
     shield: 'M12 3l7 3v5c0 4.4-3 8.3-7 10-4-1.7-7-5.6-7-10V6z',
   };
   return (

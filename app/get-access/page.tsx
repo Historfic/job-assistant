@@ -36,7 +36,7 @@ export default async function GetAccessPage() {
             Get full access
           </h1>
           <p className="text-[15px] text-slate-600 mt-2.5">
-            All three job sites, 20 searches a day, and daily alerts.
+            All three job sites, 20 searches a day.
           </p>
 
           <div className="mt-6 bg-white border-2 border-blue-600 rounded-2xl px-5 py-4">

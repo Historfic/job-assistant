@@ -2,10 +2,11 @@
 
 import { useEffect, useState, useCallback, useSyncExternalStore, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import type { User, ScrapeOptions, ProcessResult, AppTab, AnalyzedJob, MeResponse } from '@/types';
+import type { User, ScrapeOptions, ProcessResult, AppTab, AnalyzedJob, MeResponse, JobSource } from '@/types';
 import SearchForm from '@/components/SearchForm';
 import Logo from '@/components/Logo';
 import JobCard from '@/components/JobCard';
+import { SOURCE_LABEL, SOURCE_BADGE, jobSource, countBySource } from '@/lib/sourceLabels';
 import AIInsights from '@/components/AIInsights';
 import ApplicationMessage from '@/components/ApplicationMessage';
 import EmailPreview from '@/components/EmailPreview';
@@ -14,7 +15,6 @@ import OjConnectModal from '@/components/dashboard/OjConnectModal';
 import MarkedJobsList from '@/components/dashboard/MarkedJobsList';
 import UpgradeButton from '@/components/dashboard/UpgradeButton';
 import ProfileModal from '@/components/dashboard/ProfileModal';
-import AlertToggle from '@/components/dashboard/AlertToggle';
 import {
   subscribeJobStatus,
   getJobStatusSnapshot,
@@ -59,6 +59,9 @@ export default function DashboardPage() {
 
   // Status filter (session-only — resets on reload by design)
   const [hideMarked, setHideMarked] = useState(false);
+  // Source filter — null means "all". Also session-only: a filter that outlived
+  // the search would silently hide results from the next one.
+  const [onlySource, setOnlySource] = useState<JobSource | null>(null);
   const statusMap = useSyncExternalStore(
     subscribeJobStatus,
     getJobStatusSnapshot,
@@ -66,10 +69,24 @@ export default function DashboardPage() {
   );
 
   const filterMarked = useCallback(
-    (jobs: AnalyzedJob[]) =>
-      hideMarked ? jobs.filter(j => !(j.url && statusMap[j.url])) : jobs,
-    [hideMarked, statusMap],
+    (jobs: AnalyzedJob[]) => {
+      const byStatus = hideMarked
+        ? jobs.filter(j => !(j.url && statusMap[j.url]))
+        : jobs;
+      return onlySource ? byStatus.filter(j => jobSource(j) === onlySource) : byStatus;
+    },
+    [hideMarked, statusMap, onlySource],
   );
+
+  // Counts come from the unfiltered set, so a chip keeps showing its real total
+  // while another source is selected — otherwise every chip but the active one
+  // would read zero.
+  const sourceCounts = useMemo(
+    () => countBySource(result?.validJobs ?? []),
+    [result],
+  );
+
+  useEffect(() => { setOnlySource(null); }, [result]);
 
   const visibleValidJobs   = useMemo(() => filterMarked(result?.validJobs ?? []),   [result, filterMarked]);
   const visibleBestMatches = useMemo(() => filterMarked(result?.bestMatches ?? []), [result, filterMarked]);
@@ -539,7 +556,33 @@ export default function DashboardPage() {
                       </div>
                     )}
 
-                    <AlertToggle options={lastOptions} />
+                    {/* Source filter — only worth showing when more than one
+                        site actually returned something. */}
+                    {sourceCounts.length > 1 && (
+                      <div className="flex items-center gap-2 flex-wrap mb-3">
+                        <button
+                          onClick={() => setOnlySource(null)}
+                          className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors
+                            ${onlySource === null
+                              ? 'bg-white text-gray-900 border-white'
+                              : 'bg-gray-900 text-gray-400 border-gray-700 hover:text-gray-200'}`}
+                        >
+                          All {result.validJobs.length}
+                        </button>
+                        {sourceCounts.map(({ source, count }) => (
+                          <button
+                            key={source}
+                            onClick={() => setOnlySource(s => (s === source ? null : source))}
+                            className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors
+                              ${onlySource === source
+                                ? SOURCE_BADGE[source]
+                                : 'bg-gray-900 text-gray-400 border-gray-700 hover:text-gray-200'}`}
+                          >
+                            {SOURCE_LABEL[source]} {count}
+                          </button>
+                        ))}
+                      </div>
+                    )}
 
                     {/* Filter chip — only meaningful once at least one job is marked */}
                     {markedInBatch > 0 && (

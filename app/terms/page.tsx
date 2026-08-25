@@ -51,7 +51,7 @@ export default function TermsPage() {
         </p>
         <p>
           Full access is <strong className="text-slate-900 font-semibold">{PRICE_COPY}</strong> and adds LinkedIn
-          and Upwork, {TIER_LIMITS.pro.searches} searches a day, and daily email alerts.
+          and Upwork, and {TIER_LIMITS.pro.searches} searches a day.
         </p>
         <p>
           The first {FOUNDING_SEATS} members pay {PRICE_COPY} and keep that price for as
