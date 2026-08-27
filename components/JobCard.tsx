@@ -67,8 +67,10 @@ export default function JobCard({ job, highlight, baseMessage }: Props) {
   const [questions, setQuestions]       = useState<CoverLetterQuestion[]>([]);
   const [answers, setAnswers]           = useState<Record<string, string>>({});
   const [personalMsg, setPersonalMsg]   = useState('');
+  const [personalSubject, setPersonalSubject] = useState('');
   const [personalError, setPersonalError] = useState('');
-  const [personalCopied, setPersonalCopied] = useState(false);
+  // Which field was copied last, so only that button shows its tick.
+  const [personalCopied, setPersonalCopied] = useState<'subject' | 'body' | null>(null);
 
   async function startQuestionnaire() {
     setPhase('loading-questions');
@@ -111,6 +113,7 @@ export default function JobCard({ job, highlight, baseMessage }: Props) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed');
       setPersonalMsg(data.message);
+      setPersonalSubject(data.subject ?? '');
       setPhase('result');
     } catch (err) {
       setPersonalError((err as Error).message);
@@ -124,10 +127,14 @@ export default function JobCard({ job, highlight, baseMessage }: Props) {
     if (phase === 'questions') { setPhase('idle'); return; }
   }
 
-  async function handleCopyPersonal() {
-    await navigator.clipboard.writeText(personalMsg);
-    setPersonalCopied(true);
-    setTimeout(() => setPersonalCopied(false), 2000);
+  async function copyText(text: string, mark: 'subject' | 'body') {
+    try {
+      await navigator.clipboard.writeText(text);
+      setPersonalCopied(mark);
+      setTimeout(() => setPersonalCopied(null), 2000);
+    } catch {
+      // clipboard blocked — the text is on screen to select manually
+    }
   }
 
   const btnLoading = phase === 'loading-questions' || phase === 'generating';
@@ -420,23 +427,42 @@ export default function JobCard({ job, highlight, baseMessage }: Props) {
               </span>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => { setPhase('questions'); setPersonalMsg(''); }}
+                  onClick={() => { setPhase('questions'); setPersonalMsg(''); setPersonalSubject(''); }}
                   className="text-[10px] text-gray-600 hover:text-gray-400 transition-colors"
                 >
                   ← Edit answers
                 </button>
                 <button
-                  onClick={handleCopyPersonal}
+                  onClick={() => copyText(personalMsg, 'body')}
                   className={`text-[10px] px-2 py-0.5 rounded-md font-medium transition-colors
-                    ${personalCopied
+                    ${personalCopied === 'body'
                       ? 'bg-emerald-600/20 text-emerald-400'
                       : 'bg-gray-800 text-gray-400 hover:text-white'
                     }`}
                 >
-                  {personalCopied ? '✓ Copied!' : 'Copy'}
+                  {personalCopied === 'body' ? '✓ Copied!' : 'Copy body'}
                 </button>
               </div>
             </div>
+            {/* Subject and body copy separately: they go into two different
+                fields, so one combined blob means editing them apart by hand. */}
+            {personalSubject && (
+              <div className="flex items-center gap-2 mb-2 bg-gray-950 rounded-lg px-3 py-2 border border-gray-800">
+                <span className="text-[9px] font-semibold uppercase tracking-widest text-gray-600 shrink-0">
+                  Subject
+                </span>
+                <p className="text-xs text-gray-300 truncate flex-1">{personalSubject}</p>
+                <button
+                  onClick={() => copyText(personalSubject, 'subject')}
+                  className={`shrink-0 text-[10px] px-2 py-0.5 rounded-md font-medium transition-colors
+                    ${personalCopied === 'subject'
+                      ? 'bg-emerald-600/20 text-emerald-400'
+                      : 'bg-gray-800 text-gray-400 hover:text-white'}`}
+                >
+                  {personalCopied === 'subject' ? '✓' : 'Copy'}
+                </button>
+              </div>
+            )}
             <p className="text-xs text-gray-400 leading-relaxed whitespace-pre-line bg-gray-950 rounded-lg p-3 border border-gray-800">
               {personalMsg}
             </p>

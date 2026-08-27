@@ -22,6 +22,7 @@ import { normalizeSources } from '@/lib/sources/types';
 import { allowedSources, TIER_LIMITS, FULL_ACCESS_COPY, manilaDayStartUtc, nextManilaMidnightUtc } from '@/lib/tiers';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { createSupabaseServer } from '@/lib/supabase/server';
+import { encodeEvent, NDJSON_CONTENT_TYPE, type SearchEvent } from '@/lib/searchStream';
 
 // Three sources scraped in parallel plus AI analysis runs past two minutes on a
 // slow day. Render imposes no per-request cap, so this only matters if the app
@@ -160,6 +161,40 @@ export async function POST(req: NextRequest) {
     const openRouterKey = process.env.OPENROUTER_API_KEY;
     const targetCount = Math.min(Math.max(limit, 1), 30);
 
+    // Everything above this line is a gate — auth, tier, rate limit — and stays
+    // an ordinary HTTP response so the client can branch on the status code.
+    // Below it the pipeline streams, because the results genuinely arrive over
+    // 30–60 seconds and there is no reason to hold the early ones back.
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        let closed = false;
+        const send = (event: SearchEvent) => {
+          if (closed) return;
+          try {
+            controller.enqueue(encoder.encode(encodeEvent(event)));
+          } catch {
+            // The browser hung up mid-search. Stop writing; the pipeline below
+            // finishes on its own and its result is simply discarded.
+            closed = true;
+          }
+        };
+
+        try {
+          send({ type: 'meta', limits, targetRequested: targetCount, sources });
+          await runPipeline(send);
+        } catch (err) {
+          console.error('[/api/scrape] stream', err);
+          send({ type: 'error', message: (err as Error).message ?? 'Search failed' });
+        } finally {
+          closed = true;
+          try { controller.close(); } catch { /* already closed */ }
+        }
+      },
+    });
+
+    async function runPipeline(send: (event: SearchEvent) => void) {
+
     const validJobs: AnalyzedJob[] = [];
     const removedJobs: Array<{ job: RawJob; reason: string }> = [];
     // Pre-seed with URLs the client says to skip (already applied / rejected).
@@ -182,24 +217,44 @@ export async function POST(req: NextRequest) {
       passes++;
       const needed = Math.ceil((targetCount - validJobs.length) * BATCH_FACTOR) + 5;
 
+      // Each source is analysed and streamed the moment IT answers, rather than
+      // when the slowest one does. OnlineJobs.ph typically returns in ten
+      // seconds against thirty to sixty for the Apify actors, and that gap is
+      // most of the search.
       const batch = await getJobsFromSources(sources, {
         keyword,
         limit: needed,
         page: currentPage,
         ojSessionCookie: sessionCookie,
+      }, {
+        onSourceDone: async (source, sourceJobs) => {
+          totalScraped += sourceJobs.length;
+          const kept = preFilter(sourceJobs);
+          await analyzeJobs(kept, keyword, openRouterKey, 5, job => {
+            if (job.analysis.requires_file_upload) {
+              removedJobs.push({
+                job,
+                reason: `Requires file upload: ${job.analysis.required_files.join(', ')}`,
+              });
+              return;
+            }
+            validJobs.push(job);
+            send({ type: 'job', job });
+          });
+          send({ type: 'source-done', source, found: sourceJobs.length });
+        },
+        onSourceError: error => {
+          if (!sourceErrors.some(x => x.source === error.source)) sourceErrors.push(error);
+          send({ type: 'source-error', error });
+        },
       });
-      for (const e of batch.errors) {
-        if (!sourceErrors.some(x => x.source === e.source)) sourceErrors.push(e);
-      }
       if (batch.isLive) isLiveData = true;
-      const rawBatch: RawJob[] = batch.jobs;
 
-      if (rawBatch.length === 0) break;
-
-      totalScraped += rawBatch.length;
+      if (batch.jobs.length === 0) break;
 
       // Apply pre-filters before AI analysis (salary, job type, date)
-      const preFiltered = rawBatch.filter(job => {
+      function preFilter(rawBatch: RawJob[]): RawJob[] {
+       return rawBatch.filter(job => {
         if (seenUrls.has(job.url ?? '')) {
           // Attribute the drop to the user's applied/rejected list when applicable
           if (job.url && excludeSet.has(job.url) && !excludedCounted.has(job.url)) {
@@ -234,21 +289,7 @@ export async function POST(req: NextRequest) {
         job.hourlyRate = salEval.hourlyRate;
         job.salaryReason = salEval.reason;
         return true;
-      });
-
-      // AI analysis
-      const analyzed = await analyzeJobs(preFiltered, keyword, openRouterKey);
-
-      // Post-AI filter: remove file-upload jobs
-      for (const job of analyzed) {
-        if (job.analysis.requires_file_upload) {
-          removedJobs.push({
-            job,
-            reason: `Requires file upload: ${job.analysis.required_files.join(', ')}`,
-          });
-        } else {
-          validJobs.push(job);
-        }
+       });
       }
     }
 
@@ -258,9 +299,9 @@ export async function POST(req: NextRequest) {
     // Sort by score descending
     validJobs.sort((a, b) => b.score - a.score);
 
-    // Trim to requested limit (after scoring/sorting, so a multi-source
-    // search isn't dominated by whichever source happened to fill the array first)
-    const finalJobs = validJobs.slice(0, targetCount);
+    // No trim any more: every job the user watched arrive stays on screen.
+    // Removing one after the fact would be the search taking something back.
+    const finalJobs = validJobs;
 
     // Best matches: top 3
     const bestMatches = finalJobs.slice(0, 3);
@@ -294,7 +335,19 @@ export async function POST(req: NextRequest) {
       sourceErrors,
     };
 
-    return NextResponse.json(result);
+      send({ type: 'complete', result });
+    }
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': NDJSON_CONTENT_TYPE,
+        // no-transform and X-Accel-Buffering stop intermediate proxies holding
+        // the response until it completes, which would silently undo all of
+        // this and deliver every job at once.
+        'Cache-Control': 'no-cache, no-transform',
+        'X-Accel-Buffering': 'no',
+      },
+    });
   } catch (err) {
     console.error('[/api/scrape]', err);
     return NextResponse.json(

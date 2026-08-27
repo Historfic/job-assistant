@@ -207,6 +207,15 @@ export async function analyzeJobs(
   keyword: string,
   openRouterKey?: string,
   concurrency = 5,
+  /**
+   * Called the moment one job's analysis lands, before the rest finish.
+   *
+   * The caller streams jobs to the browser as they become ready — a job that
+   * finished analysis in second 12 has no reason to wait for the slowest source
+   * to answer in second 50. Everything still comes back in the return value, so
+   * a caller that does not care can ignore this.
+   */
+  onJob?: (job: AnalyzedJob) => void,
 ): Promise<AnalyzedJob[]> {
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
   const hasAI = Boolean(anthropicKey || openRouterKey);
@@ -214,7 +223,9 @@ export async function analyzeJobs(
   if (!hasAI) {
     return jobs.map(job => {
       const analysis = analyzeJobLocally(job);
-      return { ...job, analysis, score: scoreJob(job, analysis, keyword) };
+      const analyzed = { ...job, analysis, score: scoreJob(job, analysis, keyword) };
+      onJob?.(analyzed);
+      return analyzed;
     });
   }
 
@@ -235,6 +246,7 @@ export async function analyzeJobs(
         analysis = analyzeJobLocally(job);
       }
       results[i] = { ...job, analysis, score: scoreJob(job, analysis, keyword) };
+      onJob?.(results[i]);
     }
   }
 

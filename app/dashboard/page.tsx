@@ -6,7 +6,9 @@ import type { User, ScrapeOptions, ProcessResult, AppTab, AnalyzedJob, MeRespons
 import SearchForm from '@/components/SearchForm';
 import Logo from '@/components/Logo';
 import JobCard from '@/components/JobCard';
+import LiveResults from '@/components/LiveResults';
 import { SOURCE_LABEL, SOURCE_BADGE, jobSource, countBySource } from '@/lib/sourceLabels';
+import { decodeChunk, insertRanked } from '@/lib/searchStream';
 import AIInsights from '@/components/AIInsights';
 import ApplicationMessage from '@/components/ApplicationMessage';
 import EmailPreview from '@/components/EmailPreview';
@@ -62,6 +64,9 @@ export default function DashboardPage() {
   // Source filter — null means "all". Also session-only: a filter that outlived
   // the search would silently hide results from the next one.
   const [onlySource, setOnlySource] = useState<JobSource | null>(null);
+  // Jobs that have streamed in but whose search has not finished yet.
+  const [streamedJobs, setStreamedJobs] = useState<AnalyzedJob[]>([]);
+  const [pendingSources, setPendingSources] = useState<Set<JobSource>>(new Set());
   const statusMap = useSyncExternalStore(
     subscribeJobStatus,
     getJobStatusSnapshot,
@@ -157,6 +162,8 @@ export default function DashboardPage() {
     setResult(null);
     setEmailSent(false);
     setProgress(0);
+    setStreamedJobs([]);
+    setPendingSources(new Set());
     setLastOptions(options);
 
     try {
@@ -200,21 +207,77 @@ export default function DashboardPage() {
         throw new Error(msg);
       }
 
-      animateProgress(STEPS[2].pct, STEPS[2].msg as string);
-      await tick();
-      animateProgress(STEPS[3].pct, STEPS[3].msg as string);
-      await tick();
-      animateProgress(STEPS[4].pct, STEPS[4].msg as string);
+      // ── Read the NDJSON stream ────────────────────────────────────────────
+      // Jobs land one at a time over 30–60 seconds. Showing each as it arrives
+      // is the whole point, so nothing here waits for the response to finish.
+      const reader = res.body?.getReader();
+      if (!reader) throw new Error('This browser cannot stream results.');
 
-      const data: ProcessResult = await res.json();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let live: AnalyzedJob[] = [];
+      const pending = new Set<JobSource>();
+      let streamError: string | null = null;
 
-      animateProgress(STEPS[5].pct, STEPS[5].msg as string);
-      await tick();
-      animateProgress(STEPS[6].pct, STEPS[6].msg as string);
-
-      setResult(data);
       setActiveTab('jobs');
-      if (data.limits) setMe(prev => (prev ? { ...prev, limits: data.limits! } : prev));
+
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const { events, rest } = decodeChunk(buffer);
+        buffer = rest;
+
+        for (const event of events) {
+          switch (event.type) {
+            case 'meta':
+              event.sources.forEach(src => pending.add(src));
+              setPendingSources(new Set(pending));
+              animateProgress(STEPS[2].pct, STEPS[2].msg as string);
+              break;
+
+            case 'job':
+              // Re-rank live: a late arrival with a better score belongs above
+              // the ones already on screen.
+              live = insertRanked(live, event.job);
+              setStreamedJobs(live);
+              animateProgress(
+                Math.min(90, 45 + live.length * 3),
+                `Found ${live.length} job${live.length === 1 ? '' : 's'}...`,
+              );
+              break;
+
+            case 'source-done':
+              pending.delete(event.source);
+              setPendingSources(new Set(pending));
+              break;
+
+            case 'source-error':
+              // The source is finished either way — drop its shimmer so the UI
+              // does not look like it is still waiting on something dead.
+              pending.delete(event.error.source);
+              setPendingSources(new Set(pending));
+              break;
+
+            case 'complete':
+              animateProgress(STEPS[6].pct, STEPS[6].msg as string);
+              setResult(event.result);
+              if (event.result.limits) {
+                setMe(prev => (prev ? { ...prev, limits: event.result.limits! } : prev));
+              }
+              break;
+
+            case 'error':
+              streamError = event.message;
+              break;
+          }
+        }
+      }
+
+      // A stream that ends without `complete` means the connection dropped
+      // mid-search. Say so rather than presenting a partial list as the answer.
+      if (streamError) throw new Error(streamError);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -401,6 +464,13 @@ export default function DashboardPage() {
                   style={{ width: `${progress}%` }}
                 />
               </div>
+            </div>
+          )}
+
+          {/* Results as they arrive — the search is not finished, but these are */}
+          {loading && (
+            <div className="flex-1 overflow-y-auto">
+              <LiveResults jobs={streamedJobs} pendingSources={[...pendingSources]} />
             </div>
           )}
 

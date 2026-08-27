@@ -21,6 +21,9 @@ const config: Config = {
         'slide-up': 'slideUp 0.3s ease-out',
         'slide-in-left': 'slideInLeft 0.2s ease-out',
         'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        // Sweeps across a placeholder card while its source is still
+        // answering. Slow enough to read as waiting, not as a glitch.
+        shimmer: 'shimmer 1.6s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
@@ -34,6 +37,9 @@ const config: Config = {
         slideInLeft: {
           '0%': { transform: 'translateX(-100%)' },
           '100%': { transform: 'translateX(0)' },
+        },
+        shimmer: {
+          '100%': { transform: 'translateX(100%)' },
         },
       },
     },

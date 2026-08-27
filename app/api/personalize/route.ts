@@ -12,6 +12,7 @@ import { stripEmDashes } from '@/lib/aiAnalyzer';
 import { getSessionUser } from '@/lib/auth';
 import { getOjConnectionStatus, getOjSessionCookie, markOjExpired } from '@/lib/oj/connection';
 import { verifyOjSession } from '@/lib/oj/exchangeSession';
+import { coverLetterSubject } from '@/lib/coverLetterSubject';
 
 // ─── Fetch full job description from the detail page ─────────────────────────
 // Called when the job's stored description is missing or too short to
@@ -350,7 +351,11 @@ export async function POST(req: NextRequest) {
     }
 
     console.log(`[/api/personalize] source=${source} descLen=${enrichedJob.description?.length ?? 0}`);
-    return NextResponse.json({ message, source });
+    return NextResponse.json({
+      message,
+      subject: coverLetterSubject(job, careerProfile?.headline),
+      source,
+    });
   } catch (err) {
     console.error('[/api/personalize]', err);
     return NextResponse.json(

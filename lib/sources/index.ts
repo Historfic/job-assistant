@@ -22,21 +22,41 @@ function isLiveEnabled(source: JobSource): boolean {
   return Boolean(process.env.APIFY_TOKEN);
 }
 
+/**
+ * Called as soon as ONE source answers, rather than when the slowest does.
+ *
+ * OnlineJobs.ph typically returns in ten seconds while the Apify actors for
+ * LinkedIn and Upwork take thirty to sixty. Waiting for all three before doing
+ * anything wastes the difference, which is most of the search.
+ */
+export interface SourceProgress {
+  onSourceDone?: (source: JobSource, jobs: RawJob[]) => void | Promise<void>;
+  onSourceError?: (error: SourceError) => void;
+}
+
 export async function getJobsFromSources(
   sources: JobSource[],
   opts: SourceSearchOptions,
+  progress: SourceProgress = {},
 ): Promise<{ jobs: RawJob[]; errors: SourceError[]; isLive: boolean }> {
   const results = await Promise.allSettled(
     sources.map(async source => {
+      const report = async (jobs: RawJob[]) => {
+        // Awaited so a slow consumer (analysing and streaming these jobs)
+        // finishes before this source is considered handled — otherwise the
+        // caller's ordering guarantees get subtle.
+        await progress.onSourceDone?.(source, jobs);
+        return jobs;
+      };
       if (!isLiveEnabled(source)) {
         if (process.env.DEMO_MODE === 'false' && source !== 'onlinejobs') {
           throw new Error('APIFY_TOKEN is not set — this source was skipped');
         }
         // Mocks mirror the adapters' pagination behavior
-        if ((opts.page ?? 0) > 0 && source !== 'onlinejobs') return [] as RawJob[];
-        return mockJobsFor(source, opts.keyword, opts.limit);
+        if ((opts.page ?? 0) > 0 && source !== 'onlinejobs') return report([]);
+        return report(mockJobsFor(source, opts.keyword, opts.limit));
       }
-      return ADAPTERS[source].searchJobs(opts);
+      return report(await ADAPTERS[source].searchJobs(opts));
     }),
   );
 
@@ -49,7 +69,9 @@ export async function getJobsFromSources(
       perSourceJobs.push(r.value);
       if (isLiveEnabled(source) && r.value.length > 0) isLive = true;
     } else {
-      errors.push({ source, message: (r.reason as Error)?.message ?? 'Unknown error' });
+      const error = { source, message: (r.reason as Error)?.message ?? 'Unknown error' };
+      errors.push(error);
+      progress.onSourceError?.(error);
     }
   });
 
