@@ -6,8 +6,11 @@ import Logo from '@/components/Logo';
 // because the Data Privacy Act (RA 10173) requires a privacy notice from
 // anyone processing Filipinos' personal data — which is everyone we sell to.
 
+// The address a customer writes to for support or a data request. Defaults to
+// the inbox Rafael actually reads; override with NEXT_PUBLIC_CONTACT_EMAIL once
+// support@easyclientph.com exists, so the contact matches the brand.
 export const CONTACT_EMAIL =
-  process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'rafael@mcgendigital.com';
+  process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'raffymcfee@gmail.com';
 
 export const LAST_UPDATED = 'August 2026';
 
