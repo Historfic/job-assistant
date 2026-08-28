@@ -15,10 +15,10 @@ import { FOUNDING_SEATS, REGULAR_PRICE_COPY } from '@/lib/tiers';
 
 const SAMPLE_RESULTS = [
   { score: 99, top: true,  title: 'Executive Virtual Assistant', src: 'Upwork',
-    meta: '$8–12/hr · client spent $47k' },
+    meta: '$8-12/hr · client spent $47k' },
   { score: 94, top: true,  title: 'Real Estate Virtual Assistant', src: 'LinkedIn',
     meta: 'Full-time · Remote' },
-  { score: 88, top: false, title: 'Social Media VA — Shopify', src: 'OnlineJobs.ph',
+  { score: 88, top: false, title: 'Social Media VA for Shopify', src: 'OnlineJobs.ph',
     meta: '₱30,000/mo · today' },
   { score: 81, top: false, title: 'Customer Support VA', src: 'OnlineJobs.ph',
     meta: '₱25,000/mo · today' },
@@ -40,13 +40,13 @@ const FEATURES: Array<[string, string]> = [
 
 const FAQ: Array<[string, string]> = [
   ['Is this a scam?',
-   '3 free searches before money is mentioned. Every job links to the real post — check it yourself.'],
+   '3 free searches before money is mentioned. Every job links to the real post. Check it yourself.'],
   ['Can you charge me without asking?',
    'No card on file. You send GCash each month. Nothing to cancel.'],
   ['Do you need my OnlineJobs password?',
    'No. Connecting it is optional and we never store passwords.'],
   ['What happens after the first 50 members?',
-   'The price goes up for new members. Yours does not — if you join at ₱999 you stay at ₱999.'],
+   'The price goes up for new members. Yours does not. If you join at ₱999 you stay at ₱999.'],
 ];
 
 function Icon({ name }: { name: string }) {
@@ -94,7 +94,7 @@ export default async function LandingPage() {
             <span className="text-blue-600">1 search.</span>
           </h1>
           <p className="text-[17px] text-slate-600 mt-4 max-w-sm mx-auto">
-            Your shortlist, ranked and ready to apply — in about a minute.
+            Your shortlist, ranked and ready to apply, in about a minute.
           </p>
           <Link href={cta} className="inline-block mt-7 px-9 py-4 rounded-xl bg-blue-600 hover:bg-blue-700 font-semibold text-white shadow-lg shadow-blue-600/25 transition-colors">
             {ctaLabel}
@@ -225,7 +225,7 @@ export default async function LandingPage() {
               <summary className="flex items-center justify-between gap-4 cursor-pointer list-none font-semibold text-[14.5px] text-slate-900">
                 {q}
                 <span className="text-blue-600 font-extrabold text-lg shrink-0 group-open:hidden">+</span>
-                <span className="text-blue-600 font-extrabold text-lg shrink-0 hidden group-open:inline">–</span>
+                <span className="text-blue-600 font-extrabold text-lg shrink-0 hidden group-open:inline">−</span>
               </summary>
               <p className="text-[14px] text-slate-600 mt-2.5 leading-relaxed">{a}</p>
             </details>

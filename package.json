@@ -1,7 +1,7 @@
 {
   "name": "job-assistant",
   "version": "1.0.0",
-  "description": "AI-powered job application assistant \u2014 scrapes OnlineJobs.ph and generates smart applications",
+  "description": "AI-powered job application assistant — scrapes OnlineJobs.ph and generates smart applications",
   "private": true,
   "scripts": {
     "predev": "node scripts/free-port.js",
@@ -16,10 +16,12 @@
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.112.1",
     "cheerio": "^1.0.0",
+    "mammoth": "^1.12.1",
     "next": "^14.2.35",
     "nodemailer": "^6.9.13",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "unpdf": "^1.8.1"
   },
   "devDependencies": {
     "@types/node": "^20",

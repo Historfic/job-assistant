@@ -18,6 +18,9 @@ export default function ProfileModal({ open, onClose }: {
   const [cvText, setCvText] = useState('');
   const [saved, setSaved] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const [uploadedName, setUploadedName] = useState('');
 
   // Load the current profile each time the modal opens
   useEffect(() => {
@@ -39,13 +42,30 @@ export default function ProfileModal({ open, onClose }: {
     setTimeout(onClose, 700);
   }
 
-  // Plain-text CVs can be dropped straight in. PDFs and Word files need to be
-  // opened and copied — the browser can't read them without a heavy parser.
+  // Almost nobody keeps a CV as plain text — it is a PDF or a Word export. The
+  // server does the parsing, because shipping a megabyte of PDF parser to every
+  // visitor to serve the few who upload one is the wrong trade.
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    e.target.value = '';            // let the same file be picked again after an error
     if (!file) return;
-    const text = await file.text();
-    setCvText(text.slice(0, 20_000));
+
+    setUploadError('');
+    setUploading(true);
+    try {
+      const body = new FormData();
+      body.append('file', file);
+      const res = await fetch('/api/cv/parse', { method: 'POST', body });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'We could not read that file.');
+
+      setCvText(data.text);
+      setUploadedName(file.name);
+    } catch (err) {
+      setUploadError((err as Error).message);
+    } finally {
+      setUploading(false);
+    }
   }
 
   return (
@@ -101,12 +121,41 @@ export default function ProfileModal({ open, onClose }: {
           </p>
           <button
             onClick={() => fileRef.current?.click()}
-            className="text-[11px] text-blue-400 hover:text-blue-300 transition-colors"
+            disabled={uploading}
+            className="inline-flex items-center gap-1.5 text-[11px] text-blue-400 hover:text-blue-300 disabled:text-gray-600 transition-colors"
           >
-            Load a .txt file
+            {uploading ? (
+              <>
+                <span className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                Reading your CV...
+              </>
+            ) : (
+              <>
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2}
+                  strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                  <path d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
+                </svg>
+                Upload CV (PDF, Word, or text)
+              </>
+            )}
           </button>
-          <input ref={fileRef} type="file" accept=".txt,.md,text/plain" onChange={handleFile} className="hidden" />
+          <input
+            ref={fileRef}
+            type="file"
+            accept=".pdf,.docx,.txt,.md,.rtf,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+            onChange={handleFile}
+            className="hidden"
+          />
         </div>
+
+        {uploadError && (
+          <p className="text-[11px] text-red-400 -mt-3 mb-4 leading-relaxed">{uploadError}</p>
+        )}
+        {uploadedName && !uploadError && (
+          <p className="text-[11px] text-emerald-400 -mt-3 mb-4">
+            Loaded {uploadedName}. Check it below and edit anything that came out wrong.
+          </p>
+        )}
 
         <div className="flex gap-2">
           <button onClick={onClose}
