@@ -24,6 +24,14 @@ const SAMPLE_RESULTS = [
     meta: '₱25,000/mo · today' },
 ];
 
+// Matches the badge colours in the app, so the screenshot in an ad and the
+// product a customer opens are recognisably the same thing.
+const SRC_TINT: Record<string, string> = {
+  'OnlineJobs.ph': 'bg-amber-50 text-amber-700 border-amber-200',
+  'LinkedIn':      'bg-sky-50 text-sky-700 border-sky-200',
+  'Upwork':        'bg-emerald-50 text-emerald-700 border-emerald-200',
+};
+
 const STATS = [
   ['3', 'job sites'],
   ['10 sec', 'to first result'],
@@ -119,7 +127,7 @@ export default async function LandingPage() {
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-slate-900 leading-snug truncate">{r.title}</p>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wide text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                  <span className={`text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded border ${SRC_TINT[r.src]}`}>
                     {r.src}
                   </span>{' '}{r.meta}
                 </p>
@@ -142,29 +150,21 @@ export default async function LandingPage() {
       {/* ── Before / after ── */}
       <div className="max-w-2xl mx-auto px-5">
         <section className="py-14">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="bg-white border border-slate-200 rounded-2xl p-5">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-red-500">Your morning now</p>
-              <ul className="mt-4 space-y-2.5 text-sm text-slate-500">
-                <li>3 sites, one by one</li>
-                <li>Same posts as yesterday</li>
-                <li>Rewrite the same letter</li>
-                <li>Apply to jobs already filled</li>
-              </ul>
-              <p className="mt-5 text-2xl font-extrabold text-slate-400 tabular-nums">45 min</p>
+          <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            <div className="bg-white border border-slate-200 rounded-2xl p-5 text-center">
+              <p className="text-[10.5px] font-bold uppercase tracking-widest text-slate-400">Three tabs</p>
+              <p className="mt-3 text-[40px] sm:text-[52px] font-extrabold text-slate-300 leading-none tabular-nums">45</p>
+              <p className="text-sm font-semibold text-slate-400 mt-1">minutes</p>
             </div>
-            <div className="bg-white border-2 border-blue-600 rounded-2xl p-5">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-blue-600">With EasyClient</p>
-              <ul className="mt-4 space-y-2.5 text-sm text-slate-700">
-                <li>One search, all 3 sites</li>
-                <li>New posts only</li>
-                <li>Letter written for you</li>
-                <li>Dead listings filtered out</li>
-              </ul>
-              <p className="mt-5 text-2xl font-extrabold text-slate-900 tabular-nums">1 min</p>
-              <p className="text-[11px] text-slate-500 mt-0.5">first results in 10 seconds</p>
+            <div className="bg-white border-2 border-blue-600 rounded-2xl p-5 text-center">
+              <p className="text-[10.5px] font-bold uppercase tracking-widest text-blue-600">One search</p>
+              <p className="mt-3 text-[40px] sm:text-[52px] font-extrabold text-slate-900 leading-none tabular-nums">1</p>
+              <p className="text-sm font-semibold text-slate-700 mt-1">minute</p>
             </div>
           </div>
+          <p className="text-center text-sm text-slate-500 mt-4">
+            Same three job sites. Same jobs.
+          </p>
         </section>
       </div>
 

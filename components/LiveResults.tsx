@@ -110,11 +110,11 @@ export default function LiveResults({
   if (jobs.length === 0 && pendingSources.length === 0 && !locked) return null;
 
   return (
-    <div className="px-4 sm:px-5 pb-6">
+    <div className="px-4 sm:px-5 pb-6 pt-1">
       {jobs.length > 0 && (
         <div className="flex items-center gap-2 mb-3">
           <span className="text-xs font-semibold uppercase tracking-wider text-blue-400">
-            {jobs.length} found so far
+            {jobs.length} {pendingSources.length > 0 ? 'found so far' : 'matches'}
           </span>
           <div className="flex-1 border-t border-blue-500/20" />
         </div>

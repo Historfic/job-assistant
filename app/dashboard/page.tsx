@@ -246,7 +246,9 @@ export default function DashboardPage() {
               setStreamedJobs(live);
               animateProgress(
                 Math.min(90, 45 + live.length * 3),
-                `Found ${live.length} job${live.length === 1 ? '' : 's'}...`,
+                pending.size > 0
+                  ? `Still checking ${[...pending].map(s => SOURCE_LABEL[s]).join(', ')}...`
+                  : 'Ranking your matches...',
               );
               break;
 
@@ -260,6 +262,9 @@ export default function DashboardPage() {
               // does not look like it is still waiting on something dead.
               pending.delete(event.error.source);
               setPendingSources(new Set(pending));
+              // Say so while it happens. Finding out at the end that a whole
+              // site returned nothing reads as results having gone missing.
+              setStatusMsg(`${SOURCE_LABEL[event.error.source]} did not respond. Carrying on with the others...`);
               break;
 
             case 'locked':
