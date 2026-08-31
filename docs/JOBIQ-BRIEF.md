@@ -39,20 +39,30 @@ social media, bookkeeping, design, some developers. Typically:
 - Paying with **GCash**, often no credit card
 - **Cautious about scams** — online fraud is common here, so trust signals
   matter more than clever marketing
-- Price-sensitive: ₱999 is a real decision, roughly a day's pay for many
+- Price-sensitive: ₱999 a month is a real decision, roughly a day's pay for many
 
 ## Pricing and how sales work
 
-**One payment of ₱999. No subscription.**
+**₱999 a month.** Founding price, locked for life for the first 50 members;
+₱1,499/month for everyone after that.
 
-| | Free preview | Full access — ₱999 once |
+| | Free preview | Full access — ₱999/month |
 |---|---|---|
-| Searches | 3 total, ever | 20 per day, forever |
+| Searches | 3 total, ever | 20 per day |
 | Job sites | OnlineJobs.ph only | OnlineJobs.ph + LinkedIn + Upwork |
 | Everything else (AI ranking, cover letters, CV, tracking, alerts) | ✅ | ✅ |
 
 Almost every feature is in the free preview on purpose — people should feel the
 quality before they hit the wall. The limits are searches and job sites.
+
+**₱1,499 is a real future price, never a struck-through past one.** Inventing a
+"was" price is a deceptive sales act under the Consumer Act (RA 7394), and Meta
+rejects ads claiming false discounts. The promise only stays honest if it is
+kept: a founding member pays ₱999 for as long as they stay, even after the price
+rises. Raising them later makes it a fake discount with extra steps.
+
+The numbers live in `lib/tiers.ts` — `PRICE_COPY`, `REGULAR_PRICE_COPY` and
+`FOUNDING_SEATS`. Change them there, not only here.
 
 **The sales flow today is manual:**
 
@@ -65,6 +75,11 @@ quality before they hit the wall. The limits are searches and job sites.
 
 The admin console also shows every signup, how many searches they've used, and
 lets me revoke or permanently delete an account.
+
+**Renewals are manual too, and nothing expires on its own.** No code counts
+months or lapses an account — a subscriber who stops paying keeps full access
+until I revoke them by hand in `/admin`. Same for the 50 founding seats: that is
+a number I track myself, not one the app enforces.
 
 ## Marketing plan
 
@@ -111,7 +126,9 @@ via Gmail SMTP.
 
 ## Decisions already made — please don't re-litigate these
 
-- **One-time payment, not a subscription.** Deliberate for this market.
+- **Monthly subscription at ₱999, not a one-off.** This brief previously said
+  one-time; the app has been monthly with founding pricing since. If the two
+  ever disagree again, `lib/tiers.ts` is the truth.
 - **Manual activation for now.** Automated checkout (PayMongo — GCash, Maya,
   bank, cards) comes once sales justify the setup. Stripe is not an option:
   it doesn't support Philippine businesses.
@@ -119,8 +136,8 @@ via Gmail SMTP.
   Upwork, so it's off the table however often people ask.
 - **Render, not Vercel.** A live search takes 15–30 seconds and Vercel caps
   requests at 60s; Vercel's free tier also forbids commercial use.
-- **A daily cap even for paying customers.** They pay once but cost me money
-  on every search, so unlimited isn't viable.
+- **A daily cap even for paying customers.** ₱999 a month is fixed while every
+  search costs me money, so unlimited isn't viable.
 
 ## What I want help with
 

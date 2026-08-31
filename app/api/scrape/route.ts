@@ -14,12 +14,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { RawJob, ScrapeOptions, ProcessResult, AnalyzedJob, SearchLimits, SourceError } from '@/types';
 import { evaluateSalary } from '@/lib/salaryEvaluator';
-import { analyzeJobs, generateApplicationMessage, scoreJob } from '@/lib/aiAnalyzer';
+import { analyzeJobs, analyzeJobLocally, generateApplicationMessage, scoreJob } from '@/lib/aiAnalyzer';
 import { getJobsFromSources } from '@/lib/sources';
 import { getSessionUser } from '@/lib/auth';
 import { getOjSessionCookie } from '@/lib/oj/connection';
 import { normalizeSources } from '@/lib/sources/types';
-import { allowedSources, TIER_LIMITS, FULL_ACCESS_COPY, manilaDayStartUtc, nextManilaMidnightUtc } from '@/lib/tiers';
+import { allowedSources, TIER_LIMITS, FULL_ACCESS_COPY, resultCap, manilaDayStartUtc, nextManilaMidnightUtc } from '@/lib/tiers';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { createSupabaseServer } from '@/lib/supabase/server';
 import { encodeEvent, NDJSON_CONTENT_TYPE, type SearchEvent } from '@/lib/searchStream';
@@ -159,7 +159,10 @@ export async function POST(req: NextRequest) {
     }
 
     const openRouterKey = process.env.OPENROUTER_API_KEY;
-    const targetCount = Math.min(Math.max(limit, 1), 30);
+    // What the user asked for, capped by their tier. Free sees five; everything
+    // past that is counted and locked rather than analysed and hidden.
+    const targetCount = resultCap(user.tier, limit);
+    const cappedByTier = targetCount < Math.min(Math.max(limit, 1), 30);
 
     // Everything above this line is a gate — auth, tier, rate limit — and stays
     // an ordinary HTTP response so the client can branch on the status code.
@@ -204,6 +207,8 @@ export async function POST(req: NextRequest) {
     const excludedCounted = new Set<string>(); // urls counted toward excludedAsMarked (dedup across passes)
     let totalScraped = 0;
     let excludedAsMarked = 0;
+    let reserved = 0;      // slots claimed for analysis, across parallel sources
+    let lockedCount = 0;   // found and counted, never analysed
     let passes = 0;
     let isLiveData = false;
     const sourceErrors: SourceError[] = [];
@@ -230,7 +235,24 @@ export async function POST(req: NextRequest) {
         onSourceDone: async (source, sourceJobs) => {
           totalScraped += sourceJobs.length;
           const kept = preFilter(sourceJobs);
-          await analyzeJobs(kept, keyword, openRouterKey, 5, job => {
+
+          // Rank locally first. The regex analyser is free, so it decides which
+          // jobs are worth paying Claude to read — otherwise the ones we spend
+          // on are just whichever source answered first.
+          const ranked = kept
+            .map(job => ({ job, score: scoreJob(job, analyzeJobLocally(job), keyword) }))
+            .sort((a, b) => b.score - a.score)
+            .map(x => x.job);
+
+          // Reserved synchronously, before the await below: sources answer in
+          // parallel, and two callbacks computing "room left" at the same time
+          // would each claim the same slots.
+          const room = Math.max(0, targetCount - reserved);
+          const toAnalyse = ranked.slice(0, room);
+          reserved += toAnalyse.length;
+          lockedCount += ranked.length - toAnalyse.length;
+
+          await analyzeJobs(toAnalyse, keyword, openRouterKey, 5, job => {
             if (job.analysis.requires_file_upload) {
               removedJobs.push({
                 job,
@@ -335,6 +357,13 @@ export async function POST(req: NextRequest) {
       sourceErrors,
     };
 
+      if (lockedCount > 0) {
+        send({
+          type: 'locked',
+          count: lockedCount,
+          reason: cappedByTier ? 'tier' : 'limit',
+        });
+      }
       send({ type: 'complete', result });
     }
 

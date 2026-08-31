@@ -47,7 +47,8 @@ export default function TermsPage() {
       <Section heading="Free and full access">
         <p>
           Free accounts get <strong className="text-slate-900 font-semibold">{TIER_LIMITS.free.searches} searches
-          in total</strong>, on OnlineJobs.ph, with no card and no payment details asked.
+          in total</strong>, on OnlineJobs.ph, showing up to {TIER_LIMITS.free.results} results each,
+          with no card and no payment details asked.
         </p>
         <p>
           Full access is <strong className="text-slate-900 font-semibold">{PRICE_COPY}</strong> and adds LinkedIn

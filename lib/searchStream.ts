@@ -28,6 +28,14 @@ export type SearchEvent =
   | { type: 'source-error'; error: SourceError }
   /** Pipeline finished. Carries everything that can only be known at the end. */
   | { type: 'complete'; result: ProcessResult }
+  /**
+   * Jobs found but not shown.
+   *
+   * `tier` means the free plan capped it — the UI blurs that many placeholder
+   * cards and offers full access. `limit` means the user asked for fewer than
+   * we found, which is not a paywall and must not look like one.
+   */
+  | { type: 'locked'; count: number; reason: 'tier' | 'limit' }
   /** Fatal. The stream stops here. */
   | { type: 'error'; message: string; code?: string };
 

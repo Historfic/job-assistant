@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { TIER_LIMITS, FULL_ACCESS_COPY, PRICE_COPY, REGULAR_PRICE_COPY, FOUNDING_SEATS,
-  allowedSources, manilaDayStartUtc, nextManilaMidnightUtc } from '@/lib/tiers';
+  allowedSources, resultCap, manilaDayStartUtc, nextManilaMidnightUtc } from '@/lib/tiers';
 
 describe('access limits (monthly subscription)', () => {
   it('free preview: onlinejobs only, 3 lifetime searches', () => {
@@ -43,5 +43,27 @@ describe('manilaDayStartUtc', () => {
   it('nextManilaMidnightUtc is day start + 24h', () => {
     expect(nextManilaMidnightUtc(new Date('2026-08-05T15:59:00Z')).toISOString())
       .toBe('2026-08-05T16:00:00.000Z');
+  });
+});
+
+describe('resultCap', () => {
+  it('caps a free search at five however many the user asks for', () => {
+    expect(resultCap('free', 10)).toBe(5);
+    expect(resultCap('free', 30)).toBe(5);
+  });
+  it('lets a free user ask for fewer', () => {
+    expect(resultCap('free', 3)).toBe(3);
+  });
+  it("respects a paying user's choice up to the ceiling", () => {
+    expect(resultCap('pro', 10)).toBe(10);
+    expect(resultCap('pro', 30)).toBe(30);
+    expect(resultCap('pro', 500)).toBe(30);
+  });
+  it('never returns zero, which would search for nothing', () => {
+    expect(resultCap('free', 0)).toBe(1);
+    expect(resultCap('pro', -5)).toBe(1);
+  });
+  it('free sees strictly fewer results than pro, or the tier means nothing', () => {
+    expect(TIER_LIMITS.free.results).toBeLessThan(TIER_LIMITS.pro.results);
   });
 });

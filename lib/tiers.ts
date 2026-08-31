@@ -46,10 +46,27 @@ export const TIER_LIMITS: Record<'free' | 'pro', {
   searches: number;
   scope: 'lifetime' | 'day';
   sources: JobSource[];
+  /**
+   * How many results a single search may show.
+   *
+   * Free sees enough to judge whether the ranking works, not enough to job
+   * hunt on. The rest are counted and locked rather than sent — a blurred job
+   * still readable in devtools is a costume, not a paywall, and we would have
+   * paid to analyse something the user was never meant to read.
+   *
+   * Pro is a ceiling, not a target: the number the user picks in the search
+   * form wins, up to this.
+   */
+  results: number;
 }> = {
-  free: { searches: 3,  scope: 'lifetime', sources: ['onlinejobs'] },
-  pro:  { searches: 20, scope: 'day',      sources: ['onlinejobs', 'linkedin', 'upwork'] },
+  free: { searches: 3,  scope: 'lifetime', sources: ['onlinejobs'], results: 5 },
+  pro:  { searches: 20, scope: 'day',      sources: ['onlinejobs', 'linkedin', 'upwork'], results: 30 },
 };
+
+/** What this search may actually show: the user's choice, capped by their tier. */
+export function resultCap(tier: 'free' | 'pro', requested: number): number {
+  return Math.min(Math.max(requested, 1), TIER_LIMITS[tier].results);
+}
 
 export function allowedSources(tier: 'free' | 'pro'): JobSource[] {
   return TIER_LIMITS[tier].sources;

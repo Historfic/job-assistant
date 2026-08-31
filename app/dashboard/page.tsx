@@ -67,6 +67,7 @@ export default function DashboardPage() {
   // Jobs that have streamed in but whose search has not finished yet.
   const [streamedJobs, setStreamedJobs] = useState<AnalyzedJob[]>([]);
   const [pendingSources, setPendingSources] = useState<Set<JobSource>>(new Set());
+  const [locked, setLocked] = useState<{ count: number; reason: 'tier' | 'limit' } | null>(null);
   const statusMap = useSyncExternalStore(
     subscribeJobStatus,
     getJobStatusSnapshot,
@@ -164,6 +165,7 @@ export default function DashboardPage() {
     setProgress(0);
     setStreamedJobs([]);
     setPendingSources(new Set());
+    setLocked(null);
     setLastOptions(options);
 
     try {
@@ -258,6 +260,10 @@ export default function DashboardPage() {
               // does not look like it is still waiting on something dead.
               pending.delete(event.error.source);
               setPendingSources(new Set(pending));
+              break;
+
+            case 'locked':
+              setLocked({ count: event.count, reason: event.reason });
               break;
 
             case 'complete':
@@ -470,7 +476,7 @@ export default function DashboardPage() {
           {/* Results as they arrive — the search is not finished, but these are */}
           {loading && (
             <div className="flex-1 overflow-y-auto">
-              <LiveResults jobs={streamedJobs} pendingSources={[...pendingSources]} />
+              <LiveResults jobs={streamedJobs} pendingSources={[...pendingSources]} locked={locked} />
             </div>
           )}
 
@@ -708,6 +714,12 @@ export default function DashboardPage() {
                           ))}
                         </div>
                       </>
+                    )}
+
+                    {locked && (
+                      <div className="mt-4">
+                        <LiveResults jobs={[]} pendingSources={[]} locked={locked} />
+                      </div>
                     )}
 
                     {/* Empty state — only when BOTH Top Matches and Other Jobs render nothing */}

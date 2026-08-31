@@ -2,8 +2,17 @@
 
 **Date:** 2026-08-07
 **Owner:** Rafael (McGen Digital)
-**Status:** Approved by Rafael 2026-08-07 (chat)
+**Status:** ~~Approved 2026-08-07~~ — **SUPERSEDED. Not how JobIQ prices today.**
 **Amends:** 2026-08-05-jobiq-v1-design.md (Users & Tiers section)
+
+> **⚠️ Historical record only.** The one-time payment described below was later
+> replaced by a **₱999/month subscription** with founding-member pricing —
+> ₱999 locked for life for the first 50 members, ₱1,499/month after.
+>
+> Kept because it records why the one-time model was chosen and what it changed,
+> which matters if the question is ever reopened. Do not implement from it.
+> `lib/tiers.ts` is the truth about pricing; `docs/JOBIQ-BRIEF.md` is the
+> current product description.
 
 ## Change
 
