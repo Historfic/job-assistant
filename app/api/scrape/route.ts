@@ -21,6 +21,7 @@ import { getOjSessionCookie } from '@/lib/oj/connection';
 import { normalizeSources } from '@/lib/sources/types';
 import { allowedSources, TIER_LIMITS, FULL_ACCESS_COPY, resultCap, manilaDayStartUtc, nextManilaMidnightUtc } from '@/lib/tiers';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
+import { normalizeEmail } from '@/lib/email';
 import { createSupabaseServer } from '@/lib/supabase/server';
 import { encodeEvent, NDJSON_CONTENT_TYPE, type SearchEvent } from '@/lib/searchStream';
 
@@ -128,10 +129,24 @@ export async function POST(req: NextRequest) {
     if (isSupabaseConfigured()) {
       const supabase = createSupabaseServer();
       const { searches: maxSearches, scope } = TIER_LIMITS[user.tier];
+
+      // A lifetime allowance has to span every alias of the same inbox, or it
+      // is not lifetime: Gmail ignores dots and `+tags`, so one account could
+      // mint unlimited fresh allowances at no effort. Daily limits are per
+      // account — a paying customer's aliases are their own business.
+      let userIds = [user.id];
+      if (scope === 'lifetime') {
+        const { data: siblings } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('normalized_email', normalizeEmail(user.email));
+        if (siblings && siblings.length > 0) userIds = siblings.map(r => r.id);
+      }
+
       let countQuery = supabase
         .from('searches')
         .select('id', { count: 'exact', head: true })
-        .eq('user_id', user.id);
+        .in('user_id', userIds);
       if (scope === 'day') {
         countQuery = countQuery.gte('created_at', manilaDayStartUtc(new Date()).toISOString());
       }
