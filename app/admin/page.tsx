@@ -7,6 +7,17 @@ import type { AdminCustomer } from '@/types';
 
 // Customer console. Paste a payer's email, click Activate — the account is
 // created (if new), an invite email goes out, and paid access is on.
+interface PendingClaim {
+  id: string;
+  email: string;
+  method: string;
+  reference: string;
+  amount: number;
+  note: string | null;
+  paymentId: string;
+  created_at: string;
+}
+
 export default function AdminPage() {
   const router = useRouter();
   const [customers, setCustomers] = useState<AdminCustomer[] | null>(null);
@@ -15,6 +26,9 @@ export default function AdminPage() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [query, setQuery] = useState('');
+  // Customers who say they paid, waiting on Rafael checking GCash.
+  const [claims, setClaims] = useState<PendingClaim[] | null>(null);
+  const [notifications, setNotifications] = useState(true);
 
   const load = useCallback(async () => {
     try {
@@ -30,6 +44,27 @@ export default function AdminPage() {
   }, [router]);
 
   useEffect(() => { void load(); }, [load]);
+
+  const loadClaims = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/claims');
+      if (!res.ok) return;
+      const data = await res.json();
+      setClaims(data.claims ?? []);
+      setNotifications(Boolean(data.notifications));
+    } catch { /* the customer list is the more important half */ }
+  }, []);
+
+  useEffect(() => { loadClaims(); }, [loadClaims]);
+
+  async function resolveClaim(id: string, decision: 'approved' | 'rejected') {
+    setClaims(prev => (prev ?? []).filter(c => c.id !== id));   // optimistic
+    await fetch('/api/admin/claims', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, decision }),
+    }).catch(() => loadClaims());
+  }
 
   async function activate(e: React.FormEvent) {
     e.preventDefault();
@@ -118,6 +153,57 @@ export default function AdminPage() {
       <main className="max-w-3xl mx-auto px-5 py-8 space-y-6">
         {/* Activate a payer */}
         <section className="bg-gray-900 border border-gray-800 rounded-2xl p-5">
+          {claims !== null && claims.length > 0 && (
+            <div className="mb-6 border border-amber-500/30 bg-amber-500/5 rounded-xl p-4">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <h2 className="text-sm font-semibold text-amber-200">
+                  {claims.length} said they paid
+                </h2>
+                {!notifications && (
+                  // Silence here means claims pile up unseen. Say so.
+                  <span className="text-[10px] text-amber-400/80">
+                    Email notifications are off — set SMTP_USER and SMTP_PASS
+                  </span>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                {claims.map(c => (
+                  <div key={c.id} className="bg-gray-900 border border-gray-800 rounded-lg px-3.5 py-3">
+                    <div className="flex items-start justify-between gap-3 flex-wrap">
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-white truncate">{c.email}</p>
+                        <p className="text-[11px] text-gray-500 mt-0.5 tabular-nums">
+                          {c.paymentId} · {c.method.toUpperCase()} · Ref {c.reference} · ₱{c.amount}
+                        </p>
+                        {c.note && <p className="text-[11px] text-gray-400 mt-1">{c.note}</p>}
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => { setEmail(c.email); resolveClaim(c.id, 'approved'); }}
+                          className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-[11px] font-medium text-white transition-colors"
+                        >
+                          Checked — fill in
+                        </button>
+                        <button
+                          onClick={() => resolveClaim(c.id, 'rejected')}
+                          className="px-2.5 py-1 rounded-lg border border-gray-700 text-[11px] text-gray-400 hover:text-white transition-colors"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <p className="text-[11px] text-gray-500 mt-3">
+                Check the amount in {'GCash, BPI or GoTyme'} first. &ldquo;Checked&rdquo; only clears
+                the queue and fills the box below — it does not grant access.
+              </p>
+            </div>
+          )}
+
           <h1 className="text-base font-semibold mb-1">Activate a customer</h1>
           <p className="text-xs text-gray-500 mb-4">
             Paste the email they sent after paying. New customers get an invite email to set their own password.

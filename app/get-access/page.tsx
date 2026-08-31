@@ -4,6 +4,8 @@ import { getSessionUser } from '@/lib/auth';
 import { BUY_URL, FOUNDING_NOTE, REGULAR_PRICE_COPY } from '@/lib/tiers';
 import { paymentMethods } from '@/lib/payment';
 import PaymentPicker from '@/components/PaymentPicker';
+import PaymentClaimForm from '@/components/PaymentClaimForm';
+import { paymentIdFor } from '@/lib/paymentId';
 
 // Where "Get full access" lands. Keeping payment on our own page rather than
 // sending people straight to Messenger means we control the instructions, and
@@ -77,22 +79,25 @@ export default async function GetAccessPage() {
           <section className="mt-9">
             <div className="flex items-center gap-2.5 mb-3">
               <span className="w-6 h-6 rounded-lg bg-blue-50 text-blue-600 grid place-items-center text-xs font-extrabold">2</span>
-              <h2 className="text-base font-bold text-slate-900">Send us the receipt</h2>
+              <h2 className="text-base font-bold text-slate-900">Tell us you paid</h2>
             </div>
-            <div className="bg-white border border-slate-200 rounded-xl p-5">
-              <p className="text-sm text-slate-600">
-                Message us on Facebook with a screenshot of your payment and{' '}
-                <strong className="text-slate-900 font-semibold">the email address you want to use</strong>.
-                That email is how we switch your account on, so double-check the spelling.
-              </p>
+
+            <PaymentClaimForm
+              methods={methods}
+              signedIn={Boolean(user)}
+              paymentId={user ? paymentIdFor(user.id) : null}
+            />
+
+            {/* Messenger stays as a fallback, not the only route. Somebody who
+                has already paid should never have to find us to get what they
+                paid for. */}
+            <p className="text-xs text-slate-500 mt-3 text-center">
+              Prefer to message us?{' '}
               <a href={BUY_URL} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 mt-4 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-sm font-semibold text-white transition-colors">
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.89v2.25h3.33l-.53 3.49h-2.8V24C19.61 23.1 24 18.1 24 12.07z" />
-                </svg>
-                Send the receipt
+                className="text-blue-600 hover:text-blue-700 font-medium">
+                Send the receipt on Facebook
               </a>
-            </div>
+            </p>
           </section>
 
           {/* ── Step 3 ── */}
