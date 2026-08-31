@@ -6,7 +6,7 @@ import { PRICE_COPY, REGULAR_PRICE_COPY, FOUNDING_SEATS, TIER_LIMITS } from '@/l
 // far more than any refund.
 
 export const metadata = {
-  title: 'Terms of Service — EasyClient',
+  title: 'Terms of Service | EasyClient',
   description: 'What EasyClient promises, what it costs, and what it does not guarantee.',
 };
 
@@ -27,7 +27,7 @@ export default function TermsPage() {
           <strong className="text-slate-900 font-semibold">We are not an employer, a recruiter, or an agency.</strong>{' '}
           We do not post the jobs, we do not vet the clients, and we have no relationship
           with them. Every listing links back to its original post so you can check it
-          yourself — please do.
+          yourself. Please do.
         </p>
       </Section>
 
@@ -40,7 +40,7 @@ export default function TermsPage() {
         <p>
           Job listings come from other websites. We do not control whether one is accurate,
           still open, or legitimate. Use the same judgement you would use applying
-          anywhere — and never pay anyone to be hired.
+          anywhere, and never pay anyone to be hired.
         </p>
       </Section>
 
@@ -64,14 +64,14 @@ export default function TermsPage() {
       <Section heading="Paying">
         <p>
           Payment is by GCash, BPI or GoTyme. You send the payment and a screenshot of the
-          receipt, and we switch your account on by hand — normally within the hour during
+          receipt, and we switch your account on by hand, normally within the hour during
           the day.
         </p>
         <p>
           <strong className="text-slate-900 font-semibold">There is no card on file and nothing renews
           automatically.</strong> Nothing can be charged without you deciding to send it. To
-          continue another month, you send another payment. To stop, you simply do not —
-          there is nothing to cancel and no cancellation fee.
+          continue another month, you send another payment. To stop, you simply do not.
+          There is nothing to cancel and no cancellation fee.
         </p>
       </Section>
 

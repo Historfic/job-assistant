@@ -44,15 +44,15 @@ the story rather than an interruption.
 
 0:11–0:13   COFFEE SHOP  (a later section of the clip)
             Caption: "3 free searches. Walang card."
-            Small under it: easyclients.com
+            Small under it: easyclientph.com
 ```
 
 **Primary text** (front-loaded — only ~125 characters show before "See more"):
 ```
 45 minutes hanapin, 5 minutes mag-apply. Mali ang ratio.
 
-EasyClient checks OnlineJobs.ph, LinkedIn at Upwork sa isang search — mga isang
-minuto, ranked by fit, tanggal na ang expired.
+EasyClient checks OnlineJobs.ph, LinkedIn at Upwork sa isang search — unang resulta sa
+10 segundo, ranked by fit, tanggal na ang expired.
 
 3 free searches. Walang card.
 ```
@@ -81,14 +81,14 @@ promise — just their own routine reflected back, then a faster version of it.
             Caption: "Isang search. Tatlong site."
 
 0:08–0:11   SCREEN RECORDING — results appear
-            Caption: "Ranked by fit. May cover letter."
+            Caption: "Unang resulta sa 10 segundo."
 
 0:11–0:13   SCREEN RECORDING — scrolling
-            Caption: "Mga isang minuto lang."
+            Caption: "Ranked by fit. May cover letter."
 
 0:13–0:15   MOUNTAIN  (a later section of the clip)
             Caption: "3 free searches. Walang card."
-            Small under it: easyclients.com
+            Small under it: easyclientph.com
 ```
 
 **Primary text:**
@@ -96,12 +96,12 @@ promise — just their own routine reflected back, then a faster version of it.
 Bakit nasa bundok ako ng Martes ng umaga? Dahil tapos na ako maghanap.
 
 Isang search sa OnlineJobs.ph, LinkedIn at Upwork. Ranked by fit, kasama na ang
-cover letter, mga isang minuto lang.
+cover letter, 10 segundo bago ang una.
 
 3 free searches muna — walang card.
 ```
 
-- **Headline:** `Tapos na maghanap. 1 minuto.` (28)
+- **Headline:** `Unang resulta sa 10 segundo.` (28)
 - **Description:** `3 free searches. No card.` (25)
 - **CTA button:** Learn more
 

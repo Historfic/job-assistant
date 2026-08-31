@@ -6,7 +6,7 @@ import { LegalPage, Section, CONTACT_EMAIL } from '../legal';
 // a written claim that is no longer true.
 
 export const metadata = {
-  title: 'Privacy Policy — EasyClient',
+  title: 'Privacy Policy | EasyClient',
   description: 'What EasyClient collects, why, who it is shared with, and your rights under the Data Privacy Act.',
 };
 
@@ -23,11 +23,11 @@ export default function PrivacyPage() {
       <Section heading="What we collect">
         <p>Only what the product needs to work:</p>
         <ul className="list-disc pl-5 space-y-1.5">
-          <li><strong className="text-slate-900 font-semibold">Your email address and name</strong> — from signing up, or from Google if you use Google sign-in. Used to identify your account and send you what you asked for.</li>
-          <li><strong className="text-slate-900 font-semibold">Your searches</strong> — the keyword and which job sites you searched. Used to enforce your daily search limit.</li>
-          <li><strong className="text-slate-900 font-semibold">Jobs you mark applied or rejected</strong> — so we stop showing you the same listings.</li>
-          <li><strong className="text-slate-900 font-semibold">Your career profile and CV text</strong> — only if you choose to add it. Used to personalise cover letters.</li>
-          <li><strong className="text-slate-900 font-semibold">Your OnlineJobs.ph session</strong> — only if you connect it, and only after you agree to a notice that says we are storing it.</li>
+          <li><strong className="text-slate-900 font-semibold">Your email address and name</strong>: from signing up, or from Google if you use Google sign-in. Used to identify your account and send you what you asked for.</li>
+          <li><strong className="text-slate-900 font-semibold">Your searches</strong>: the keyword and which job sites you searched. Used to enforce your daily search limit.</li>
+          <li><strong className="text-slate-900 font-semibold">Jobs you mark applied or rejected</strong>: so we stop showing you the same listings.</li>
+          <li><strong className="text-slate-900 font-semibold">Your career profile and CV text</strong>: only if you choose to add it. Used to personalise cover letters.</li>
+          <li><strong className="text-slate-900 font-semibold">Your OnlineJobs.ph session</strong>: only if you connect it, and only after you agree to a notice that says we are storing it.</li>
         </ul>
         <p>
           We do not collect payment card details. There is no card on file, because payment
@@ -58,12 +58,12 @@ export default function PrivacyPage() {
           service providers to run the product, and each sees only what it needs:
         </p>
         <ul className="list-disc pl-5 space-y-1.5">
-          <li><strong className="text-slate-900 font-semibold">Supabase</strong> — accounts and database.</li>
-          <li><strong className="text-slate-900 font-semibold">Render</strong> — hosting.</li>
-          <li><strong className="text-slate-900 font-semibold">Apify</strong> — collects public job listings. Receives your search keyword, not your identity.</li>
-          <li><strong className="text-slate-900 font-semibold">Anthropic and OpenRouter</strong> — analyse job listings and draft cover letters. Receive job text and, if you added one, your CV text.</li>
-          <li><strong className="text-slate-900 font-semibold">Google</strong> — only if you choose Google sign-in.</li>
-          <li><strong className="text-slate-900 font-semibold">Gmail / SMTP</strong> — only when you ask us to email a set of results to yourself.</li>
+          <li><strong className="text-slate-900 font-semibold">Supabase</strong>: accounts and database.</li>
+          <li><strong className="text-slate-900 font-semibold">Render</strong>: hosting.</li>
+          <li><strong className="text-slate-900 font-semibold">Apify</strong>: collects public job listings. Receives your search keyword, not your identity.</li>
+          <li><strong className="text-slate-900 font-semibold">Anthropic and OpenRouter</strong>: analyse job listings and draft cover letters. Receive job text and, if you added one, your CV text.</li>
+          <li><strong className="text-slate-900 font-semibold">Google</strong>: only if you choose Google sign-in.</li>
+          <li><strong className="text-slate-900 font-semibold">Gmail / SMTP</strong>: only when you ask us to email a set of results to yourself.</li>
         </ul>
         <p>
           Some of these process data outside the Philippines. Where that happens, it is done
@@ -74,7 +74,7 @@ export default function PrivacyPage() {
       <Section heading="How long we keep it">
         <p>
           For as long as your account exists. Delete your account and everything tied to it
-          is deleted with it — searches, saved jobs, career profile, and any
+          is deleted with it: searches, saved jobs, career profile, and any
           OnlineJobs connection.
         </p>
         <p>

@@ -32,7 +32,7 @@ The rest of this document assumes the page is **EasyClient**.
 | Name | `EasyClient` |
 | Username | `@easyclientph` (or match your domain) |
 | Category | `Software` — secondary: `Business Service` |
-| Website | your domain, once bought |
+| Website | `https://easyclientph.com` |
 | Email | a real inbox you check |
 
 **Profile picture** — the EasyClient logo mark on the blue square, 500×500 px.
@@ -79,14 +79,14 @@ answer *what is it, how much, and why should I believe you* in one screen.
     Upwork. Tatlong tab, parehong mga post kahapon, at pagka-apply mo — sarado
     na pala.
 
-    EasyClient checks all three at once. One search, about a minute, and you get
-    a shortlist ranked by fit — expired at low-quality posts na tanggal na.
+    EasyClient checks all three at once. One search, first results in about ten seconds,
+    and you get a shortlist ranked by fit — expired at low-quality posts na tanggal na.
 
     Free to try: 3 searches, walang card, walang bayad.
     Full access: ₱999/month — GCash, BPI, GoTyme. Walang naka-save na card, kaya
     walang kailangang i-cancel.
 
-    👉 [your domain]
+    👉 easyclientph.com
 
     Tanong muna bago magbayad? Message us. Mas gusto naming sumagot kaysa kumuha
     ng pera sa taong hindi pa sigurado.
@@ -118,10 +118,10 @@ audience is, and they cost nothing.
 **Day 3 — Show the product.** Screen recording, 20 seconds: type a search, wait,
 shortlist appears. Caption:
 
-    Isang search. Tatlong site. Mga isang minuto.
+    Isang search. Tatlong site. 10 segundo.
 
     OnlineJobs.ph, LinkedIn, Upwork — sabay-sabay.
-    Try 3 free: [your domain]
+    Try 3 free: easyclientph.com
 
 **Day 4 — The trust post.** This is the one that converts skeptics.
 
@@ -147,7 +147,7 @@ letter next to the job post it was written for.
     walang kailangang i-cancel. Kapag gusto mo ng isa pang buwan, magbabayad ka
     ulit. Kung hindi, titigil lang.
 
-    3 free searches muna bago ka magdesisyon: [your domain]
+    3 free searches muna bago ka magdesisyon: easyclientph.com
 
 **Day 7 — Answer whatever people actually asked** in the week's comments and
 DMs. Real questions, real answers, screenshot the question if it's a good one.
@@ -200,7 +200,7 @@ judging anything.
     45 minutes hanapin. 5 minutes mag-apply. Mali ang ratio.
 
     EasyClient checks OnlineJobs.ph, LinkedIn at Upwork sa isang search — mga
-    isang minuto, ranked by fit, tanggal na ang expired.
+    10 segundo bago ang una, ranked by fit, tanggal na ang expired.
 
     3 free searches. Walang card.
 
@@ -234,10 +234,10 @@ judging anything.
 
     Tatlong site, sabay. Ranked by fit. Kasama na ang cover letter.
 
-    Subukan mo — 3 free searches, walang card: [your domain]
+    Subukan mo — 3 free searches, walang card: easyclientph.com
 
 - **Headline:** `OnlineJobs + LinkedIn + Upwork`
-- **Description:** `One search, about a minute`
+- **Description:** `First results in 10 seconds`
 - **CTA:** Learn more
 - **Creative:** the 20-second screen recording
 
@@ -267,7 +267,7 @@ the sale.
     ₱999/month po — 20 searches a day sa tatlong site.
 
     Pero libre po muna: 3 searches, walang card, walang hihinging payment
-    details. Subukan niyo muna: [your domain]
+    details. Subukan niyo muna: easyclientph.com
 
     Kung gusto niyo na, dito lang po ako.
 
@@ -289,7 +289,7 @@ the sale.
 
 **"Paano magbayad?"**
 
-    Dito po lahat ng details: [your domain]/get-access
+    Dito po lahat ng details: easyclientph.com/get-access
 
     GCash, BPI o GoTyme — may QR code po doon.
 

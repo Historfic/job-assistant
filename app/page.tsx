@@ -26,7 +26,7 @@ const SAMPLE_RESULTS = [
 
 const STATS = [
   ['3', 'job sites'],
-  ['1 min', 'per search'],
+  ['10 sec', 'to first result'],
   ['20', 'searches a day'],
 ];
 
@@ -94,7 +94,7 @@ export default async function LandingPage() {
             <span className="text-blue-600">1 search.</span>
           </h1>
           <p className="text-[17px] text-slate-600 mt-4 max-w-sm mx-auto">
-            Your shortlist, ranked and ready to apply, in about a minute.
+            First results in about 10 seconds. Ranked, filtered, ready to apply.
           </p>
           <Link href={cta} className="inline-block mt-7 px-9 py-4 rounded-xl bg-blue-600 hover:bg-blue-700 font-semibold text-white shadow-lg shadow-blue-600/25 transition-colors">
             {ctaLabel}
@@ -162,6 +162,7 @@ export default async function LandingPage() {
                 <li>Dead listings filtered out</li>
               </ul>
               <p className="mt-5 text-2xl font-extrabold text-slate-900 tabular-nums">1 min</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">first results in 10 seconds</p>
             </div>
           </div>
         </section>
@@ -205,7 +206,10 @@ export default async function LandingPage() {
               <p className="text-sm text-slate-600 mt-1.5">
                 First {FOUNDING_SEATS} members. {REGULAR_PRICE_COPY} after that.
               </p>
-              <p className="text-sm text-slate-600 mt-4">GCash · BPI · GoTyme</p>
+              <p className="text-[13px] text-slate-600 mt-4 leading-relaxed max-w-[17rem] mx-auto">
+                One client at ₱25,000/month pays for two years of this.
+              </p>
+              <p className="text-sm text-slate-600 mt-3">GCash · BPI · GoTyme</p>
               <p className="text-[13px] text-emerald-700 font-semibold mt-1.5">No card. Nothing to cancel.</p>
               <Link href="/get-access"
                 className="block mt-6 px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-700 font-semibold text-white shadow-lg shadow-blue-600/25 transition-colors">

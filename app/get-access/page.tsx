@@ -12,7 +12,7 @@ import { paymentIdFor } from '@/lib/paymentId';
 // the customer knows exactly what happens after they pay.
 
 export const metadata = {
-  title: 'Get full access — EasyClient',
+  title: 'Get full access | EasyClient',
   description: 'Pay by GCash, BPI or GoTyme and get full access to EasyClient.',
 };
 
@@ -117,7 +117,7 @@ export default async function GetAccessPage() {
 
           <p className="text-xs text-slate-500 mt-9 leading-relaxed">
             Paying for the first month only. There is no card on file and nothing renews
-            automatically — when you want another month, you send another payment.
+            automatically. When you want another month, you send another payment.
             Questions before you pay? Message us; we&apos;d rather answer than take money
             from someone who isn&apos;t sure.
           </p>
