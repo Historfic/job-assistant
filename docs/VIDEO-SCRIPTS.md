@@ -111,6 +111,26 @@ screen recording answers it with a mechanism instead of a promise.
 
 ---
 
+# A third ad worth testing later
+
+Both scripts above sell the search. Neither mentions the two features that
+separate this from "a job board with a filter", and both shipped after the
+scripts were written:
+
+- **Paste any job** — from a Facebook group, a referral, a site we don't cover —
+  and get the cover letter for it
+- **Upload your CV** as a PDF or Word file, so letters cite real experience
+  instead of generic praise
+
+That is a different promise from "search is faster", and worth its own ad once
+the first two have run. Film it the same way: paste a job on screen, let the
+letter appear, no narration.
+
+    Nakita mo sa Facebook group? Paste mo lang.
+    May cover letter ka na, galing sa totoong CV mo.
+
+---
+
 # The screen recording
 
 Eight seconds in each finished ad, so record 45–60 seconds and cut it down. One

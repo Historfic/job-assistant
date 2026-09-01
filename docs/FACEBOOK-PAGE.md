@@ -2,7 +2,9 @@
 
 Everything to set up the page and run the first ads. Copy is written to be
 pasted as-is. Nothing here claims a customer we don't have — the honest hook is
-**3 free searches, no card**, and that is what every piece leads with.
+**3 free searches, 5 jobs each, no card**, and that is what every piece leads with.
+The result cap is stated wherever the free tier is, because somebody promised a
+search who gets five results and a lock has been under-told.
 
 ---
 
@@ -58,10 +60,15 @@ Long version (About section):
     and the time-wasters already removed — and a cover letter written for the
     ones you want to apply to.
 
-    Try it free: 3 searches, no card, no payment details asked.
+    Try it free: 3 searches showing 5 jobs each. No card, no payment details
+    asked.
     Full access is ₱999/month — GCash, BPI or GoTyme. No card is ever saved, so
     there is nothing to cancel. When you want another month, you send another
     payment.
+
+    Found a job somewhere else? Paste it in and we'll write the cover letter
+    for that one too. Upload your CV as a PDF or Word file and every letter
+    cites your real experience.
 
     We never ask for your OnlineJobs password. Connecting your OnlineJobs
     account is optional, and used only to personalise your cover letters.
@@ -82,7 +89,7 @@ answer *what is it, how much, and why should I believe you* in one screen.
     EasyClient checks all three at once. One search, first results in about ten seconds,
     and you get a shortlist ranked by fit — expired at low-quality posts na tanggal na.
 
-    Free to try: 3 searches, walang card, walang bayad.
+    Free to try: 3 searches, 5 trabaho bawat isa. Walang card, walang bayad.
     Full access: ₱999/month — GCash, BPI, GoTyme. Walang naka-save na card, kaya
     walang kailangang i-cancel.
 
@@ -137,7 +144,14 @@ shortlist appears. Caption:
     namin sine-save ang password.
 
 **Day 5 — One feature, in detail.** Cover letters. Screenshot of a generated
-letter next to the job post it was written for.
+letter next to the job post it was written for. Mention the two things that
+make it specific rather than generic:
+
+    Hindi lang sa amin nakuha ang trabaho? Paste mo lang dito, isusulat pa rin
+    namin ang cover letter.
+
+    I-upload mo ang CV mo (PDF o Word) at babanggitin ng bawat letter ang
+    totoong karanasan mo, hindi generic na papuri.
 
 **Day 6 — Price, plainly.**
 
@@ -266,8 +280,8 @@ the sale.
 
     ₱999/month po — 20 searches a day sa tatlong site.
 
-    Pero libre po muna: 3 searches, walang card, walang hihinging payment
-    details. Subukan niyo muna: easyclientph.com
+    Pero libre po muna: 3 searches, 5 trabaho bawat isa. Walang card, walang
+    hihinging payment details. Subukan niyo muna: easyclientph.com
 
     Kung gusto niyo na, dito lang po ako.
 
@@ -275,8 +289,8 @@ the sale.
 
     Fair na tanong po — ang dami talagang scam sa online jobs.
 
-    Kaya ganito: 3 free searches muna, walang card at walang payment info na
-    hinihingi. Bawat trabaho sa results ay naka-link sa totoong post sa
+    Kaya ganito: 3 free searches muna (5 trabaho bawat isa), walang card at
+    walang payment info na hinihingi. Bawat trabaho sa results ay naka-link sa totoong post sa
     OnlineJobs, LinkedIn o Upwork — buksan niyo, i-check niyo mismo.
 
     Hindi rin po namin hinihingi ang password niyo kahit kailan.
