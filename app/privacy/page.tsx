@@ -30,8 +30,9 @@ export default function PrivacyPage() {
           <li><strong className="text-slate-900 font-semibold">Your OnlineJobs.ph session</strong>: only if you connect it, and only after you agree to a notice that says we are storing it.</li>
         </ul>
         <p>
-          We do not collect payment card details. There is no card on file, because payment
-          happens outside the app by GCash or bank transfer.
+          We never see or store your card details. Card payments are handled entirely by
+          our payment provider; GCash and bank transfers happen outside the app altogether.
+          Either way, no card is kept on file and nothing renews on its own.
         </p>
       </Section>
 

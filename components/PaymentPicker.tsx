@@ -50,6 +50,25 @@ export default function PaymentPicker({ methods }: { methods: PaymentMethod[] })
         <div className="p-5">
           <p className="text-xs text-slate-500 mb-4">{current.hint}</p>
 
+          {/* Card has no QR and no account number — it has a checkout. */}
+          {current.checkoutUrl && (
+            <>
+              <a
+                href={current.checkoutUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-sm
+                           font-semibold text-white text-center transition-colors"
+              >
+                Pay ₱999 by card
+              </a>
+              <p className="text-[11px] text-slate-500 mt-2.5 leading-relaxed">
+                Handled by our payment provider. We never see or store your card number,
+                and nothing renews — this is a single payment.
+              </p>
+            </>
+          )}
+
           {current.hasQr && (
             <div className="flex justify-center mb-5">
               {/* White plate: QR codes need light behind them to scan reliably */}
@@ -66,7 +85,7 @@ export default function PaymentPicker({ methods }: { methods: PaymentMethod[] })
             </div>
           )}
 
-          <div className="space-y-2.5">
+          <div className={`space-y-2.5 ${current.checkoutUrl ? 'hidden' : ''}`}>
             {current.accountName && (
               <Field label="Account name" value={current.accountName} />
             )}

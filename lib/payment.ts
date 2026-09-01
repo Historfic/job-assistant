@@ -9,13 +9,26 @@
 // QR images: drop them in /public as qr-gcash.png, qr-bpi.png, qr-gotyme.png.
 
 export interface PaymentMethod {
-  id: 'gcash' | 'bpi' | 'gotyme';
+  id: 'gcash' | 'bpi' | 'gotyme' | 'card';
   label: string;
   hint: string;
   accountName: string;
   accountNumber: string;
   qrSrc: string;
   hasQr: boolean;
+  /**
+   * Set only for `card`: where the checkout lives.
+   *
+   * Card payment goes through a Merchant of Record (Paddle or Lemon Squeezy),
+   * which sells on our behalf and handles the tax — the only route open to
+   * someone without DTI or SEC registration. It also means card details never
+   * touch our servers, so the privacy policy's "we do not collect payment card
+   * details" stays true.
+   *
+   * A ONE-OFF payment, not a subscription. Nothing is stored and nothing
+   * renews, which is what keeps the rest of the promise intact.
+   */
+  checkoutUrl?: string;
 }
 
 const RAW: Array<Omit<PaymentMethod, 'hasQr'>> = [
@@ -47,9 +60,26 @@ const RAW: Array<Omit<PaymentMethod, 'hasQr'>> = [
 
 /** Only methods you've actually configured. Empty until the details are set. */
 export function paymentMethods(): PaymentMethod[] {
-  return RAW
+  const local = RAW
     .filter(m => m.accountNumber.trim() || m.accountName.trim())
     .map(m => ({ ...m, hasQr: hasQrFor(m.id) }));
+
+  // Card goes last: it costs about ₱65 in fees per payment against nothing for
+  // a bank transfer, so it belongs beside the free options rather than ahead
+  // of them.
+  const checkoutUrl = process.env.NEXT_PUBLIC_CARD_CHECKOUT_URL?.trim();
+  if (!checkoutUrl) return local;
+
+  return [...local, {
+    id: 'card' as const,
+    label: 'Card',
+    hint: 'Visa, Mastercard. One payment — nothing is saved and nothing renews.',
+    accountName: '',
+    accountNumber: '',
+    qrSrc: '',
+    hasQr: false,
+    checkoutUrl,
+  }];
 }
 
 // Whether a QR image was uploaded. Checked at build time on the server so a

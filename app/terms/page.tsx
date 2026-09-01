@@ -63,13 +63,14 @@ export default function TermsPage() {
 
       <Section heading="Paying">
         <p>
-          Payment is by GCash, BPI or GoTyme. You send the payment and a screenshot of the
+          Payment is by GCash, BPI, GoTyme or card. You send the payment and a screenshot of the
           receipt, and we switch your account on by hand, normally within the hour during
           the day.
         </p>
         <p>
-          <strong className="text-slate-900 font-semibold">There is no card on file and nothing renews
-          automatically.</strong> Nothing can be charged without you deciding to send it. To
+          <strong className="text-slate-900 font-semibold">Nothing is stored and nothing renews
+          automatically.</strong> Card payments are single payments handled by our payment
+          provider; we never see or keep your card details. Nothing can be charged without you deciding to send it. To
           continue another month, you send another payment. To stop, you simply do not.
           There is nothing to cancel and no cancellation fee.
         </p>

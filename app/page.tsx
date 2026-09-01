@@ -50,7 +50,7 @@ const FAQ: Array<[string, string]> = [
   ['Is this a scam?',
    '3 free searches before money is mentioned. Every job links to the real post. Check it yourself.'],
   ['Can you charge me without asking?',
-   'No card on file. You send GCash each month. Nothing to cancel.'],
+   'Nothing is stored and nothing renews. Every month is a payment you choose to send.'],
   ['Do you need my OnlineJobs password?',
    'No. Connecting it is optional and we never store passwords.'],
   ['What happens after the first 50 members?',
