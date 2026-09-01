@@ -72,6 +72,21 @@ export default function PaymentPicker({ methods }: { methods: PaymentMethod[] })
               Philippine banking app can scan one from the gallery instead, but
               the button is small and most people have never noticed it — so
               save the image for them and say where to look. */}
+          {/* When a real payment link exists this is the whole flow on a phone:
+              it opens the app with the amount already filled in. Nothing else
+              here does that, which is why it sits above the QR. */}
+          {current.payLink && (
+            <a
+              href={current.payLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full py-3 mb-4 rounded-xl bg-blue-600 hover:bg-blue-700
+                         text-sm font-semibold text-white text-center transition-colors"
+            >
+              Pay ₱999 with {current.label}
+            </a>
+          )}
+
           {current.hasQr && (
             <div className="flex justify-center mb-5">
               {/* White plate: QR codes need light behind them to scan reliably */}

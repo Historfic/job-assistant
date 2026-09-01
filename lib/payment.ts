@@ -17,6 +17,16 @@ export interface PaymentMethod {
   qrSrc: string;
   hasQr: boolean;
   /**
+   * A link that opens the payment directly, when one exists for this method.
+   *
+   * Bare schemes like gcash:// do nothing — tested, no prompt on any handset.
+   * A working link has to carry a payment session, and only three things
+   * produce one: GCash's own Request Money feature, a payment-link service, or
+   * a gateway like PayMongo. All three hand back a URL, so this is a slot
+   * rather than an integration: paste whichever you get and the button works.
+   */
+  payLink?: string;
+  /**
    * Set only for `card`: where the checkout lives.
    *
    * Card payment goes through a Merchant of Record (Paddle or Lemon Squeezy),
@@ -62,7 +72,7 @@ const RAW: Array<Omit<PaymentMethod, 'hasQr'>> = [
 export function paymentMethods(): PaymentMethod[] {
   const local = RAW
     .filter(m => m.accountNumber.trim() || m.accountName.trim())
-    .map(m => ({ ...m, hasQr: hasQrFor(m.id) }));
+    .map(m => ({ ...m, hasQr: hasQrFor(m.id), payLink: payLinkFor(m.id) }));
 
   // Card goes last: it costs about ₱65 in fees per payment against nothing for
   // a bank transfer, so it belongs beside the free options rather than ahead
@@ -80,6 +90,20 @@ export function paymentMethods(): PaymentMethod[] {
     hasQr: false,
     checkoutUrl,
   }];
+}
+
+/**
+ * Literal keys, not a computed lookup: Next only inlines NEXT_PUBLIC_ values
+ * when the key is written out, so a template string would read as undefined the
+ * day this moves to a client component.
+ */
+function payLinkFor(id: string): string | undefined {
+  const links: Record<string, string | undefined> = {
+    gcash: process.env.NEXT_PUBLIC_GCASH_LINK,
+    bpi: process.env.NEXT_PUBLIC_BPI_LINK,
+    gotyme: process.env.NEXT_PUBLIC_GOTYME_LINK,
+  };
+  return links[id]?.trim() || undefined;
 }
 
 // Whether a QR image was uploaded. Checked at build time on the server so a
