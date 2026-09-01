@@ -30,10 +30,15 @@ export default function PaymentPicker({ methods }: { methods: PaymentMethod[] })
               role="tab"
               aria-selected={m.id === active}
               onClick={() => setActive(m.id)}
+              // Every tab carries the 2px border, transparent when inactive, so
+              // selecting one does not make it taller than its siblings. -mb-px
+              // pulls it onto the container's own border instead of sitting
+              // below it, which is what made the row look bent.
               className={`flex-1 px-3 py-3 text-sm font-semibold transition-colors
+                border-b-2 -mb-px
                 ${m.id === active
-                  ? 'text-slate-900 bg-slate-50 border-b-2 border-blue-600'
-                  : 'text-slate-400 hover:text-slate-600'}`}
+                  ? 'text-slate-900 bg-slate-50 border-blue-600'
+                  : 'text-slate-400 hover:text-slate-600 border-transparent'}`}
             >
               {m.label}
             </button>
