@@ -256,19 +256,19 @@ export default function JobCard({ job, highlight, baseMessage }: Props) {
 
         {/* Description */}
         {job.description && (
-          <p className={`text-xs text-gray-500 leading-relaxed ${expanded ? '' : 'line-clamp-2'}`}>
+          <p className={`text-xs text-gray-500 leading-relaxed ${expanded ? 'whitespace-pre-line' : 'line-clamp-4'}`}>
             {job.description}
           </p>
         )}
 
         {/* Footer: expand + personalize + view link + status toggles */}
         <div className="flex items-center justify-between mt-3 gap-2 flex-wrap">
-          {job.description && job.description.length > 120 && (
+          {job.description && job.description.length > 240 && (
             <button
               onClick={() => setExpanded(e => !e)}
               className="text-[10px] text-gray-600 hover:text-gray-400 transition-colors shrink-0"
             >
-              {expanded ? 'Show less ↑' : 'Show more ↓'}
+              {expanded ? 'Show less' : 'Read the full post'}
             </button>
           )}
           <div className="flex-1" />
