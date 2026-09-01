@@ -8,6 +8,7 @@ import Logo from '@/components/Logo';
 import JobCard from '@/components/JobCard';
 import LiveResults from '@/components/LiveResults';
 import PasteJobPanel from '@/components/PasteJobPanel';
+import Tour, { hasSeenTour } from '@/components/dashboard/Tour';
 import { SOURCE_LABEL, SOURCE_BADGE, jobSource, countBySource } from '@/lib/sourceLabels';
 import { decodeChunk, insertRanked } from '@/lib/searchStream';
 import AIInsights from '@/components/AIInsights';
@@ -69,6 +70,10 @@ export default function DashboardPage() {
   const [streamedJobs, setStreamedJobs] = useState<AnalyzedJob[]>([]);
   const [pendingSources, setPendingSources] = useState<Set<JobSource>>(new Set());
   const [locked, setLocked] = useState<{ count: number; reason: 'tier' | 'limit' } | null>(null);
+  // First run only. Checked after mount because localStorage does not exist
+  // during SSR, and started once the user is loaded so the tour never points at
+  // a dashboard that is still redirecting to /login.
+  const [tourRunning, setTourRunning] = useState(false);
   const statusMap = useSyncExternalStore(
     subscribeJobStatus,
     getJobStatusSnapshot,
@@ -148,6 +153,10 @@ export default function DashboardPage() {
   }, [router]);
 
   useEffect(() => { refreshMe(); }, [refreshMe]);
+
+  useEffect(() => {
+    if (user && !hasSeenTour()) setTourRunning(true);
+  }, [user]);
 
   // ── Progress ticker ──────────────────────────────────────────────────────────
   function animateProgress(targetPct: number, msg: string) {
@@ -359,7 +368,9 @@ export default function DashboardPage() {
   };
 
   return (
-    // 100dvh (not 100vh) so mobile browser chrome doesn't clip the layout
+    <>
+    <Tour run={tourRunning} onFinish={() => setTourRunning(false)} />
+    {/* 100dvh (not 100vh) so mobile browser chrome doesn't clip the layout */}
     <div className="h-[100dvh] bg-gray-950 text-white flex flex-col overflow-hidden">
 
       {/* ── Top Header ───────────────────────────────────────────────────────── */}
@@ -416,8 +427,10 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* User avatar */}
+          {/* User avatar. Wrapped so the tour has something to point at:
+              AccountMenu does not forward arbitrary DOM props. */}
           {me && user && (
+            <div data-tour="profile">
             <AccountMenu
               me={me}
               avatar={user.avatar}
@@ -428,7 +441,9 @@ export default function DashboardPage() {
                 refreshMe();
               }}
               onProfileClick={() => setProfileOpen(true)}
+              onReplayTour={() => setTourRunning(true)}
             />
+            </div>
           )}
         </div>
       </header>
@@ -530,7 +545,7 @@ export default function DashboardPage() {
 
           {/* ── Empty state ─────────────────────────────────────────────────── */}
           {!loading && !result && (
-            <div className="flex-1 overflow-y-auto animate-fade-in">
+            <div className="flex-1 overflow-y-auto animate-fade-in" data-tour="results">
             <div className="flex flex-col items-center justify-center p-8 text-center">
               <div className="w-16 h-16 bg-gray-900 border border-gray-800 rounded-2xl flex items-center justify-center mb-4">
                 <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -571,7 +586,7 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            <div className="max-w-md w-full mx-auto border-t border-gray-800">
+            <div className="max-w-md w-full mx-auto border-t border-gray-800" data-tour="paste">
               <PasteJobPanel />
             </div>
             </div>
@@ -849,8 +864,10 @@ export default function DashboardPage() {
 
       <OjConnectModal open={ojModalOpen} onClose={() => setOjModalOpen(false)} onConnected={refreshMe} />
     </div>
+    </>
   );
 }
+
 
 // ─── Utility: single animation frame tick ────────────────────────────────────
 function tick() {

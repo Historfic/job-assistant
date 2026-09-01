@@ -4,13 +4,14 @@ import { useState } from 'react';
 import type { MeResponse } from '@/types';
 import UpgradeButton from '@/components/dashboard/UpgradeButton';
 
-export default function AccountMenu({ me, avatar, onLogout, onConnectClick, onDisconnect, onProfileClick }: {
+export default function AccountMenu({ me, avatar, onLogout, onConnectClick, onDisconnect, onProfileClick, onReplayTour }: {
   me: MeResponse;
   avatar: string;
   onLogout: () => void;
   onConnectClick: () => void;
   onDisconnect: () => void;
   onProfileClick: () => void;
+  onReplayTour?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const { user, ojConnection, limits } = me;
@@ -53,6 +54,13 @@ export default function AccountMenu({ me, avatar, onLogout, onConnectClick, onDi
               className="w-full text-left text-[11px] text-blue-400 hover:text-blue-300 transition-colors"
             >
               Your experience — used to write your cover letters
+            </button>
+
+            <button
+              onClick={() => { setOpen(false); onReplayTour?.(); }}
+              className="w-full text-left px-3 py-2 text-xs text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
+            >
+              Show me around again
             </button>
           </div>
 

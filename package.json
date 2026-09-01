@@ -21,6 +21,7 @@
     "nodemailer": "^6.9.13",
     "react": "^18",
     "react-dom": "^18",
+    "react-joyride": "^2.9.3",
     "unpdf": "^1.8.1"
   },
   "devDependencies": {

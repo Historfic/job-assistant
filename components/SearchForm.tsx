@@ -120,7 +120,7 @@ export default function SearchForm({ onSearch, loading, tier }: Props) {
           refinement, so everything except the keyword now waits behind
           Filters. Nothing was removed. It just stopped being in the way. */}
       <div className="space-y-4">
-        <div>
+        <div data-tour="search">
           <Label>What work do you do?</Label>
           <Input
             value={keyword}
@@ -148,7 +148,9 @@ export default function SearchForm({ onSearch, loading, tier }: Props) {
           )}
         </div>
 
-        <SourceSelector selected={sources} tier={tier} onChange={chooseSources} />
+        <div data-tour="sources">
+          <SourceSelector selected={sources} tier={tier} onChange={chooseSources} />
+        </div>
       </div>
 
       <div className="border-t border-gray-800" />
