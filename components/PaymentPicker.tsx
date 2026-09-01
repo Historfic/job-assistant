@@ -22,7 +22,7 @@ export default function PaymentPicker({ methods }: { methods: PaymentMethod[] })
   return (
     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
       {methods.length > 1 && (
-        <div className="flex border-b border-slate-200" role="tablist">
+        <div className="grid grid-cols-4 border-b border-slate-200" role="tablist">
           {methods.map(m => (
             <button
               key={m.id}
@@ -33,7 +33,7 @@ export default function PaymentPicker({ methods }: { methods: PaymentMethod[] })
               // selecting one does not make it taller than its siblings. -mb-px
               // pulls it onto the container's own border instead of sitting
               // below it, which is what made the row look bent.
-              className={`flex-1 px-3 py-3 text-sm font-semibold transition-colors
+              className={`px-2 py-3 text-[13px] font-semibold transition-colors
                 border-b-2 -mb-px
                 ${m.id === active
                   ? 'text-slate-900 bg-slate-50 border-blue-600'
@@ -133,7 +133,9 @@ export default function PaymentPicker({ methods }: { methods: PaymentMethod[] })
                 copied={copied === current.accountNumber}
               />
             )}
-            <Field label="Amount" value="₱999" />
+            {/* Only when there is no QR to carry it: with the amount encoded,
+                a copyable "Amount" field implies it must be typed. */}
+            {!current.hasQr && <Field label="Amount" value="₱999" />}
           </div>
         </div>
       )}

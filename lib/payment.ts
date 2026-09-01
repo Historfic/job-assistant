@@ -6,10 +6,14 @@
 // A method only appears on the page once its details are filled in, so you can
 // launch with GCash alone and add the banks later without a code change.
 //
-// QR images: drop them in /public as qr-gcash.png, qr-bpi.png, qr-gotyme.png.
+// QR images live in /public as qr-<method>.png.
+//
+// These encode the ₱999 amount, so a customer scanning one cannot mistype it —
+// which removes the most likely way a payment arrives wrong and has to be
+// chased in Messenger.
 
 export interface PaymentMethod {
-  id: 'gcash' | 'bpi' | 'gotyme' | 'card';
+  id: 'gcash' | 'bpi' | 'gotyme' | 'maya' | 'card';
   label: string;
   hint: string;
   accountName: string;
@@ -45,7 +49,7 @@ const RAW: Array<Omit<PaymentMethod, 'hasQr'>> = [
   {
     id: 'gcash',
     label: 'GCash',
-    hint: 'Fastest — most people use this',
+    hint: 'Scan and the ₱999 is already filled in',
     accountName: process.env.NEXT_PUBLIC_GCASH_NAME ?? '',
     accountNumber: process.env.NEXT_PUBLIC_GCASH_NUMBER ?? '',
     qrSrc: '/qr-gcash.png',
@@ -53,7 +57,7 @@ const RAW: Array<Omit<PaymentMethod, 'hasQr'>> = [
   {
     id: 'bpi',
     label: 'BPI',
-    hint: 'Bank transfer or InstaPay',
+    hint: 'Scan and the ₱999 is already filled in',
     accountName: process.env.NEXT_PUBLIC_BPI_NAME ?? '',
     accountNumber: process.env.NEXT_PUBLIC_BPI_ACCOUNT ?? '',
     qrSrc: '/qr-bpi.png',
@@ -61,10 +65,18 @@ const RAW: Array<Omit<PaymentMethod, 'hasQr'>> = [
   {
     id: 'gotyme',
     label: 'GoTyme',
-    hint: 'Bank transfer or InstaPay',
+    hint: 'Scan and the ₱999 is already filled in',
     accountName: process.env.NEXT_PUBLIC_GOTYME_NAME ?? '',
     accountNumber: process.env.NEXT_PUBLIC_GOTYME_ACCOUNT ?? '',
     qrSrc: '/qr-gotyme.png',
+  },
+  {
+    id: 'maya',
+    label: 'Maya',
+    hint: 'Scan and the ₱999 is already filled in',
+    accountName: process.env.NEXT_PUBLIC_MAYA_NAME ?? '',
+    accountNumber: process.env.NEXT_PUBLIC_MAYA_NUMBER ?? '',
+    qrSrc: '/qr-maya.png',
   },
 ];
 
@@ -102,6 +114,7 @@ function payLinkFor(id: string): string | undefined {
     gcash: process.env.NEXT_PUBLIC_GCASH_LINK,
     bpi: process.env.NEXT_PUBLIC_BPI_LINK,
     gotyme: process.env.NEXT_PUBLIC_GOTYME_LINK,
+    maya: process.env.NEXT_PUBLIC_MAYA_LINK,
   };
   return links[id]?.trim() || undefined;
 }
