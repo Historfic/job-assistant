@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import type { PaymentMethod } from '@/lib/payment';
-import { appLinkFor } from '@/lib/appLinks';
 
 // Tabs rather than three stacked QR codes: on a phone, showing all of them at
 // once means a lot of scrolling and a real chance of scanning the wrong one.
@@ -10,18 +9,6 @@ export default function PaymentPicker({ methods }: { methods: PaymentMethod[] })
   const [active, setActive] = useState(methods[0]?.id);
   const [copied, setCopied] = useState('');
   const current = methods.find(m => m.id === active) ?? methods[0];
-  const appLink = current ? appLinkFor(current.id) : null;
-
-  /**
-   * Custom schemes fail silently when the app is not installed, so Android gets
-   * an intent URL (which offers the Play Store) and iOS gets the scheme. If
-   * nothing happens the page simply stays put, which is the honest outcome.
-   */
-  function openApp(link: { scheme: string; intent: string }) {
-    const android = /android/i.test(navigator.userAgent);
-    window.location.href = android ? link.intent : link.scheme;
-  }
-
   async function copy(text: string) {
     try {
       await navigator.clipboard.writeText(text);
@@ -98,18 +85,6 @@ export default function PaymentPicker({ methods }: { methods: PaymentMethod[] })
                   className="block w-[200px] h-[200px] object-contain"
                 />
               </div>
-            </div>
-          )}
-
-          {current.hasQr && appLink && (
-            <div className="sm:hidden -mt-2 mb-3">
-              <button
-                onClick={() => openApp(appLink)}
-                className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-sm
-                           font-semibold text-white transition-colors"
-              >
-                Open {current.label}
-              </button>
             </div>
           )}
 
