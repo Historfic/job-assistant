@@ -1,8 +1,33 @@
 // ─── Salary Evaluator ─────────────────────────────────────────────────────────
-// Ported directly from the original onlinejobs scraper (index.js).
-// Parses any raw salary string and decides if it meets the minimum hourly rate.
+// Parses any raw salary string and decides whether it clears a minimum.
+//
+// Every number used to be read as US dollars. OnlineJobs.ph lists in pesos, so
+// "₱30,000/month" was becoming ₱30,000 ÷ 160 = $187/hr — and since scoreJob
+// awards its top salary bonus at $30/hr, EVERY peso-denominated job scored
+// maximum on pay regardless of what it actually paid. That corrupted the
+// ranking on the free tier's only source.
+//
+// Currency is now read from the string, and everything is compared in one unit.
 
 const HOURS_PER_MONTH = 160;
+
+/**
+ * Approximate and deliberately a constant rather than a live rate: a filter
+ * whose results shift with the exchange rate would be impossible to reason
+ * about, and the numbers being compared are advertised salary ranges, not
+ * settlements. Worth revisiting if the peso moves a long way.
+ */
+const PHP_PER_USD = 58;
+
+function isPeso(text: string): boolean {
+  return /₱|\bphp\b|\bpesos?\b/i.test(text);
+}
+
+/** Everything becomes USD per hour, so one comparison covers every source. */
+function toUsdHourly(amount: number, peso: boolean, monthly: boolean): number {
+  const usd = peso ? amount / PHP_PER_USD : amount;
+  return parseFloat((monthly ? usd / HOURS_PER_MONTH : usd).toFixed(2));
+}
 
 export interface SalaryEvaluation {
   approved: boolean;
@@ -36,28 +61,26 @@ export function evaluateSalary(
   // For ranges like "$800-$1,200" take the highest value
   const amount = Math.max(...numMatches.map(Number));
 
+  const peso = isPeso(rawSalary);
+  const unit = peso ? '₱' : '$';
+
   // Rule 3: hourly rate
   if (/\/hr|per hour|hourly|\/hour/i.test(lower)) {
-    if (amount >= minHourlyRate) {
-      return { approved: true, reason: `$${amount}/hr ≥ $${minHourlyRate}/hr minimum`, hourlyRate: amount };
-    }
-    return { approved: false, reason: `$${amount}/hr < $${minHourlyRate}/hr minimum`, hourlyRate: amount };
+    const hourly = toUsdHourly(amount, peso, false);
+    return {
+      approved: hourly >= minHourlyRate,
+      reason: `${unit}${amount}/hr ≈ $${hourly}/hr vs $${minHourlyRate}/hr minimum`,
+      hourlyRate: hourly,
+    };
   }
 
   // Rule 4: monthly rate → convert to hourly
   if (/\/mo|per month|monthly|\/month/i.test(lower)) {
-    const hourlyEstimate = parseFloat((amount / HOURS_PER_MONTH).toFixed(2));
-    if (hourlyEstimate >= minHourlyRate) {
-      return {
-        approved: true,
-        reason: `$${amount}/mo ÷ ${HOURS_PER_MONTH}hrs ≈ $${hourlyEstimate}/hr ≥ $${minHourlyRate}/hr`,
-        hourlyRate: hourlyEstimate,
-      };
-    }
+    const hourly = toUsdHourly(amount, peso, true);
     return {
-      approved: false,
-      reason: `$${amount}/mo ÷ ${HOURS_PER_MONTH}hrs ≈ $${hourlyEstimate}/hr < $${minHourlyRate}/hr`,
-      hourlyRate: hourlyEstimate,
+      approved: hourly >= minHourlyRate,
+      reason: `${unit}${amount}/mo ≈ $${hourly}/hr vs $${minHourlyRate}/hr minimum`,
+      hourlyRate: hourly,
     };
   }
 
