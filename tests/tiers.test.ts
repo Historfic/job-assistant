@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import type { RawJob } from '@/types';
 import { TIER_LIMITS, FULL_ACCESS_COPY, PRICE_COPY, REGULAR_PRICE_COPY, FOUNDING_SEATS,
   allowedSources, resultCap, manilaDayStartUtc, nextManilaMidnightUtc } from '@/lib/tiers';
 
@@ -74,10 +75,10 @@ describe('search scoring floor', () => {
     // scored 0 for pay while "Negotiable" scored 8 — so knowing a job paid
     // ₱30,000 ranked it below a job that said nothing at all.
     const { scoreJob, analyzeJobLocally } = await import('@/lib/aiAnalyzer');
-    const base = { title: 'VA', description: '', url: 'u' } as never;
+    const base = { title: 'VA', description: '', url: 'u' } as unknown as RawJob;
 
-    const stated    = scoreJob({ ...base, hourlyRate: 3.2, salary: '₱30,000/mo' } as never, analyzeJobLocally(base), 'va');
-    const unstated  = scoreJob({ ...base, salary: 'Negotiable' } as never, analyzeJobLocally(base), 'va');
+    const stated   = scoreJob({ ...base, hourlyRate: 3.2, salary: '₱30,000/mo' }, analyzeJobLocally(base), 'va');
+    const unstated = scoreJob({ ...base, salary: 'Negotiable' }, analyzeJobLocally(base), 'va');
     expect(stated).toBeGreaterThanOrEqual(unstated);
   });
 });

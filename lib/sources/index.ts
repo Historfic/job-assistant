@@ -43,9 +43,16 @@ export async function getJobsFromSources(
     sources.map(async source => {
       const report = async (jobs: RawJob[]) => {
         // Awaited so a slow consumer (analysing and streaming these jobs)
-        // finishes before this source is considered handled — otherwise the
-        // caller's ordering guarantees get subtle.
-        await progress.onSourceDone?.(source, jobs);
+        // finishes before this source is considered handled.
+        //
+        // Caught, because the consumer's failure is not the source's: letting
+        // it reject rejected this whole source, so its scraped jobs vanished
+        // and the user was told the site had not responded.
+        try {
+          await progress.onSourceDone?.(source, jobs);
+        } catch (err) {
+          console.error(`[sources] consumer failed for ${source}`, err);
+        }
         return jobs;
       };
       if (!isLiveEnabled(source)) {
@@ -56,7 +63,15 @@ export async function getJobsFromSources(
         if ((opts.page ?? 0) > 0 && source !== 'onlinejobs') return report([]);
         return report(mockJobsFor(source, opts.keyword, opts.limit));
       }
-      return report(await ADAPTERS[source].searchJobs(opts));
+      try {
+        return await report(await ADAPTERS[source].searchJobs(opts));
+      } catch (err) {
+        // Announced here rather than after Promise.allSettled resolves, so the
+        // UI can say "LinkedIn did not respond" while the others are still
+        // working instead of at the very end.
+        progress.onSourceError?.({ source, message: (err as Error)?.message ?? 'Unknown error' });
+        throw err;
+      }
     }),
   );
 
@@ -69,9 +84,8 @@ export async function getJobsFromSources(
       perSourceJobs.push(r.value);
       if (isLiveEnabled(source) && r.value.length > 0) isLive = true;
     } else {
-      const error = { source, message: (r.reason as Error)?.message ?? 'Unknown error' };
-      errors.push(error);
-      progress.onSourceError?.(error);
+      // Already announced above, at the moment it happened.
+      errors.push({ source, message: (r.reason as Error)?.message ?? 'Unknown error' });
     }
   });
 

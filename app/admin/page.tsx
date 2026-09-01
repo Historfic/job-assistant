@@ -59,11 +59,21 @@ export default function AdminPage() {
 
   async function resolveClaim(id: string, decision: 'approved' | 'rejected') {
     setClaims(prev => (prev ?? []).filter(c => c.id !== id));   // optimistic
-    await fetch('/api/admin/claims', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id, decision }),
-    }).catch(() => loadClaims());
+    try {
+      const res = await fetch('/api/admin/claims', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, decision }),
+      });
+      // fetch only rejects on a network failure, so a 500 was silently
+      // dropping the claim from the queue while it stayed pending in the
+      // database — somebody's payment disappearing from the only place
+      // Rafael would look for it.
+      if (!res.ok) throw new Error('resolve failed');
+    } catch {
+      setError('That claim did not save. Reloading the queue.');
+      loadClaims();
+    }
   }
 
   async function activate(e: React.FormEvent) {

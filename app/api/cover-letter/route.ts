@@ -14,6 +14,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth';
 import { analyzeJobs } from '@/lib/aiAnalyzer';
+import { consumeSearchAllowance } from '@/lib/searchAllowance';
 import type { RawJob } from '@/types';
 
 const MAX_CHARS = 12_000;
@@ -21,6 +22,12 @@ const MAX_CHARS = 12_000;
 export async function POST(req: NextRequest) {
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: 'Please sign in first.' }, { status: 401 });
+
+  // This costs a Claude call, so it counts against the same allowance searches
+  // do. Without it, a free user out of lifetime searches had an unlimited
+  // supply of paid analysis through the paste box.
+  const denied = await consumeSearchAllowance(user, { keyword: 'pasted job', sources: [] });
+  if (denied) return denied;
 
   const { description, title, company } = (await req.json().catch(() => ({}))) as {
     description?: string; title?: string; company?: string;
@@ -33,8 +40,11 @@ export async function POST(req: NextRequest) {
     }, { status: 400 });
   }
 
+  // Marks it as pasted rather than scraped, so /api/personalize does not treat
+  // it as an OnlineJobs listing and demand a connection for it.
   const raw: RawJob = {
     id: `pasted-${Date.now()}`,
+    source: undefined,
     title: (title ?? '').trim() || firstLineAsTitle(text),
     companyName: (company ?? '').trim() || '',
     description: text.slice(0, MAX_CHARS),

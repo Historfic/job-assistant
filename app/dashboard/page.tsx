@@ -221,6 +221,7 @@ export default function DashboardPage() {
       let live: AnalyzedJob[] = [];
       const pending = new Set<JobSource>();
       let streamError: string | null = null;
+      let finished = false;
 
       setActiveTab('jobs');
 
@@ -273,6 +274,7 @@ export default function DashboardPage() {
               break;
 
             case 'complete':
+              finished = true;
               animateProgress(STEPS[6].pct, STEPS[6].msg as string);
               setResult(event.result);
               if (event.result.limits) {
@@ -287,9 +289,19 @@ export default function DashboardPage() {
         }
       }
 
-      // A stream that ends without `complete` means the connection dropped
-      // mid-search. Say so rather than presenting a partial list as the answer.
       if (streamError) throw new Error(streamError);
+
+      // A stream that ends without `complete` means the connection dropped
+      // mid-search — an instance restart, a lost signal. Without this the
+      // dashboard fell back to the "no search yet" empty state, having already
+      // spent one of the user's searches and shown them nothing.
+      if (!finished) {
+        throw new Error(
+          live.length > 0
+            ? `The connection dropped after ${live.length} result${live.length === 1 ? '' : 's'}. Please search again.`
+            : 'The connection dropped before any results arrived. Please search again.',
+        );
+      }
     } catch (err) {
       setError((err as Error).message);
     } finally {

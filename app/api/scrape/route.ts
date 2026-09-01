@@ -232,7 +232,11 @@ export async function POST(req: NextRequest) {
     // Each pass scrapes the next page of OnlineJobs.ph results (page-size 30)
     // so we can keep finding fresh listings even when many URLs are already
     // applied/rejected and being filtered out client-side.
-    while (validJobs.length < targetCount && passes < MAX_PASSES) {
+    // Compared against `reserved`, not validJobs.length: a job dropped by the
+    // file-upload filter would otherwise leave the loop short forever, sending
+    // it into two more scrape passes that analyse nothing and inflate the
+    // locked count into a paywall number that was never real.
+    while (reserved < targetCount && passes < MAX_PASSES) {
       const currentPage = passes; // 0-indexed: pass 0 = first page, pass 1 = offset 30, etc.
       passes++;
       const needed = Math.ceil((targetCount - validJobs.length) * BATCH_FACTOR) + 5;
@@ -259,10 +263,15 @@ export async function POST(req: NextRequest) {
             .sort((a, b) => b.score - a.score)
             .map(x => x.job);
 
-          // Reserved synchronously, before the await below: sources answer in
-          // parallel, and two callbacks computing "room left" at the same time
-          // would each claim the same slots.
-          const room = Math.max(0, targetCount - reserved);
+          // Slots are shared out per source, not first-come-first-served.
+          //
+          // OnlineJobs.ph answers in about ten seconds against thirty to sixty
+          // for the Apify actors, so claiming slots on arrival meant it took
+          // every one and LinkedIn and Upwork were discarded entirely — the
+          // exact failure the old post-sort trim existed to prevent, and the
+          // whole thing a paying customer is buying.
+          const share = Math.max(1, Math.ceil(targetCount / Math.max(1, sources.length)));
+          const room = Math.max(0, Math.min(share, targetCount - reserved));
           const toAnalyse = ranked.slice(0, room);
           reserved += toAnalyse.length;
           lockedCount += ranked.length - toAnalyse.length;

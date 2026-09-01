@@ -21,19 +21,31 @@ export interface PaymentClaimNotice {
 
 const APP_URL = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://easyclientph.com').replace(/\/+$/, '');
 
+/**
+ * Everything in a claim is typed by a stranger. Interpolated raw, a note
+ * containing markup would render as markup in Rafael's inbox — and a link he
+ * might click, in an email that exists to tell him money arrived.
+ */
+function esc(value: string): string {
+  return value
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 function body(claim: PaymentClaimNotice): { subject: string; text: string; html: string } {
   const method = claim.method.toUpperCase();
-  const subject = `₱999 claimed — ${claim.email} (${method} ${claim.reference})`;
+  const note = (claim.note ?? '').slice(0, 500);
+  const subject = `₱999 claimed — ${claim.email} (${esc(method)} ${claim.reference})`;
 
   const lines = [
     `${claim.email} says they paid.`,
     '',
     `Payment ID:  ${claim.paymentId}`,
-    `Method:      ${method}`,
+    `Method:      ${esc(method)}`,
     `Reference:   ${claim.reference}`,
-    claim.note ? `Note:        ${claim.note}` : '',
+    note ? `Note:        ${note}` : '',
     '',
-    `Check ${method} for ₱999 with that reference, then approve at:`,
+    `Check ${esc(method)} for ₱999 with that reference, then approve at:`,
     `${APP_URL}/admin`,
     '',
     'Nothing has been granted. This is a claim, not a payment.',
@@ -41,15 +53,15 @@ function body(claim: PaymentClaimNotice): { subject: string; text: string; html:
 
   const html = `
 <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:520px">
-  <p style="font-size:15px;margin:0 0 16px"><strong>${claim.email}</strong> says they paid.</p>
+  <p style="font-size:15px;margin:0 0 16px"><strong>${esc(claim.email)}</strong> says they paid.</p>
   <table style="border-collapse:collapse;font-size:14px;margin-bottom:18px">
-    <tr><td style="padding:4px 16px 4px 0;color:#6b7280">Payment ID</td><td style="font-weight:600">${claim.paymentId}</td></tr>
-    <tr><td style="padding:4px 16px 4px 0;color:#6b7280">Method</td><td style="font-weight:600">${method}</td></tr>
-    <tr><td style="padding:4px 16px 4px 0;color:#6b7280">Reference</td><td style="font-weight:600">${claim.reference}</td></tr>
-    ${claim.note ? `<tr><td style="padding:4px 16px 4px 0;color:#6b7280">Note</td><td>${claim.note}</td></tr>` : ''}
+    <tr><td style="padding:4px 16px 4px 0;color:#6b7280">Payment ID</td><td style="font-weight:600">${esc(claim.paymentId)}</td></tr>
+    <tr><td style="padding:4px 16px 4px 0;color:#6b7280">Method</td><td style="font-weight:600">${esc(method)}</td></tr>
+    <tr><td style="padding:4px 16px 4px 0;color:#6b7280">Reference</td><td style="font-weight:600">${esc(claim.reference)}</td></tr>
+    ${note ? `<tr><td style="padding:4px 16px 4px 0;color:#6b7280">Note</td><td>${esc(note)}</td></tr>` : ''}
   </table>
   <p style="font-size:14px;color:#374151;margin:0 0 18px">
-    Check ${method} for ₱999 with that reference, then approve it.
+    Check ${esc(method)} for ₱999 with that reference, then approve it.
   </p>
   <a href="${APP_URL}/admin"
      style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;

@@ -266,8 +266,12 @@ export async function POST(req: NextRequest) {
       careerProfile?: CareerProfile;
     } = await req.json();
 
-    if (!job || !baseMessage) {
-      return NextResponse.json({ error: 'job and baseMessage are required' }, { status: 400 });
+    // baseMessage is a starting draft, and an empty one is legitimate: a job
+    // streamed in before the search finished has no application message yet,
+    // and a pasted job never gets one. Requiring it truthy broke every cover
+    // letter from both paths.
+    if (!job) {
+      return NextResponse.json({ error: 'job is required' }, { status: 400 });
     }
 
     const user = await getSessionUser();
@@ -276,7 +280,11 @@ export async function POST(req: NextRequest) {
     // OnlineJobs listings need a connected OJ account (per spec, the connection
     // is the incentive). LinkedIn/Upwork listings personalize without one —
     // their descriptions already come from Apify.
-    const jobSource = job.source ?? 'onlinejobs';
+    // Only gate a job we actually scraped from OnlineJobs. A pasted job carries
+    // its own description, so there is nothing a connection would add — and
+    // demanding one would make paste-a-job unreachable for anybody who has not
+    // handed over their OnlineJobs login.
+    const jobSource = job.source ?? (job.url ? 'onlinejobs' : null);
     let ojCookie: string | undefined;
     if (jobSource === 'onlinejobs') {
       const status = await getOjConnectionStatus(user.id);
