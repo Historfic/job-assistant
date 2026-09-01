@@ -69,6 +69,10 @@ export default function PaymentPicker({ methods }: { methods: PaymentMethod[] })
             </>
           )}
 
+          {/* On a phone you cannot scan a QR that is on that same phone. Every
+              Philippine banking app can scan one from the gallery instead, but
+              the button is small and most people have never noticed it — so
+              save the image for them and say where to look. */}
           {current.hasQr && (
             <div className="flex justify-center mb-5">
               {/* White plate: QR codes need light behind them to scan reliably */}
@@ -82,6 +86,24 @@ export default function PaymentPicker({ methods }: { methods: PaymentMethod[] })
                   className="block w-[200px] h-[200px] object-contain"
                 />
               </div>
+            </div>
+          )}
+
+          {current.hasQr && (
+            <div className="sm:hidden -mt-2 mb-5">
+              <a
+                href={current.qrSrc}
+                download={`easyclient-${current.id}-qr.png`}
+                className="block w-full py-2.5 rounded-xl border-2 border-blue-600 text-xs
+                           font-semibold text-blue-700 text-center transition-colors hover:bg-blue-50"
+              >
+                Save this QR to your photos
+              </a>
+              <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
+                Then open {current.label}, tap <strong className="text-slate-700">Scan QR</strong>,
+                and tap the small <strong className="text-slate-700">gallery icon</strong> in the
+                corner to pick the saved image.
+              </p>
             </div>
           )}
 
