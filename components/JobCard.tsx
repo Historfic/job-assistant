@@ -138,12 +138,15 @@ export default function JobCard({ job, highlight, baseMessage }: Props) {
   }
 
   const btnLoading = phase === 'loading-questions' || phase === 'generating';
+  // "Personalize" describes what the software does. "Generate Cover Letter"
+  // describes what the user gets, which is the only one of the two they can
+  // act on without being told.
   const btnLabel =
-    phase === 'idle'             ? 'Personalize'
-    : phase === 'loading-questions' ? 'Analyzing...'
+    phase === 'idle'             ? 'Generate Cover Letter'
+    : phase === 'loading-questions' ? 'Reading the job...'
     : phase === 'questions'      ? 'Cancel'
-    : phase === 'generating'     ? 'Writing...'
-    : 'Hide message';
+    : phase === 'generating'     ? 'Writing your letter...'
+    : 'Hide letter';
 
   const btnActive = phase === 'result';
 
@@ -316,18 +319,19 @@ export default function JobCard({ job, highlight, baseMessage }: Props) {
               onClick={() => toggleStatus(job.url!, 'applied', job)}
               title={applied ? 'Unmark as applied' : 'Mark as applied'}
               aria-label={applied ? 'Unmark as applied' : 'Mark as applied'}
-              className={`inline-flex items-center justify-center w-7 h-7 rounded-lg transition-colors shrink-0
+              className={`inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-[11px] font-medium transition-colors shrink-0
                 ${applied
                   ? 'bg-emerald-600/15 text-emerald-400 border border-emerald-600/25 hover:bg-emerald-600/25'
                   : 'bg-gray-800 text-gray-400 hover:text-emerald-400 hover:bg-gray-700 border border-gray-700'
                 }`}
             >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d={applied
                     ? 'M5 13l4 4L19 7'
                     : 'M9 12h6m-3-3v6m9-3a9 9 0 11-18 0 9 9 0 0118 0z'} />
               </svg>
+              {applied ? 'Applied' : 'I applied'}
             </button>
           )}
 
@@ -336,18 +340,19 @@ export default function JobCard({ job, highlight, baseMessage }: Props) {
               onClick={() => toggleStatus(job.url!, 'rejected', job)}
               title={rejected ? 'Unmark as rejected' : 'Reject this job'}
               aria-label={rejected ? 'Unmark as rejected' : 'Reject this job'}
-              className={`inline-flex items-center justify-center w-7 h-7 rounded-lg transition-colors shrink-0
+              className={`inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-[11px] font-medium transition-colors shrink-0
                 ${rejected
                   ? 'bg-red-600/15 text-red-400 border border-red-600/25 hover:bg-red-600/25'
                   : 'bg-gray-800 text-gray-400 hover:text-red-400 hover:bg-gray-700 border border-gray-700'
                 }`}
             >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                   d={rejected
                     ? 'M6 18L18 6M6 6l12 12'
                     : 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z'} />
               </svg>
+              {rejected ? 'Hidden' : 'Not for me'}
             </button>
           )}
           </div>
