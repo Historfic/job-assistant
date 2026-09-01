@@ -71,9 +71,10 @@ export default function SearchForm({ onSearch, loading, tier }: Props) {
   // dollars, $10/hr meant roughly P93,000/month -- so a default free-tier
   // search, where OnlineJobs.ph is the only source, returned nothing at all.
   //
-  // keyword defaulted to "AI automation", which is not what this audience
-  // searches for, and it also suppressed the example chips: they only appear
-  // when the box is empty, and the box was never empty.
+  // keyword was pre-filled, which is not what this audience searches for and
+  // also suppressed the example chips: they only appear when the box is empty,
+  // and the box was never empty. It is a faint placeholder now, so the field
+  // reads as a question rather than an answer somebody else already gave.
   const [keyword, setKeyword] = useState('');
   const [minSalary, setMinSalary] = useState('');
   const [maxSalary, setMaxSalary] = useState('');
@@ -208,11 +209,11 @@ export default function SearchForm({ onSearch, loading, tier }: Props) {
             </div>
 
             <div>
-              <Label>Tech Stack Filter</Label>
+              <Label>Tools you know</Label>
               <Input
                 value={techStack}
                 onChange={e => setTechStack(e.target.value)}
-                placeholder="e.g. React, Python, n8n"
+                placeholder="Canva, Shopify, QuickBooks"
               />
             </div>
 
