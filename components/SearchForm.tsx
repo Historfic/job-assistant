@@ -64,9 +64,18 @@ export default function SearchForm({ onSearch, loading, tier }: Props) {
     setSources(next);
   }
 
-  // Required fields
-  const [keyword, setKeyword] = useState('AI automation');
-  const [minSalary, setMinSalary] = useState('10');
+  // Both of these used to be pre-filled, which mattered more than it looked.
+  //
+  // minSalary defaulted to 10 and was submitted on every search even while
+  // hidden inside collapsed filters. Once peso salaries stopped being read as
+  // dollars, $10/hr meant roughly P93,000/month -- so a default free-tier
+  // search, where OnlineJobs.ph is the only source, returned nothing at all.
+  //
+  // keyword defaulted to "AI automation", which is not what this audience
+  // searches for, and it also suppressed the example chips: they only appear
+  // when the box is empty, and the box was never empty.
+  const [keyword, setKeyword] = useState('');
+  const [minSalary, setMinSalary] = useState('');
   const [maxSalary, setMaxSalary] = useState('');
   const [jobType, setJobType] = useState<ScrapeOptions['jobType']>('any');
   const [limit, setLimit] = useState('10');

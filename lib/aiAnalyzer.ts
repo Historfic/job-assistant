@@ -169,12 +169,20 @@ export function scoreJob(job: RawJob, analysis: JobAnalysis, keyword: string): n
   let score = 50; // base
 
   // Salary quality
+  // Bands are calibrated for this market, not for US contract rates: a strong
+  // OnlineJobs.ph salary is around ₱90,000/month, about $9.70/hr, which scored
+  // zero under the old ladder.
+  //
+  // The floor matters as much as the ceiling. A job with a stated but modest
+  // rate must never score BELOW one that only says “Negotiable” — knowing what
+  // a job pays is information, even when the answer is not much.
   if (job.hourlyRate) {
-    if (job.hourlyRate >= 30) score += 25;
-    else if (job.hourlyRate >= 20) score += 18;
-    else if (job.hourlyRate >= 10) score += 10;
+    if (job.hourlyRate >= 15) score += 25;
+    else if (job.hourlyRate >= 8) score += 18;
+    else if (job.hourlyRate >= 4) score += 12;
+    else score += 8;
   } else if (job.salary) {
-    score += 8; // has some salary info
+    score += 8; // an unparseable salary line still beats silence
   }
 
   // Keyword match

@@ -67,3 +67,17 @@ describe('resultCap', () => {
     expect(TIER_LIMITS.free.results).toBeLessThan(TIER_LIMITS.pro.results);
   });
 });
+
+describe('search scoring floor', () => {
+  it('a stated modest rate never scores below an unstated one', async () => {
+    // Peso jobs convert to a few dollars an hour. Under the old ladder they
+    // scored 0 for pay while "Negotiable" scored 8 — so knowing a job paid
+    // ₱30,000 ranked it below a job that said nothing at all.
+    const { scoreJob, analyzeJobLocally } = await import('@/lib/aiAnalyzer');
+    const base = { title: 'VA', description: '', url: 'u' } as never;
+
+    const stated    = scoreJob({ ...base, hourlyRate: 3.2, salary: '₱30,000/mo' } as never, analyzeJobLocally(base), 'va');
+    const unstated  = scoreJob({ ...base, salary: 'Negotiable' } as never, analyzeJobLocally(base), 'va');
+    expect(stated).toBeGreaterThanOrEqual(unstated);
+  });
+});

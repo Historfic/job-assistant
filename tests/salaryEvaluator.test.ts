@@ -51,3 +51,25 @@ describe('evaluateSalary — approve when unsure', () => {
     expect(evaluateSalary('$800-$1,200/month', 5).hourlyRate).toBe(7.5);
   });
 });
+
+describe('evaluateSalary — the forms OnlineJobs actually writes', () => {
+  it('reads Php with no space, which is how the site writes it', () => {
+    // "\bphp\b" could never match here: there is no word boundary between
+    // "p" and "3", so these all fell through to the dollar branch and became
+    // $187/hr — exactly the bug the currency fix was meant to remove.
+    for (const s of ['Php30,000/month', 'PHP30000 per month', 'P30,000/month']) {
+      expect(evaluateSalary(s, 10).hourlyRate).toBeLessThan(10);
+    }
+  });
+
+  it('lets an explicit dollar amount win over a mention of pesos', () => {
+    const r = evaluateSalary('USD $1,500/month or PHP equivalent', 5);
+    expect(r.hourlyRate).toBeCloseTo(9.38, 1);
+    expect(r.approved).toBe(true);
+  });
+
+  it('still reads pesos when a dollar conversion is shown alongside', () => {
+    // The symbol attached to the number is the one that counts.
+    expect(evaluateSalary('₱30,000/month ($517)', 10).hourlyRate).toBeLessThan(10);
+  });
+});

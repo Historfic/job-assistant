@@ -19,8 +19,18 @@ const HOURS_PER_MONTH = 160;
  */
 const PHP_PER_USD = 58;
 
+/**
+ * Order matters. “₱30,000 ($517)” is a peso salary with a conversion beside
+ * it, while “USD $1,500/month or PHP equivalent” is a dollar salary that
+ * merely mentions pesos. The symbol attached to the number wins.
+ *
+ * No word boundary after “php”: OnlineJobs writes “Php30,000” with no space,
+ * and \b cannot match between “p” and “3”.
+ */
 function isPeso(text: string): boolean {
-  return /₱|\bphp\b|\bpesos?\b/i.test(text);
+  if (/₱/.test(text)) return true;
+  if (/\$|\busd\b/i.test(text)) return false;
+  return /\bphp|\bpesos?\b|\bp(?=[\d,])/i.test(text);
 }
 
 /** Everything becomes USD per hour, so one comparison covers every source. */
