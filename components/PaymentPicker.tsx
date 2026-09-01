@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { PaymentMethod } from '@/lib/payment';
+import { appLinkFor, tryOpenApp } from '@/lib/appLinks';
 
 // Tabs rather than three stacked QR codes: on a phone, showing all of them at
 // once means a lot of scrolling and a real chance of scanning the wrong one.
@@ -9,6 +10,16 @@ export default function PaymentPicker({ methods }: { methods: PaymentMethod[] })
   const [active, setActive] = useState(methods[0]?.id);
   const [copied, setCopied] = useState('');
   const current = methods.find(m => m.id === active) ?? methods[0];
+  const appLink = current ? appLinkFor(current.id, current.label) : null;
+  const [openState, setOpenState] = useState<'idle' | 'trying' | 'failed'>('idle');
+
+  async function openApp(scheme: string) {
+    setOpenState('trying');
+    const opened = await tryOpenApp(scheme);
+    // Never navigate on failure. The honest outcomes are "the app opened" or
+    // "nothing happened, here is the route that always works".
+    setOpenState(opened ? 'idle' : 'failed');
+  }
   async function copy(text: string) {
     try {
       await navigator.clipboard.writeText(text);
@@ -28,7 +39,7 @@ export default function PaymentPicker({ methods }: { methods: PaymentMethod[] })
               key={m.id}
               role="tab"
               aria-selected={m.id === active}
-              onClick={() => setActive(m.id)}
+              onClick={() => { setActive(m.id); setOpenState('idle'); }}
               // Every tab carries the 2px border, transparent when inactive, so
               // selecting one does not make it taller than its siblings. -mb-px
               // pulls it onto the container's own border instead of sitting
@@ -72,6 +83,25 @@ export default function PaymentPicker({ methods }: { methods: PaymentMethod[] })
               Philippine banking app can scan one from the gallery instead, but
               the button is small and most people have never noticed it — so
               save the image for them and say where to look. */}
+          {current.hasQr && appLink && (
+            <div className="sm:hidden -mt-2 mb-3">
+              <button
+                onClick={() => openApp(appLink.scheme)}
+                disabled={openState === 'trying'}
+                className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400
+                           text-sm font-semibold text-white transition-colors"
+              >
+                {openState === 'trying' ? 'Opening...' : `Open ${appLink.label}`}
+              </button>
+              {openState === 'failed' && (
+                <p className="text-[11px] text-amber-700 mt-2 leading-relaxed">
+                  {appLink.label} didn&apos;t open. Save the QR below and scan it from your
+                  gallery, or copy the number and use Send Money.
+                </p>
+              )}
+            </div>
+          )}
+
           {current.hasQr && (
             <div className="flex justify-center mb-5">
               {/* White plate: QR codes need light behind them to scan reliably */}
