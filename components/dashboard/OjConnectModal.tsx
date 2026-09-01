@@ -41,9 +41,16 @@ export default function OjConnectModal({ open, onClose, onConnected }: {
   return (
     <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={onClose}>
       <div className="w-full max-w-md bg-gray-900 border border-gray-800 rounded-2xl p-5" onClick={e => e.stopPropagation()}>
-        <h2 className="text-sm font-semibold text-white mb-1">Connect your OnlineJobs.ph account</h2>
+        <h2 className="text-sm font-semibold text-white mb-1">Connect OnlineJobs.ph <span className="text-gray-500 font-normal">(optional)</span></h2>
         <p className="text-xs text-gray-500 mb-4">
-          Optional — unlocks personalized cover letters for OnlineJobs.ph listings.
+          <strong className="text-gray-300">You do not need this.</strong> Search works fully
+          without it. Connecting only lets us open the full OnlineJobs.ph post, so cover
+          letters for those jobs can mention specifics instead of generalities.
+        </p>
+        <p className="text-xs text-gray-500 mb-4 leading-relaxed">
+          Your password is used once to sign in and is <strong className="text-gray-300">never
+          stored</strong>. We keep only the session it produces, encrypted, and you can
+          disconnect any time, which deletes it.
         </p>
 
         {/* Data Privacy Act consent notice — required reading before connecting */}

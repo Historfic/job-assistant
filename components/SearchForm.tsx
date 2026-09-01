@@ -42,6 +42,10 @@ function Select({ children, ...props }: React.SelectHTMLAttributes<HTMLSelectEle
 
 // ─── Component ─────────────────────────────────────────────────────────────────
 
+// What this audience actually types. Deliberately roles, not skills: someone
+// looking for VA work does not think of themselves as "React".
+const EXAMPLES = ['virtual assistant', 'social media manager', 'bookkeeper', 'customer support'];
+
 export default function SearchForm({ onSearch, loading, tier }: Props) {
   // A paying customer's first search should use everything they paid for —
   // LinkedIn and Upwork are the whole reason for the upgrade, and most people
@@ -99,65 +103,42 @@ export default function SearchForm({ onSearch, loading, tier }: Props) {
         <p className="text-[11px] text-gray-600">Configure your search and click Find Jobs.</p>
       </div>
 
-      {/* ── Required Fields ─────────────────────────────────────────────────── */}
+      {/* ── The only thing anyone has to fill in ─────────────────────────────
+          A beta tester called this form "way too complex", and they were
+          right: five fields stood between someone and their first result,
+          three of them marked required. Everything except the keyword is a
+          refinement, so everything except the keyword now waits behind
+          Filters. Nothing was removed. It just stopped being in the way. */}
       <div className="space-y-4">
         <div>
-          <Label>Keyword *</Label>
+          <Label>What work do you do?</Label>
           <Input
             value={keyword}
             onChange={e => setKeyword(e.target.value)}
-            placeholder="e.g. AI, React, VA"
+            placeholder="virtual assistant"
             required
           />
+
+          {/* Instruction without a tutorial: the first search becomes one tap.
+              A blank box tells a first-time user nothing about what belongs
+              in it. */}
+          {!keyword && (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {EXAMPLES.map(example => (
+                <button
+                  key={example}
+                  type="button"
+                  onClick={() => setKeyword(example)}
+                  className="px-2 py-1 rounded-lg bg-gray-800 hover:bg-gray-700 text-[11px] text-gray-400 hover:text-white transition-colors"
+                >
+                  {example}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <SourceSelector selected={sources} tier={tier} onChange={chooseSources} />
-
-        <div className="grid grid-cols-2 gap-2">
-          <div>
-            <Label>Min $/hr</Label>
-            <Input
-              type="number"
-              value={minSalary}
-              onChange={e => setMinSalary(e.target.value)}
-              placeholder="10"
-              min="0"
-            />
-          </div>
-          <div>
-            <Label>Max $/hr</Label>
-            <Input
-              type="number"
-              value={maxSalary}
-              onChange={e => setMaxSalary(e.target.value)}
-              placeholder="Any"
-              min="0"
-            />
-          </div>
-        </div>
-
-        <div>
-          <Label>Job Type *</Label>
-          <Select value={jobType} onChange={e => setJobType(e.target.value as ScrapeOptions['jobType'])}>
-            <option value="any">Any</option>
-            <option value="full-time">Full-time</option>
-            <option value="part-time">Part-time</option>
-            <option value="freelance">Freelance / Gig</option>
-          </Select>
-        </div>
-
-        <div>
-          <Label>Number of Jobs *</Label>
-          <Input
-            type="number"
-            value={limit}
-            onChange={e => setLimit(e.target.value)}
-            min="1"
-            max="30"
-            placeholder="10"
-          />
-          <p className="text-[10px] text-gray-700 mt-1">Max 30. Scraper will loop until quota is met.</p>
-        </div>
       </div>
 
       <div className="border-t border-gray-800" />
@@ -172,12 +153,41 @@ export default function SearchForm({ onSearch, loading, tier }: Props) {
           <svg className={`w-3.5 h-3.5 transition-transform ${showFilters ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
-          <span className="font-semibold uppercase tracking-widest text-[10px]">Smart Filters</span>
+          <span className="font-semibold uppercase tracking-widest text-[10px]">Filters</span>
           <span className="text-gray-700 text-[10px]">(optional)</span>
         </button>
 
         {showFilters && (
           <div className="mt-4 space-y-4 animate-slide-up">
+            <div>
+              <Label>Job type</Label>
+              <Select value={jobType} onChange={e => setJobType(e.target.value as ScrapeOptions['jobType'])}>
+                <option value="any">Any</option>
+                <option value="full-time">Full-time</option>
+                <option value="part-time">Part-time</option>
+                <option value="freelance">Freelance / Gig</option>
+              </Select>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label>Min $/hr</Label>
+                <Input type="number" value={minSalary} onChange={e => setMinSalary(e.target.value)}
+                  placeholder="Any" min="0" />
+              </div>
+              <div>
+                <Label>Max $/hr</Label>
+                <Input type="number" value={maxSalary} onChange={e => setMaxSalary(e.target.value)}
+                  placeholder="Any" min="0" />
+              </div>
+            </div>
+
+            <div>
+              <Label>Results per search</Label>
+              <Input type="number" value={limit} onChange={e => setLimit(e.target.value)}
+                min="1" max="30" placeholder="10" />
+            </div>
+
             <div>
               <Label>Experience Level</Label>
               <Select value={experienceLevel} onChange={e => setExperienceLevel(e.target.value)}>
