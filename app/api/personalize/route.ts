@@ -13,6 +13,7 @@ import { getSessionUser } from '@/lib/auth';
 import { getOjConnectionStatus, getOjSessionCookie, markOjExpired } from '@/lib/oj/connection';
 import { verifyOjSession } from '@/lib/oj/exchangeSession';
 import { coverLetterSubject } from '@/lib/coverLetterSubject';
+import { letterTemplateOrDefault, templateSlots } from '@/lib/letterTemplate';
 
 // ─── Fetch full job description from the detail page ─────────────────────────
 // Called when the job's stored description is missing or too short to
@@ -67,6 +68,8 @@ interface QAPair {
 interface CareerProfile {
   headline?: string;
   cvText?: string;
+  /** The user's own letter shape. Empty falls back to the default. */
+  letterTemplate?: string;
 }
 
 function buildPersonalizePrompt(
@@ -85,6 +88,8 @@ function buildPersonalizePrompt(
   // carries more weight than the generic base message.
   const cv = (careerProfile?.cvText ?? '').trim();
   const headline = (careerProfile?.headline ?? '').trim();
+  const template = letterTemplateOrDefault(careerProfile?.letterTemplate);
+  const slots = templateSlots(template);
   const cvSection = cv
     ? [
         '',
@@ -122,7 +127,20 @@ Here is the applicant's general background for reference:
 ${baseMessage}
 """
 
+Follow this structure exactly. It is the applicant's own template, and the
+shape of it matters to them:
+"""
+${template}
+"""
+${slots.length > 0 ? `
+Every bracketed slot above MUST be replaced with real content drawn from the
+job description and the applicant's background: ${slots.join(', ')}. If you
+cannot fill one honestly, delete that sentence rather than leaving the bracket
+or writing a vague placeholder. A letter that reaches an employer still saying
+"[Client's Name]" is worse than no letter at all.
+` : ''}
 Write a unique, personalized cover letter that:
+- Keeps the structure, order and tone of the template above
 - Is primarily driven by the job description above
 ${cv ? "- Cites real, specific experience from the applicant's background above wherever it matches what this job needs. Never invent experience they did not list.\n" : ''}${filledAnswers.length > 0 ? '- Naturally weaves in the applicant\'s context where it strengthens the letter (don\'t quote it verbatim)\n' : ''}- Opens with a specific hook referencing something concrete from the job description (NOT a generic "I came across your posting" opener)
 - Demonstrates understanding of what this specific role actually needs

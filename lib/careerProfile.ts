@@ -6,9 +6,11 @@
 export interface CareerProfile {
   headline: string;
   cvText: string;
+  /** Empty means "use the default" — see lib/letterTemplate.ts. */
+  letterTemplate?: string;
 }
 
-export const EMPTY_PROFILE: CareerProfile = { headline: '', cvText: '' };
+export const EMPTY_PROFILE: CareerProfile = { headline: '', cvText: '', letterTemplate: '' };
 
 const STORAGE_KEY = 'jobiq_career_profile';
 

@@ -7,6 +7,7 @@ import {
   hasUsableProfile,
   type CareerProfile,
 } from '@/lib/careerProfile';
+import { DEFAULT_LETTER_TEMPLATE } from '@/lib/letterTemplate';
 
 const MIN_CHARS = 80;
 
@@ -16,6 +17,7 @@ export default function ProfileModal({ open, onClose }: {
 }) {
   const [headline, setHeadline] = useState('');
   const [cvText, setCvText] = useState('');
+  const [template, setTemplate] = useState('');
   const [saved, setSaved] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -28,12 +30,17 @@ export default function ProfileModal({ open, onClose }: {
     const p = getCareerProfileSnapshot();
     setHeadline(p.headline);
     setCvText(p.cvText);
+    setTemplate(p.letterTemplate ?? '');
     setSaved(false);
   }, [open]);
 
   if (!open) return null;
 
-  const profile: CareerProfile = { headline: headline.trim(), cvText: cvText.trim() };
+  const profile: CareerProfile = {
+    headline: headline.trim(),
+    cvText: cvText.trim(),
+    letterTemplate: template.trim(),
+  };
   const ready = hasUsableProfile(profile);
 
   function handleSave() {
@@ -156,6 +163,36 @@ export default function ProfileModal({ open, onClose }: {
             Loaded {uploadedName}. Check it below and edit anything that came out wrong.
           </p>
         )}
+
+        {/* The one part of the output a user controls. Someone applying twenty
+            times a week has their own voice; before this they could accept the
+            model's shape or rewrite every letter by hand. */}
+        <div className="border-t border-gray-800 pt-4 mb-5">
+          <div className="flex items-baseline justify-between gap-3 mb-1.5">
+            <label className="text-[11px] font-semibold uppercase tracking-widest text-gray-500">
+              Your letter template
+            </label>
+            {template.trim() && (
+              <button
+                onClick={() => setTemplate('')}
+                className="text-[11px] text-gray-600 hover:text-gray-400 transition-colors"
+              >
+                Reset to default
+              </button>
+            )}
+          </div>
+          <textarea
+            value={template || DEFAULT_LETTER_TEMPLATE}
+            onChange={e => setTemplate(e.target.value)}
+            rows={9}
+            className="w-full px-3 py-2.5 rounded-xl bg-gray-950 border border-gray-800 text-xs
+                       text-gray-300 leading-relaxed resize-y focus:outline-none focus:border-blue-600"
+          />
+          <p className="text-[11px] text-gray-600 mt-1.5 leading-relaxed">
+            Every letter follows this shape. Anything in [square brackets] gets replaced
+            with real details from the job and your CV, never left as-is.
+          </p>
+        </div>
 
         <div className="flex gap-2">
           <button onClick={onClose}
