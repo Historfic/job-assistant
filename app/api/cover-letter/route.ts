@@ -14,7 +14,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth';
 import { analyzeJobs } from '@/lib/aiAnalyzer';
-import { consumeSearchAllowance } from '@/lib/searchAllowance';
+import { consumeSearchAllowance, refundSearch } from '@/lib/searchAllowance';
 import type { RawJob } from '@/types';
 
 const MAX_CHARS = 12_000;
@@ -55,8 +55,14 @@ export async function POST(req: NextRequest) {
 
   // The keyword is what the scorer matches against. For a pasted job the title
   // is the closest thing to intent we have.
-  const [analyzed] = await analyzeJobs([raw], raw.title ?? '', process.env.OPENROUTER_API_KEY);
-  return NextResponse.json({ job: analyzed });
+  try {
+    const [analyzed] = await analyzeJobs([raw], raw.title ?? '', process.env.OPENROUTER_API_KEY);
+    return NextResponse.json({ job: analyzed });
+  } catch (err) {
+    console.error('[/api/cover-letter]', err);
+    await refundSearch(user.id);
+    return NextResponse.json({ error: 'We could not read that job post.' }, { status: 500 });
+  }
 }
 
 /**

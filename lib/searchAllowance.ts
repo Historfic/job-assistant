@@ -10,6 +10,7 @@ import { NextResponse } from 'next/server';
 import type { AppUser, JobSource } from '@/types';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { createSupabaseServer } from '@/lib/supabase/server';
+import { createSupabaseAdmin } from '@/lib/supabase/admin';
 import { normalizeEmail } from '@/lib/email';
 import { TIER_LIMITS, FULL_ACCESS_COPY, manilaDayStartUtc, nextManilaMidnightUtc } from '@/lib/tiers';
 
@@ -57,4 +58,34 @@ export async function consumeSearchAllowance(
     keyword: entry.keyword,
   });
   return null;
+}
+
+/**
+ * Give a search back when it produced nothing.
+ *
+ * The allowance is charged BEFORE the pipeline runs, which is right — it is
+ * what stops two simultaneous requests both slipping under the limit. But it
+ * means a search that then failed still cost the user one, and a customer who
+ * loses three of twenty to our outage has been charged for our problem.
+ *
+ * Deletes the most recent row for this user, via the admin client: `searches`
+ * has no delete policy on purpose, so a user cannot clear their own rate limit.
+ */
+export async function refundSearch(userId: string): Promise<void> {
+  if (!isSupabaseConfigured()) return;
+  try {
+    const admin = createSupabaseAdmin();
+    const { data } = await admin
+      .from('searches')
+      .select('id')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (data?.id) await admin.from('searches').delete().eq('id', data.id);
+  } catch (err) {
+    // A failed refund is not worth failing the request over — the user already
+    // has their error message, and one search is a small debt beside a crash.
+    console.error('[refundSearch]', err);
+  }
 }

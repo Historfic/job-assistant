@@ -22,6 +22,7 @@ import { normalizeSources } from '@/lib/sources/types';
 import { allowedSources, TIER_LIMITS, FULL_ACCESS_COPY, resultCap, manilaDayStartUtc, nextManilaMidnightUtc } from '@/lib/tiers';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { normalizeEmail } from '@/lib/email';
+import { refundSearch } from '@/lib/searchAllowance';
 import { createSupabaseServer } from '@/lib/supabase/server';
 import { encodeEvent, NDJSON_CONTENT_TYPE, type SearchEvent } from '@/lib/searchStream';
 
@@ -203,6 +204,10 @@ export async function POST(req: NextRequest) {
           await runPipeline(send);
         } catch (err) {
           console.error('[/api/scrape] stream', err);
+          // Charged up front to guard against two simultaneous requests. Given
+          // back here, because a search that crashed is not one the customer
+          // should have paid for.
+          await refundSearch(user.id);
           send({ type: 'error', message: (err as Error).message ?? 'Search failed' });
         } finally {
           closed = true;
