@@ -127,20 +127,25 @@ Here is the applicant's general background for reference:
 ${baseMessage}
 """
 
-Follow this structure exactly. It is the applicant's own template, and the
-shape of it matters to them:
+The applicant's preferred shape, as a starting point:
 """
 ${template}
 """
-${slots.length > 0 ? `
-Every bracketed slot above MUST be replaced with real content drawn from the
-job description and the applicant's background: ${slots.join(', ')}. If you
-cannot fill one honestly, delete that sentence rather than leaving the bracket
-or writing a vague placeholder. A letter that reaches an employer still saying
-"[Client's Name]" is worse than no letter at all.
+${slots.length > 0 ? `Replace every bracketed slot with real content from the job description and the applicant's background: ${slots.join(', ')}. If one cannot be filled honestly, delete that sentence. A letter that reaches an employer still saying "[Client's Name]" is worse than no letter.
 ` : ''}
+The JOB POST OUTRANKS THE TEMPLATE. Many employers put instructions inside the
+description: answer a question, name a tool you have used, describe a project,
+start with a specific word. Those are a filter, and a letter that ignores them
+is discarded unread no matter how well written it is.
+
+So: if the description asks anything of the applicant, answer it directly and
+concretely, using their real background above. Add a paragraph, reorder, or
+drop part of the template to do it. Never answer a question with a promise to
+answer it later.
+
 Write a unique, personalized cover letter that:
-- Keeps the structure, order and tone of the template above
+- Answers everything the job post explicitly asks for, first and plainly
+- Follows the template's tone and rough shape where the post leaves room
 - Is primarily driven by the job description above
 ${cv ? "- Cites real, specific experience from the applicant's background above wherever it matches what this job needs. Never invent experience they did not list.\n" : ''}${filledAnswers.length > 0 ? '- Naturally weaves in the applicant\'s context where it strengthens the letter (don\'t quote it verbatim)\n' : ''}- Opens with a specific hook referencing something concrete from the job description (NOT a generic "I came across your posting" opener)
 - Demonstrates understanding of what this specific role actually needs

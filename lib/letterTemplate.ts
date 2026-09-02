@@ -1,6 +1,12 @@
 // ─── Cover letter template ────────────────────────────────────────────────────
-// The shape every generated letter follows, and the one thing about the output
+// The shape a generated letter starts from, and the one thing about the output
 // a user can actually control.
+//
+// A starting point, not a cage. Employers routinely hide instructions in the
+// job post — "tell me about a project you built", "name the tools you use",
+// "start your reply with the word BANANA" — and those are a filter. A letter
+// that follows a template through one of those is discarded unread, so the
+// prompt is explicit that the job post outranks this.
 //
 // Before this, the letter came back however the model felt like writing it.
 // Someone who applies twenty times a week has their own voice and their own
