@@ -9,6 +9,7 @@ import JobCard from '@/components/JobCard';
 import LiveResults from '@/components/LiveResults';
 import PasteJobPanel from '@/components/PasteJobPanel';
 import Tour, { hasSeenTour } from '@/components/dashboard/Tour';
+import { saveLastSearch, loadLastSearch, clearLastSearch, savedAgo } from '@/lib/lastSearch';
 import { SOURCE_LABEL, SOURCE_BADGE, jobSource, countBySource } from '@/lib/sourceLabels';
 import { decodeChunk, insertRanked } from '@/lib/searchStream';
 import AIInsights from '@/components/AIInsights';
@@ -74,6 +75,9 @@ export default function DashboardPage() {
   // during SSR, and started once the user is loaded so the tour never points at
   // a dashboard that is still redirecting to /login.
   const [tourRunning, setTourRunning] = useState(false);
+  // When the last search was saved, so the banner can say how stale it is.
+  // Null once the user has run a fresh search or dismissed the restored one.
+  const [restoredAt, setRestoredAt] = useState<number | null>(null);
   const statusMap = useSyncExternalStore(
     subscribeJobStatus,
     getJobStatusSnapshot,
@@ -156,6 +160,19 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (user && !hasSeenTour()) setTourRunning(true);
+  }, [user]);
+
+  // Put the last search back. A search costs 30–60 seconds and one of the
+  // user's allowance, so losing it to a reload is expensive in a way most lost
+  // UI state is not.
+  useEffect(() => {
+    if (!user) return;
+    const saved = loadLastSearch();
+    if (!saved) return;
+    setResult(saved.result);
+    setLastOptions(saved.options);
+    setRestoredAt(saved.savedAt);
+    setActiveTab('jobs');
   }, [user]);
 
   // ── Progress ticker ──────────────────────────────────────────────────────────
@@ -284,6 +301,8 @@ export default function DashboardPage() {
 
             case 'complete':
               finished = true;
+              saveLastSearch(options, event.result);
+              setRestoredAt(null);   // this one is fresh, not restored
               animateProgress(STEPS[6].pct, STEPS[6].msg as string);
               setResult(event.result);
               if (event.result.limits) {
@@ -510,6 +529,22 @@ export default function DashboardPage() {
           {loading && (
             <div className="flex-1 overflow-y-auto">
               <LiveResults jobs={streamedJobs} pendingSources={[...pendingSources]} locked={locked} />
+            </div>
+          )}
+
+          {restoredAt !== null && result && (
+            <div className="shrink-0 mx-4 sm:mx-5 mt-3 px-3.5 py-2.5 bg-gray-900 border border-gray-800
+                            rounded-xl flex items-center justify-between gap-3 flex-wrap animate-fade-in">
+              <p className="text-[11px] text-gray-400">
+                Where you left off, from <strong className="text-gray-300">{savedAgo(restoredAt)}</strong>.
+                Some of these may already be filled.
+              </p>
+              <button
+                onClick={() => { clearLastSearch(); setRestoredAt(null); setResult(null); }}
+                className="shrink-0 text-[11px] text-gray-500 hover:text-white transition-colors"
+              >
+                Clear
+              </button>
             </div>
           )}
 
