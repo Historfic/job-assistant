@@ -34,12 +34,12 @@ const PLATFORM_REDIRECT_PATTERNS: Record<string, RegExp> = {
 const SKILL_KEYWORDS = [
   'react', 'vue', 'angular', 'svelte', 'next.js', 'nuxt',
   'javascript', 'typescript', 'node.js', 'express', 'fastapi', 'django', 'flask',
-  'python', 'php', 'ruby', 'go', 'rust',
+  'python', 'php', 'ruby', 'golang', 'rust',
   'mysql', 'postgresql', 'mongodb', 'redis', 'supabase', 'firebase',
   'docker', 'kubernetes', 'aws', 'gcp', 'azure', 'vercel', 'netlify',
   'wordpress', 'shopify', 'woocommerce',
   'figma', 'photoshop', 'illustrator', 'canva',
-  'n8n', 'zapier', 'make', 'airtable',
+  'n8n', 'zapier', 'make.com', 'airtable',
   'openai', 'chatgpt', 'claude', 'ai', 'llm', 'machine learning',
   'seo', 'google ads', 'facebook ads', 'email marketing',
   'zendesk', 'hubspot', 'salesforce', 'notion', 'asana', 'jira',
@@ -47,6 +47,18 @@ const SKILL_KEYWORDS = [
 ];
 
 // ─── Local (regex) analyzer ────────────────────────────────────────────────────
+
+/**
+ * Whole-word-ish match. Plain `includes` had "ai" matching inside "available"
+ * and "email", "excel" inside "excellent", "go" inside "going" -- so an HVAC
+ * estimator job came back tagged go, make, ai, excel. Those fed the score, the
+ * cover letter and the quick questions, which is how somebody got asked about
+ * their experience with "go or make".
+ */
+function matchesWholeWord(haystack: string, needle: string): boolean {
+  const escaped = needle.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&');
+  return new RegExp(`(?<![a-z0-9])${escaped}(?![a-z0-9])`, 'i').test(haystack);
+}
 
 export function analyzeJobLocally(job: RawJob): JobAnalysis {
   const fullText = `${job.title ?? ''} ${job.description ?? ''}`.toLowerCase();
@@ -70,8 +82,17 @@ export function analyzeJobLocally(job: RawJob): JobAnalysis {
     }
   }
 
-  // Skill extraction
-  const skills = SKILL_KEYWORDS.filter(kw => fullText.includes(kw));
+  // Skill extraction.
+  //
+  // Word boundaries, not substring matching. Plain `includes` had "ai" matching
+  // inside "available" and "email", "excel" inside "excellent", "go" inside
+  // "going" — so an HVAC estimator job came back tagged go, make, ai, excel.
+  // Those badges then fed the score, the cover letter and the quick questions,
+  // which is how a user got asked about their experience with "go or make".
+  //
+  // Boundaries are non-letter/digit rather than \b, so "node.js" and
+  // "make.com" still match without the dot ending the token early.
+  const skills = SKILL_KEYWORDS.filter(kw => matchesWholeWord(fullText, kw));
 
   // Keyword extraction: title words + top skills
   const titleWords = (job.title ?? '')

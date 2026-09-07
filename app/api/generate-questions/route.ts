@@ -42,20 +42,32 @@ Return ONLY a JSON array, no explanation:
 ]`;
 }
 
+/**
+ * Words too generic to build a question around, even when they are genuinely
+ * in the post. "What's your experience with AI?" tells the letter nothing, and
+ * reads like the software did not understand the job.
+ */
+const TOO_VAGUE = new Set(['ai', 'excel', 'google sheets', 'notion', 'canva']);
+
 function localFallback(job: AnalyzedJob): CoverLetterQuestion[] {
-  const skills = job.analysis.skills.slice(0, 2);
   const title = job.title ?? 'this role';
 
-  const q1: CoverLetterQuestion = skills.length > 0
+  // The job title beats a keyword list. It is always present, always specific
+  // to the post, and a question built from it cannot be nonsense — whereas a
+  // skill list can be, and was: users were asked about "go or make" on an HVAC
+  // estimator job because those matched inside "going" and "makes".
+  const specific = job.analysis.skills.filter(s => !TOO_VAGUE.has(s.toLowerCase())).slice(0, 2);
+
+  const q1: CoverLetterQuestion = specific.length > 0
     ? {
         id: 'q1',
-        question: `What's your experience with ${skills[0]}${skills[1] ? ` or ${skills[1]}` : ''}? A quick example is fine.`,
-        placeholder: 'e.g. 3 years, built a client dashboard — or just a sentence about it',
+        question: `You'll be working with ${specific[0]}${specific[1] ? ` and ${specific[1]}` : ''} in this role. What have you done with ${specific[1] ? 'them' : 'it'}?`,
+        placeholder: 'A sentence is enough. A real example beats a long answer.',
       }
     : {
         id: 'q1',
-        question: `What's your most relevant experience for the ${title} position?`,
-        placeholder: 'A sentence or two is enough',
+        question: `What have you done that is closest to this ${title.toLowerCase()} role?`,
+        placeholder: 'A sentence is enough. A real example beats a long answer.',
       };
 
   return [
