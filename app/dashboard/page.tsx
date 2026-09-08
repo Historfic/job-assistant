@@ -9,6 +9,7 @@ import JobCard from '@/components/JobCard';
 import LiveResults from '@/components/LiveResults';
 import PasteJobPanel from '@/components/PasteJobPanel';
 import Tour, { hasSeenTour } from '@/components/dashboard/Tour';
+import AlertToggle from '@/components/dashboard/AlertToggle';
 import { saveLastSearch, loadLastSearch, clearLastSearch, savedAgo } from '@/lib/lastSearch';
 import { SOURCE_LABEL, SOURCE_BADGE, jobSource, countBySource } from '@/lib/sourceLabels';
 import { decodeChunk, insertRanked } from '@/lib/searchStream';
@@ -795,6 +796,8 @@ export default function DashboardPage() {
                         </div>
                       </>
                     )}
+
+                    <AlertToggle options={lastOptions} tier={me?.user.tier ?? 'free'} />
 
                     {locked && (
                       <div className="mt-4">
