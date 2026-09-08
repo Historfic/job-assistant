@@ -347,9 +347,15 @@ export default function DashboardPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ result, options: lastOptions, toEmail }),
       });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({ error: 'Email send failed' }));
-        throw new Error(data.error ?? 'Email send failed');
+      const data = await res.json().catch(() => ({} as { error?: string; simulated?: boolean }));
+      if (!res.ok) throw new Error(data.error ?? 'Email send failed');
+
+      // The route reports success whether it sent or only logged to the
+      // console, so a missing SMTP config used to show "Sent" to somebody
+      // whose jobs went nowhere. Telling a user their email arrived when it
+      // did not is worse than telling them it failed.
+      if (data.simulated) {
+        throw new Error('Email is not set up yet, so nothing was sent. Your results are still here.');
       }
       setEmailSent(true);
     } catch (err) {

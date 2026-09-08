@@ -182,12 +182,10 @@ export default function EmailPreview({ result, options, userEmail, onSend, sendi
         </div>
       </div>
 
-      <p className="text-[10px] text-gray-700 text-center">
-        {process.env.NODE_ENV === 'production'
-          ? 'Add SMTP_USER + SMTP_PASS to .env for real delivery. Currently simulated.'
-          : 'Set SMTP_USER + SMTP_PASS in .env to send real emails. Currently simulated.'
-        }
-      </p>
+      {/* This said "Add SMTP_USER + SMTP_PASS to .env" — to a customer, on a
+          live product. Whether mail is configured is our problem, and if it is
+          not the right place to say so is the send result, not a permanent
+          note under the preview. */}
     </div>
   );
 }
