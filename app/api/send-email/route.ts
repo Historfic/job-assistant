@@ -11,23 +11,40 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSessionUser } from '@/lib/auth';
 import type { ProcessResult, ScrapeOptions } from '@/types';
 
+// Where "Write cover letter" sends them. Falls back to the live domain so an
+// unset env var cannot produce a mail full of dead links.
+const APP_EMAIL_URL = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://easyclientph.com').replace(/\/+$/, '');
+
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const FALLBACK_TO_EMAIL = process.env.TO_EMAIL ?? '';
 
 // ─── HTML email builder ───────────────────────────────────────────────────────
 
 function buildEmailHtml(result: ProcessResult, options: ScrapeOptions): string {
-  const { validJobs, topSkills, suggestedKeywords, applicationMessage, stats, removedJobs } = result;
+  const { validJobs: rawJobs, topSkills, suggestedKeywords, applicationMessage, stats, removedJobs } = result;
   const date = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
-  const jobRows = validJobs.map(j => `
+  // The same posting can arrive from two sources, or from two passes of the
+  // same search. On screen a duplicate is a shrug; in an email it reads as
+  // padding, and somebody who applies twice looks careless to the employer.
+  const seen = new Set<string>();
+  const uniqueJobs = rawJobs.filter(j => {
+    const key = (j.url ?? '').trim() || `${j.title}|${j.companyName}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  const jobRows = uniqueJobs.map(j => `
     <tr style="border-bottom: 1px solid #e5e7eb;">
       <td style="padding: 10px 8px; font-size: 13px; font-weight: 600; color: #111827;">${j.title ?? '—'}</td>
       <td style="padding: 10px 8px; font-size: 12px; color: #6b7280;">${j.companyName ?? '—'}</td>
       <td style="padding: 10px 8px; font-size: 12px; color: #059669; font-weight: 500;">${j.salary ?? 'N/A'}</td>
       <td style="padding: 10px 8px; font-size: 12px; color: #6b7280;">${j.employmentType ?? '—'}</td>
       <td style="padding: 10px 8px; font-size: 12px;">
-        <a href="${j.url ?? '#'}" style="color: #2563eb; text-decoration: none;">View Job →</a>
+        <a href="${j.url ?? '#'}" style="color: #2563eb; text-decoration: none;">View Job</a>
+        &nbsp;·&nbsp;
+        <a href="${APP_EMAIL_URL}/dashboard" style="color: #059669; text-decoration: none; font-weight: 600;">Write cover letter</a>
       </td>
       <td style="padding: 10px 8px; font-size: 11px; color: #9ca3af;">${j.score ?? 0}/100</td>
     </tr>
@@ -55,7 +72,7 @@ function buildEmailHtml(result: ProcessResult, options: ScrapeOptions): string {
 
     <!-- Stats -->
     <div style="background:#eff6ff;padding:16px 32px;display:flex;gap:24px;border-bottom:1px solid #e0e7ff;">
-      <div><span style="font-size:22px;font-weight:700;color:#1d4ed8;">${validJobs.length}</span><br><span style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">Valid Jobs</span></div>
+      <div><span style="font-size:22px;font-weight:700;color:#1d4ed8;">${uniqueJobs.length}</span><br><span style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">Valid Jobs</span></div>
       <div><span style="font-size:22px;font-weight:700;color:#dc2626;">${removedJobs.length}</span><br><span style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">Removed</span></div>
       <div><span style="font-size:22px;font-weight:700;color:#059669;">${stats.totalScraped}</span><br><span style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">Scraped</span></div>
       <div><span style="font-size:22px;font-weight:700;color:#7c3aed;">${stats.scrapePasses}</span><br><span style="font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;">Pass(es)</span></div>
@@ -77,7 +94,7 @@ function buildEmailHtml(result: ProcessResult, options: ScrapeOptions): string {
       </div>
 
       <!-- Jobs table -->
-      <h2 style="font-size:14px;font-weight:700;color:#111827;margin:0 0 12px;text-transform:uppercase;letter-spacing:.08em;">📋 Filtered Job Listings (${validJobs.length})</h2>
+      <h2 style="font-size:14px;font-weight:700;color:#111827;margin:0 0 12px;text-transform:uppercase;letter-spacing:.08em;">📋 Filtered Job Listings (${uniqueJobs.length})</h2>
       <table style="width:100%;border-collapse:collapse;margin-bottom:28px;">
         <thead>
           <tr style="background:#f3f4f6;">
