@@ -28,6 +28,7 @@ export default function PrivacyPage() {
           <li><strong className="text-slate-900 font-semibold">Jobs you mark applied or rejected</strong>: so we stop showing you the same listings.</li>
           <li><strong className="text-slate-900 font-semibold">Your career profile and CV text</strong>: only if you choose to add it. Used to personalise cover letters.</li>
           <li><strong className="text-slate-900 font-semibold">Your OnlineJobs.ph session</strong>: only if you connect it, and only after you agree to a notice that says we are storing it.</li>
+          <li><strong className="text-slate-900 font-semibold">Your payment receipt</strong>: if you upload a screenshot after paying, so we can confirm the payment and switch your account on. Kept privately, visible only to us, and deleted with your account.</li>
         </ul>
         <p>
           We never see or store your card details. Card payments are handled entirely by

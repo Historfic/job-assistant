@@ -28,9 +28,10 @@ export async function GET() {
   if (!admin) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   if (!isSupabaseConfigured()) return NextResponse.json({ claims: [], notifications: false });
 
-  const { data, error } = await createSupabaseAdmin()
+  const db = createSupabaseAdmin();
+  const { data, error } = await db
     .from('payment_claims')
-    .select('id, user_id, email, method, reference, amount, note, created_at')
+    .select('id, user_id, email, method, reference, amount, note, created_at, receipt_path')
     .eq('status', 'pending')
     .order('created_at', { ascending: true });
 
@@ -39,8 +40,22 @@ export async function GET() {
     return NextResponse.json({ error: 'Could not load claims' }, { status: 500 });
   }
 
+  // Signed, short-lived URLs rather than public ones. A receipt shows a real
+  // person's name, partial account number and what they paid; the bucket stays
+  // private and these links expire.
+  const claims = await Promise.all((data ?? []).map(async (c: Record<string, unknown> & { user_id: string; receipt_path: string | null }) => {
+    let receiptUrl: string | null = null;
+    if (c.receipt_path) {
+      const { data: signed } = await db.storage
+        .from('receipts')
+        .createSignedUrl(c.receipt_path, 60 * 30);
+      receiptUrl = signed?.signedUrl ?? null;
+    }
+    return { ...c, paymentId: paymentIdFor(c.user_id), receiptUrl };
+  }));
+
   return NextResponse.json({
-    claims: (data ?? []).map(c => ({ ...c, paymentId: paymentIdFor(c.user_id) })),
+    claims,
     // Surfaced so /admin can warn when claims are arriving silently.
     notifications: smtpConfigured() && Boolean(paymentNotifyRecipient()),
   });

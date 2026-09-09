@@ -63,9 +63,9 @@ export default function TermsPage() {
 
       <Section heading="Paying">
         <p>
-          Payment is by GCash, BPI, GoTyme or card. You send the payment and a screenshot of the
-          receipt, and we switch your account on by hand, normally within the hour during
-          the day.
+          Payment is by GCash, BPI, GoTyme, Maya or card. You send the payment, upload a
+          screenshot of the receipt, and we switch your account on by hand, normally within
+          the hour during the day.
         </p>
         <p>
           <strong className="text-slate-900 font-semibold">Nothing is stored and nothing renews

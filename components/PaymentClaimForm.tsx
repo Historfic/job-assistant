@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import type { PaymentMethod } from '@/lib/payment';
 
@@ -22,6 +22,9 @@ export default function PaymentClaimForm({
   const [open, setOpen] = useState(false);
   const [method, setMethod] = useState(methods[0]?.id ?? 'gcash');
   const [reference, setReference] = useState('');
+  const [receipt, setReceipt] = useState<File | null>(null);
+  const [preview, setPreview] = useState('');
+  const fileRef = useRef<HTMLInputElement>(null);
   const [note, setNote] = useState('');
   const [state, setState] = useState<'idle' | 'sending' | 'done'>('idle');
   const [error, setError] = useState('');
@@ -30,11 +33,14 @@ export default function PaymentClaimForm({
     setError('');
     setState('sending');
     try {
-      const res = await fetch('/api/payment-claim', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ method, reference, note }),
-      });
+      // Multipart, not JSON — the receipt is an image now.
+      const body = new FormData();
+      body.append('method', method);
+      body.append('reference', reference);
+      body.append('note', note);
+      if (receipt) body.append('receipt', receipt);
+
+      const res = await fetch('/api/payment-claim', { method: 'POST', body });
       const data = await res.json();
       // An already-pending claim is not a failure — it is the reassurance the
       // customer was looking for when they pressed the button again.
@@ -113,19 +119,53 @@ export default function PaymentClaimForm({
         ))}
       </div>
 
+      {/* A screenshot rather than a typed reference. Finding and retyping a
+          reference number is where people give up, and everybody already
+          screenshots the receipt — that image carries the amount, the time,
+          the sender name and the reference all at once. */}
       <label className="block text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-1.5">
-        Reference number
+        Receipt screenshot
       </label>
+
+      {preview ? (
+        <div className="mb-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={preview} alt="Your receipt" className="w-full max-h-56 object-contain rounded-lg border border-slate-200 bg-slate-50" />
+          <button
+            onClick={() => { setReceipt(null); setPreview(''); if (fileRef.current) fileRef.current.value = ''; }}
+            className="mt-2 text-[11px] text-slate-500 hover:text-slate-900 transition-colors"
+          >
+            Choose a different one
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => fileRef.current?.click()}
+          className="w-full mb-1.5 py-6 rounded-lg border-2 border-dashed border-slate-300
+                     hover:border-blue-500 hover:bg-blue-50/40 transition-colors"
+        >
+          <span className="block text-sm font-semibold text-blue-700">Upload receipt screenshot</span>
+          <span className="block text-[11px] text-slate-500 mt-0.5">Tap to pick it from your photos</span>
+        </button>
+      )}
+
       <input
-        value={reference}
-        onChange={e => setReference(e.target.value)}
-        placeholder="From your receipt"
-        className="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-900
-                   placeholder:text-slate-400 focus:outline-none focus:border-blue-500 mb-1.5"
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        onChange={e => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          setReceipt(file);
+          setPreview(URL.createObjectURL(file));
+        }}
+        className="hidden"
       />
-      <p className="text-[11px] text-slate-500 mb-4">
-        In GCash it&apos;s the <strong>Ref. No.</strong> on the receipt screen.
-      </p>
+      {!preview && (
+        <p className="text-[11px] text-slate-500 mb-4">
+          The screenshot your bank showed after paying. Nothing else needed.
+        </p>
+      )}
 
       <label className="block text-[11px] font-semibold uppercase tracking-widest text-slate-400 mb-1.5">
         Anything else? <span className="normal-case tracking-normal font-normal text-slate-400">(optional)</span>
@@ -149,11 +189,11 @@ export default function PaymentClaimForm({
         </button>
         <button
           onClick={submit}
-          disabled={state === 'sending' || reference.trim().length < 4}
+          disabled={state === 'sending' || (!receipt && reference.trim().length < 4)}
           className="flex-[2] py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300
                      text-xs font-semibold text-white transition-colors"
         >
-          {state === 'sending' ? 'Sending...' : 'Send payment details'}
+          {state === 'sending' ? 'Sending...' : 'Send receipt'}
         </button>
       </div>
     </div>

@@ -16,6 +16,7 @@ interface PendingClaim {
   note: string | null;
   paymentId: string;
   created_at: string;
+  receiptUrl: string | null;
 }
 
 export default function AdminPage() {
@@ -184,8 +185,19 @@ export default function AdminPage() {
                       <div className="min-w-0">
                         <p className="text-xs font-medium text-white truncate">{c.email}</p>
                         <p className="text-[11px] text-gray-500 mt-0.5 tabular-nums">
-                          {c.paymentId} · {c.method.toUpperCase()} · Ref {c.reference} · ₱{c.amount}
+                          {c.paymentId} · {c.method.toUpperCase()} · ₱{c.amount}
+                          {c.reference ? ` · Ref ${c.reference}` : ''}
                         </p>
+                        {c.receiptUrl && (
+                          // The whole point of the queue: see the receipt
+                          // without leaving the page or asking for it again.
+                          <a href={c.receiptUrl} target="_blank" rel="noopener noreferrer"
+                            className="inline-block mt-2">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={c.receiptUrl} alt="Receipt"
+                              className="h-24 rounded-lg border border-gray-700 hover:border-gray-500 transition-colors" />
+                          </a>
+                        )}
                         {c.note && <p className="text-[11px] text-gray-400 mt-1">{c.note}</p>}
                       </div>
                       <div className="flex items-center gap-2 shrink-0">

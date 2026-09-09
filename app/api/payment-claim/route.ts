@@ -17,7 +17,9 @@ import { createSupabaseAdmin } from '@/lib/supabase/admin';
 import { paymentIdFor } from '@/lib/paymentId';
 import { notifyPaymentClaim } from '@/lib/paymentNotify';
 
-const METHODS = new Set(['gcash', 'bpi', 'gotyme']);
+const METHODS = new Set(['gcash', 'bpi', 'gotyme', 'maya']);
+const MAX_RECEIPT_BYTES = 5 * 1024 * 1024;
+const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']);
 
 export async function POST(req: NextRequest) {
   const user = await getSessionUser();
@@ -27,23 +29,41 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Payments are not available in demo mode.' }, { status: 503 });
   }
 
-  const body = (await req.json().catch(() => ({}))) as {
-    method?: string; reference?: string; note?: string;
-  };
+  // Multipart, because the receipt is a screenshot now. Asking someone to find
+  // and retype a reference number is the step where a payment stops being
+  // reported; everyone already screenshots the receipt out of habit, and that
+  // image carries the amount, time, sender name and reference at once.
+  const form = await req.formData().catch(() => null);
+  if (!form) {
+    return NextResponse.json({ error: 'Could not read that. Please try again.' }, { status: 400 });
+  }
 
-  const method = (body.method ?? '').toLowerCase();
+  const method = String(form.get('method') ?? '').toLowerCase();
   if (!METHODS.has(method)) {
     return NextResponse.json({ error: 'Choose how you paid.' }, { status: 400 });
   }
 
-  // Reference numbers differ per bank, so this only checks that something
-  // plausible was typed. Rafael matches it against his own record; a format
-  // rule strict enough to be useful would reject a real receipt sooner or later.
-  const reference = (body.reference ?? '').trim();
-  if (reference.length < 4 || reference.length > 64) {
+  const receipt = form.get('receipt');
+  const reference = String(form.get('reference') ?? '').trim().slice(0, 64);
+
+  // One or the other. A claim with neither leaves nothing to check against.
+  if (!(receipt instanceof File) && reference.length < 4) {
     return NextResponse.json({
-      error: 'Enter the reference number from your receipt.',
+      error: 'Upload a screenshot of your receipt so we can check the payment.',
     }, { status: 400 });
+  }
+
+  if (receipt instanceof File) {
+    if (receipt.size > MAX_RECEIPT_BYTES) {
+      return NextResponse.json({
+        error: 'That image is over 5 MB. A normal screenshot is well under that.',
+      }, { status: 413 });
+    }
+    if (!ALLOWED_TYPES.has(receipt.type)) {
+      return NextResponse.json({
+        error: 'Please upload a screenshot image (JPG, PNG or HEIC).',
+      }, { status: 415 });
+    }
   }
 
   const supabase = createSupabaseAdmin();
@@ -64,14 +84,34 @@ export async function POST(req: NextRequest) {
     }, { status: 409 });
   }
 
+  // Uploaded with the service role into a PRIVATE bucket. A receipt shows a
+  // real person's name, partial account number and what they paid — a public
+  // bucket would leave that behind a guessable URL forever.
+  let receiptPath: string | null = null;
+  if (receipt instanceof File) {
+    const ext = (receipt.name.split('.').pop() ?? 'jpg').toLowerCase().slice(0, 5);
+    const path = `${user.id}/${Date.now()}.${ext}`;
+    const { error: upErr } = await supabase.storage
+      .from('receipts')
+      .upload(path, await receipt.arrayBuffer(), { contentType: receipt.type, upsert: false });
+    if (upErr) {
+      console.error('[/api/payment-claim] upload', upErr);
+      return NextResponse.json({
+        error: 'We could not save that image. Please try again, or message us on Facebook.',
+      }, { status: 500 });
+    }
+    receiptPath = path;
+  }
+
   const { data: claim, error } = await supabase
     .from('payment_claims')
     .insert({
       user_id: user.id,
       email: user.email,
       method,
-      reference,
-      note: (body.note ?? '').trim().slice(0, 500) || null,
+      reference: reference || null,
+      receipt_path: receiptPath,
+      note: String(form.get('note') ?? '').trim().slice(0, 500) || null,
     })
     .select('id, created_at')
     .single();
@@ -89,8 +129,8 @@ export async function POST(req: NextRequest) {
     email: user.email,
     paymentId: paymentIdFor(user.id),
     method,
-    reference,
-    note: body.note ?? '',
+    reference: reference || '(see screenshot)',
+    note: String(form.get('note') ?? ''),
   }).catch(err => console.error('[/api/payment-claim] notify', err));
 
   return NextResponse.json({ received: true, claimId: claim.id });
