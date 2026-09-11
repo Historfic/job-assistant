@@ -19,7 +19,10 @@ import { notifyPaymentClaim } from '@/lib/paymentNotify';
 
 const METHODS = new Set(['gcash', 'bpi', 'gotyme', 'maya']);
 const MAX_RECEIPT_BYTES = 5 * 1024 * 1024;
-const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']);
+// Must match the bucket's allowed_mime_types (migration 0009). A type passed
+// here but refused by storage fails at upload, with a vaguer error than this
+// route gives.
+const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/heic']);
 
 export async function POST(req: NextRequest) {
   const user = await getSessionUser();
