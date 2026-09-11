@@ -83,6 +83,22 @@ export function formatPosted(raw: string | null | undefined, now: Date = new Dat
   return text;
 }
 
+/**
+ * Whether a listing went up within `maxAgeMs` of `now`.
+ *
+ * A listing that cannot be dated passes. If a site changes its date format,
+ * nothing parses, and failing undated listings would quietly empty every email
+ * from that site. One old job getting through is the better way to be wrong.
+ */
+export function postedWithin(
+  raw: string | null | undefined,
+  maxAgeMs: number,
+  now: Date = new Date(),
+): boolean {
+  const posted = parsePostedAt(raw);
+  return !posted || now.getTime() - posted.at.getTime() <= maxAgeMs;
+}
+
 /** What a listing pays, or null when it does not say. */
 export function formatRate(job: Pick<RawJob, 'salary' | 'source' | 'employmentType'>): string | null {
   const raw = job.salary?.replace(/\s+/g, ' ').trim();

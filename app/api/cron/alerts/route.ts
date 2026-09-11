@@ -16,6 +16,7 @@ import { normalizeSources } from '@/lib/sources/types';
 import { evaluateSalary } from '@/lib/salaryEvaluator';
 import { sendMail } from '@/lib/mailer';
 import { buildAlertHtml, buildAlertSubject } from '@/lib/alertEmail';
+import { postedWithin } from '@/lib/jobMeta';
 import { publicOrigin } from '@/lib/publicUrl';
 import type { JobSource, RawJob } from '@/types';
 
@@ -24,6 +25,13 @@ export const maxDuration = 300; // many alerts, each doing network work
 const MAX_JOBS_PER_EMAIL = 8;
 const MIN_HOURS_BETWEEN_RUNS = 20; // daily-ish, tolerant of scheduler drift
 const SEEN_URL_CAP = 400;          // keep rows from growing without bound
+
+// The subject says "new jobs today", but "new" only ever meant "not emailed
+// before". LinkedIn returns posts weeks or months old, and once the email
+// showed post dates, a "today" email listing "Posted: Aug 27" read as broken,
+// and a job that old is usually filled. OnlineJobs and Upwork list newest
+// first, so this mostly trims LinkedIn.
+const MAX_POST_AGE_MS = 3 * 86_400_000;
 
 interface AlertRow {
   user_id: string;
@@ -117,6 +125,7 @@ async function findNewJobs(alert: AlertRow): Promise<RawJob[]> {
   const seen = new Set(alert.seen_urls);
   return jobs
     .filter(job => job.url && !seen.has(job.url))
+    .filter(job => postedWithin(job.datePosted, MAX_POST_AGE_MS))
     .filter(job => {
       if (alert.min_salary == null) return true;
       return evaluateSalary(job.salary, alert.min_salary).approved;

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatPosted, formatRate, parsePostedAt } from '@/lib/jobMeta';
+import { formatPosted, formatRate, parsePostedAt, postedWithin } from '@/lib/jobMeta';
 
 // 1:46 PM on 11 Sep 2026, Manila. Every date below is a real value captured
 // from that day's OnlineJobs page and Apify runs.
@@ -42,6 +42,33 @@ describe('formatPosted', () => {
     expect(formatPosted('', NOW)).toBeNull();
     // No zone, so it would be read in the server's zone
     expect(formatPosted('Sep 5, 2026', NOW)).toBeNull();
+  });
+});
+
+describe('postedWithin', () => {
+  const THREE_DAYS = 3 * 86_400_000;
+
+  it('keeps a post from this morning and drops weeks-old LinkedIn ones', () => {
+    // Both LinkedIn dates are real results for "AI automation", the kind that
+    // went out under a "new jobs today" subject before this rule.
+    expect(postedWithin('2026-09-11 13:24:57', THREE_DAYS, NOW)).toBe(true);
+    expect(postedWithin('2026-08-27T00:00:00.000Z', THREE_DAYS, NOW)).toBe(false);
+    expect(postedWithin('2026-04-28T00:00:00.000Z', THREE_DAYS, NOW)).toBe(false);
+  });
+
+  it('counts a LinkedIn date from three days back as recent at the 7am send', () => {
+    // The alert runs at 7am Manila, 23:00 UTC. LinkedIn's "Sep 9" is midnight
+    // UTC on the 9th, 71 hours earlier; "Sep 8" is 95.
+    const send = new Date('2026-09-11T23:00:00Z');
+    expect(postedWithin('2026-09-09T00:00:00.000Z', THREE_DAYS, send)).toBe(true);
+    expect(postedWithin('2026-09-08T00:00:00.000Z', THREE_DAYS, send)).toBe(false);
+  });
+
+  it('lets through a listing it cannot date', () => {
+    // If a site changes its date format nothing parses, and dropping undated
+    // listings would quietly empty every email from that site.
+    expect(postedWithin(null, THREE_DAYS, NOW)).toBe(true);
+    expect(postedWithin('Sep 5, 2026', THREE_DAYS, NOW)).toBe(true);
   });
 });
 
