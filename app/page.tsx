@@ -185,14 +185,12 @@ export default async function LandingPage() {
       </div>
 
       {/* ── Who it's for, in real users' words ──
-          Wider than the other sections so the photo can sit beside the
-          heading. overflow-x-clip stops the photo, while it waits to slide in
-          from the right, from opening a horizontal scrollbar. */}
-      <div className="max-w-4xl mx-auto px-5 overflow-x-clip">
-        <section className="py-14">
-          <Testimonials />
-        </section>
-      </div>
+          Full width, unlike the other sections: the photo runs down the left
+          edge of the screen. overflow-x-clip keeps anything waiting to slide
+          in from opening a horizontal scrollbar. */}
+      <section className="overflow-x-clip">
+        <Testimonials />
+      </section>
 
       {/* ── Price ── */}
       <div className="bg-white border-y border-slate-200">
