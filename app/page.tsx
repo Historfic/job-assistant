@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Logo from '@/components/Logo';
-import FilipinoStrip from '@/components/FilipinoStrip';
+import Testimonials from '@/components/Testimonials';
 import { getSessionUser } from '@/lib/auth';
 import { FOUNDING_SEATS, REGULAR_PRICE_COPY } from '@/lib/tiers';
 
@@ -184,10 +184,13 @@ export default async function LandingPage() {
         </div>
       </div>
 
-      {/* ── Who it's for ── */}
-      <div className="max-w-2xl mx-auto px-5">
+      {/* ── Who it's for, in real users' words ──
+          Wider than the other sections so the photo can sit beside the
+          heading. overflow-x-clip stops the photo, while it waits to slide in
+          from the right, from opening a horizontal scrollbar. */}
+      <div className="max-w-4xl mx-auto px-5 overflow-x-clip">
         <section className="py-14">
-          <FilipinoStrip />
+          <Testimonials />
         </section>
       </div>
 
