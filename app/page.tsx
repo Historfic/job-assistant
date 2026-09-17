@@ -85,11 +85,11 @@ export default async function LandingPage() {
         {/* ── Remote-work photo, down the empty left side of the hero ──
             Only from xl, where that margin is wide enough to hold a photo;
             narrower it would be a sliver, and a phone has no side at all.
-            Hung off the column's left edge, so it always stops the same gap
-            short of the content and reaches the screen edge at any width.
+            Hung off the column's left edge, so at any width it keeps the same
+            2rem gap from the content and from the edge of the screen.
             It wipes in with CSS alone, so it plays on load without waiting
             for hydration, then keeps a very slow zoom. */}
-        <div className="hidden xl:block absolute top-16 bottom-0 right-[calc(100%+2rem)] w-[calc(50vw-21rem-2rem)] rounded-r-3xl overflow-hidden animate-wipe-in motion-reduce:animate-none">
+        <div className="hidden xl:block absolute top-16 bottom-0 right-[calc(100%+2rem)] w-[calc(50vw-21rem-4rem)] rounded-3xl overflow-hidden animate-wipe-in motion-reduce:animate-none">
           <Image
             src="/testimonials/remote-work.jpg"
             alt=""
