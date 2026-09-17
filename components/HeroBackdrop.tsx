@@ -36,27 +36,14 @@ export default function HeroBackdrop() {
         />
       </div>
 
-      {/* The office and the home desk take turns. The desk photo sits on top
-          and fades in and out; the office photo underneath shows in between.
-          The office shot is landscape, so it is cropped toward the right to
-          keep both women in a tall panel. */}
       <div className="hidden xl:block absolute top-16 bottom-0 right-8 left-[calc(50%+23rem)] rounded-3xl overflow-hidden animate-wipe-in-right motion-reduce:animate-none">
         <Image
-          src="/hero/office-lounge.jpg"
+          src="/hero/home-desk.jpg"
           alt=""
           fill
           sizes="30vw"
-          className="object-cover object-[61%_50%] animate-slow-zoom motion-reduce:animate-none"
+          className="object-cover animate-slow-zoom motion-reduce:animate-none"
         />
-        <div className="absolute inset-0 animate-crossfade motion-reduce:animate-none">
-          <Image
-            src="/hero/home-desk.jpg"
-            alt=""
-            fill
-            sizes="30vw"
-            className="object-cover animate-slow-zoom motion-reduce:animate-none"
-          />
-        </div>
       </div>
     </div>
   );

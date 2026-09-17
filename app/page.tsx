@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Logo from '@/components/Logo';
 import HeroBackdrop from '@/components/HeroBackdrop';
+import SideGallery from '@/components/SideGallery';
 import Testimonials from '@/components/Testimonials';
 import { getSessionUser } from '@/lib/auth';
 import { FOUNDING_SEATS, REGULAR_PRICE_COPY } from '@/lib/tiers';
@@ -155,94 +156,102 @@ export default async function LandingPage() {
         </div>
       </div>
 
-      {/* ── Before / after ── */}
-      <div className="max-w-2xl mx-auto px-5">
-        <section className="py-14">
-          <div className="grid grid-cols-2 gap-3 sm:gap-4">
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 text-center">
-              <p className="text-[10.5px] font-bold uppercase tracking-widest text-slate-400">Three tabs</p>
-              <p className="mt-3 text-[40px] sm:text-[52px] font-extrabold text-slate-300 leading-none tabular-nums">45</p>
-              <p className="text-sm font-semibold text-slate-400 mt-1">minutes</p>
+      {/* Everything between the hero and the dark close, in one full-width box
+          so the side photos can run down its whole height. overflow-x-clip
+          stops a card waiting to slide in from the right from opening a
+          horizontal scrollbar. */}
+      <div className="relative overflow-x-clip">
+        <SideGallery />
+
+        {/* ── Before / after ── */}
+        <div className="max-w-2xl mx-auto px-5">
+          <section className="py-14">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 text-center">
+                <p className="text-[10.5px] font-bold uppercase tracking-widest text-slate-400">Three tabs</p>
+                <p className="mt-3 text-[40px] sm:text-[52px] font-extrabold text-slate-300 leading-none tabular-nums">45</p>
+                <p className="text-sm font-semibold text-slate-400 mt-1">minutes</p>
+              </div>
+              <div className="bg-white border-2 border-blue-600 rounded-2xl p-5 text-center">
+                <p className="text-[10.5px] font-bold uppercase tracking-widest text-blue-600">One search</p>
+                <p className="mt-3 text-[40px] sm:text-[52px] font-extrabold text-slate-900 leading-none tabular-nums">1</p>
+                <p className="text-sm font-semibold text-slate-700 mt-1">minute</p>
+              </div>
             </div>
-            <div className="bg-white border-2 border-blue-600 rounded-2xl p-5 text-center">
-              <p className="text-[10.5px] font-bold uppercase tracking-widest text-blue-600">One search</p>
-              <p className="mt-3 text-[40px] sm:text-[52px] font-extrabold text-slate-900 leading-none tabular-nums">1</p>
-              <p className="text-sm font-semibold text-slate-700 mt-1">minute</p>
-            </div>
+            <p className="text-center text-sm text-slate-500 mt-4">
+              Same three job sites. Same jobs.
+            </p>
+          </section>
+        </div>
+
+        {/* ── What you get ── */}
+        <div className="bg-white border-y border-slate-200">
+          <div className="max-w-2xl mx-auto px-5">
+            <section className="py-14">
+              <div className="grid grid-cols-2 gap-3">
+                {FEATURES.map(([icon, label]) => (
+                  <div key={label} className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                    <span className="text-blue-600 block"><Icon name={icon} /></span>
+                    <p className="text-[13.5px] font-semibold text-slate-900 mt-2.5 leading-snug">{label}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
           </div>
-          <p className="text-center text-sm text-slate-500 mt-4">
-            Same three job sites. Same jobs.
-          </p>
-        </section>
-      </div>
+        </div>
 
-      {/* ── What you get ── */}
-      <div className="bg-white border-y border-slate-200">
+        {/* ── Who it's for, in real users' words ── */}
         <div className="max-w-2xl mx-auto px-5">
           <section className="py-14">
-            <div className="grid grid-cols-2 gap-3">
-              {FEATURES.map(([icon, label]) => (
-                <div key={label} className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-                  <span className="text-blue-600 block"><Icon name={icon} /></span>
-                  <p className="text-[13.5px] font-semibold text-slate-900 mt-2.5 leading-snug">{label}</p>
-                </div>
-              ))}
-            </div>
+            <Testimonials />
           </section>
         </div>
-      </div>
 
-      {/* ── Who it's for, in real users' words ── */}
-      <div className="max-w-2xl mx-auto px-5">
-        <section className="py-14">
-          <Testimonials />
-        </section>
-      </div>
+        {/* ── Price ── */}
+        <div className="bg-white border-y border-slate-200">
+          <div className="max-w-2xl mx-auto px-5">
+            <section className="py-14">
+              <div className="relative bg-slate-50 border-2 border-blue-600 rounded-[18px] p-7 text-center">
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10.5px] font-extrabold uppercase tracking-[0.09em] px-3.5 py-1 rounded-full whitespace-nowrap">
+                  Founding price
+                </span>
+                <p className="text-[52px] font-extrabold tracking-tight text-slate-900 leading-none tabular-nums">
+                  ₱999<span className="text-[15px] font-semibold text-slate-400 tracking-normal"> / month</span>
+                </p>
+                <p className="text-[13.5px] font-bold text-blue-600 mt-2.5">Locked for life</p>
+                <p className="text-sm text-slate-600 mt-1.5">
+                  First {FOUNDING_SEATS} members. {REGULAR_PRICE_COPY} after that.
+                </p>
+                <p className="text-[13px] text-slate-600 mt-4 leading-relaxed max-w-[17rem] mx-auto">
+                  One client at ₱25,000/month pays for two years of this.
+                </p>
+                <p className="text-sm text-slate-600 mt-3">GCash · BPI · GoTyme</p>
+                <p className="text-[13px] text-emerald-700 font-semibold mt-1.5">No card. Nothing to cancel.</p>
+                <Link href="/get-access"
+                  className="block mt-6 px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-700 font-semibold text-white shadow-lg shadow-blue-600/25 transition-colors">
+                  Get full access
+                </Link>
+                <p className="text-xs text-slate-400 mt-3">Or try 3 searches free first.</p>
+              </div>
+            </section>
+          </div>
+        </div>
 
-      {/* ── Price ── */}
-      <div className="bg-white border-y border-slate-200">
+        {/* ── FAQ ── */}
         <div className="max-w-2xl mx-auto px-5">
-          <section className="py-14">
-            <div className="relative bg-slate-50 border-2 border-blue-600 rounded-[18px] p-7 text-center">
-              <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10.5px] font-extrabold uppercase tracking-[0.09em] px-3.5 py-1 rounded-full whitespace-nowrap">
-                Founding price
-              </span>
-              <p className="text-[52px] font-extrabold tracking-tight text-slate-900 leading-none tabular-nums">
-                ₱999<span className="text-[15px] font-semibold text-slate-400 tracking-normal"> / month</span>
-              </p>
-              <p className="text-[13.5px] font-bold text-blue-600 mt-2.5">Locked for life</p>
-              <p className="text-sm text-slate-600 mt-1.5">
-                First {FOUNDING_SEATS} members. {REGULAR_PRICE_COPY} after that.
-              </p>
-              <p className="text-[13px] text-slate-600 mt-4 leading-relaxed max-w-[17rem] mx-auto">
-                One client at ₱25,000/month pays for two years of this.
-              </p>
-              <p className="text-sm text-slate-600 mt-3">GCash · BPI · GoTyme</p>
-              <p className="text-[13px] text-emerald-700 font-semibold mt-1.5">No card. Nothing to cancel.</p>
-              <Link href="/get-access"
-                className="block mt-6 px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-700 font-semibold text-white shadow-lg shadow-blue-600/25 transition-colors">
-                Get full access
-              </Link>
-              <p className="text-xs text-slate-400 mt-3">Or try 3 searches free first.</p>
-            </div>
+          <section className="py-12">
+            {FAQ.map(([q, a]) => (
+              <details key={q} className="group mt-2.5 first:mt-0 bg-white border border-slate-200 rounded-xl px-4 py-3.5 open:border-slate-300">
+                <summary className="flex items-center justify-between gap-4 cursor-pointer list-none font-semibold text-[14.5px] text-slate-900">
+                  {q}
+                  <span className="text-blue-600 font-extrabold text-lg shrink-0 group-open:hidden">+</span>
+                  <span className="text-blue-600 font-extrabold text-lg shrink-0 hidden group-open:inline">−</span>
+                </summary>
+                <p className="text-[14px] text-slate-600 mt-2.5 leading-relaxed">{a}</p>
+              </details>
+            ))}
           </section>
         </div>
-      </div>
-
-      {/* ── FAQ ── */}
-      <div className="max-w-2xl mx-auto px-5">
-        <section className="py-12">
-          {FAQ.map(([q, a]) => (
-            <details key={q} className="group mt-2.5 first:mt-0 bg-white border border-slate-200 rounded-xl px-4 py-3.5 open:border-slate-300">
-              <summary className="flex items-center justify-between gap-4 cursor-pointer list-none font-semibold text-[14.5px] text-slate-900">
-                {q}
-                <span className="text-blue-600 font-extrabold text-lg shrink-0 group-open:hidden">+</span>
-                <span className="text-blue-600 font-extrabold text-lg shrink-0 hidden group-open:inline">−</span>
-              </summary>
-              <p className="text-[14px] text-slate-600 mt-2.5 leading-relaxed">{a}</p>
-            </details>
-          ))}
-        </section>
       </div>
 
       {/* ── Close — dark, handing over to the app ── */}

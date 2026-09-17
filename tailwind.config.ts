@@ -32,9 +32,10 @@ const config: Config = {
         // screen edge; the right one a beat later so they do not move as one.
         'wipe-in': 'wipeIn 1.3s cubic-bezier(0.22, 1, 0.36, 1) both',
         'wipe-in-right': 'wipeInRight 1.3s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both',
-        // The two photos on the hero's right take turns: about 7.5s each with
-        // a 1.5s fade, slow enough to read as ambience rather than a slideshow.
-        crossfade: 'crossfade 18s ease-in-out infinite',
+        // The photo cards down the sides of the page. A small lift over a long
+        // cycle: enough to feel alive in the corner of the eye, not enough to
+        // pull attention off the column being read.
+        float: 'float 7s ease-in-out infinite',
         // Background glows. Three different lengths, so the three never fall
         // back into step and the movement never shows an obvious loop.
         'drift-a': 'driftA 19s ease-in-out infinite',
@@ -52,10 +53,9 @@ const config: Config = {
           '0%': { clipPath: 'inset(0 0 0 100%)' },
           '100%': { clipPath: 'inset(0 0 0 0%)' },
         },
-        crossfade: {
-          '0%, 42%': { opacity: '0' },
-          '50%, 92%': { opacity: '1' },
-          '100%': { opacity: '0' },
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-14px)' },
         },
         driftA: {
           '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
