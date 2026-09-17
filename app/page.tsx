@@ -1,6 +1,6 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import Logo from '@/components/Logo';
+import HeroBackdrop from '@/components/HeroBackdrop';
 import Testimonials from '@/components/Testimonials';
 import { getSessionUser } from '@/lib/auth';
 import { FOUNDING_SEATS, REGULAR_PRICE_COPY } from '@/lib/tiers';
@@ -81,87 +81,77 @@ export default async function LandingPage() {
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-700">
-      <div className="relative max-w-2xl mx-auto px-5">
-        {/* ── Remote-work photo, down the empty left side of the hero ──
-            Only from xl, where that margin is wide enough to hold a photo;
-            narrower it would be a sliver, and a phone has no side at all.
-            Hung off the column's left edge, so at any width it keeps the same
-            2rem gap from the content and from the edge of the screen.
-            It wipes in with CSS alone, so it plays on load without waiting
-            for hydration, then keeps a very slow zoom. */}
-        <div className="hidden xl:block absolute top-16 bottom-0 right-[calc(100%+2rem)] w-[calc(50vw-21rem-4rem)] rounded-3xl overflow-hidden animate-wipe-in motion-reduce:animate-none">
-          <Image
-            src="/testimonials/remote-work.jpg"
-            alt=""
-            fill
-            sizes="34vw"
-            className="object-cover animate-slow-zoom motion-reduce:animate-none"
-          />
-        </div>
+      {/* Full width, so the glows and the side photos are laid out against
+          the page rather than the centre column. The column stays relative
+          so it paints above them. */}
+      <div className="relative">
+        <HeroBackdrop />
 
-        <nav className="flex items-center justify-between py-4">
-          <div className="flex items-center gap-2.5">
-            {/* boxed: the bare mark is white and would vanish on a light ground */}
-            <Logo size={28} boxed />
-            <span className="font-extrabold text-[17px] text-slate-900">EasyClient</span>
-          </div>
-          <Link href={user ? '/dashboard' : '/login'} className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
-            {user ? 'Dashboard' : 'Sign in'}
-          </Link>
-        </nav>
-
-        {/* ── Hero ── */}
-        <section className="pt-10 pb-12 text-center">
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-600">
-            Para sa Filipino freelancers
-          </p>
-          <h1 className="text-[38px] sm:text-[56px] font-extrabold leading-[1.02] tracking-tight text-slate-900 mt-3.5">
-            3 job sites.<br />
-            <span className="text-blue-600">1 search.</span>
-          </h1>
-          <p className="text-[17px] text-slate-600 mt-4 max-w-sm mx-auto">
-            First results in about 10 seconds. Ranked, filtered, ready to apply.
-          </p>
-          <Link href={cta} className="inline-block mt-7 px-9 py-4 rounded-xl bg-blue-600 hover:bg-blue-700 font-semibold text-white shadow-lg shadow-blue-600/25 transition-colors">
-            {ctaLabel}
-          </Link>
-          <p className="text-xs text-slate-400 mt-3">Free to start. No card.</p>
-        </section>
-
-        {/* ── The product itself, as the proof ── */}
-        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl shadow-slate-900/5">
-          <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-slate-200 bg-slate-50">
-            <span className="text-[11.5px] font-semibold text-slate-400">&ldquo;virtual assistant&rdquo;</span>
-            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
-              9 matches
-            </span>
-          </div>
-          {SAMPLE_RESULTS.map(r => (
-            <div key={r.title} className="flex gap-3 px-4 py-3.5 border-b border-slate-100 last:border-b-0">
-              <div className={`shrink-0 w-9 h-9 rounded-[10px] grid place-items-center font-extrabold text-sm tabular-nums
-                ${r.top ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600'}`}>
-                {r.score}
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-slate-900 leading-snug truncate">{r.title}</p>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  <span className={`text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded border ${SRC_TINT[r.src]}`}>
-                    {r.src}
-                  </span>{' '}{r.meta}
-                </p>
-              </div>
+        <div className="relative max-w-2xl mx-auto px-5">
+          <nav className="flex items-center justify-between py-4">
+            <div className="flex items-center gap-2.5">
+              {/* boxed: the bare mark is white and would vanish on a light ground */}
+              <Logo size={28} boxed />
+              <span className="font-extrabold text-[17px] text-slate-900">EasyClient</span>
             </div>
-          ))}
-        </div>
+            <Link href={user ? '/dashboard' : '/login'} className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
+              {user ? 'Dashboard' : 'Sign in'}
+            </Link>
+          </nav>
 
-        {/* ── Stats ── */}
-        <div className="grid grid-cols-3 gap-3 mt-6">
-          {STATS.map(([n, label]) => (
-            <div key={label} className="bg-white border border-slate-200 rounded-xl py-4 text-center">
-              <p className="text-2xl font-extrabold text-slate-900 tabular-nums leading-none">{n}</p>
-              <p className="text-[11px] text-slate-500 mt-1.5">{label}</p>
+          {/* ── Hero ── */}
+          <section className="pt-10 pb-12 text-center">
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-600">
+              Para sa Filipino freelancers
+            </p>
+            <h1 className="text-[38px] sm:text-[56px] font-extrabold leading-[1.02] tracking-tight text-slate-900 mt-3.5">
+              3 job sites.<br />
+              <span className="text-blue-600">1 search.</span>
+            </h1>
+            <p className="text-[17px] text-slate-600 mt-4 max-w-sm mx-auto">
+              First results in about 10 seconds. Ranked, filtered, ready to apply.
+            </p>
+            <Link href={cta} className="inline-block mt-7 px-9 py-4 rounded-xl bg-blue-600 hover:bg-blue-700 font-semibold text-white shadow-lg shadow-blue-600/25 transition-colors">
+              {ctaLabel}
+            </Link>
+            <p className="text-xs text-slate-400 mt-3">Free to start. No card.</p>
+          </section>
+
+          {/* ── The product itself, as the proof ── */}
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xl shadow-slate-900/5">
+            <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-slate-200 bg-slate-50">
+              <span className="text-[11.5px] font-semibold text-slate-400">&ldquo;virtual assistant&rdquo;</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                9 matches
+              </span>
             </div>
-          ))}
+            {SAMPLE_RESULTS.map(r => (
+              <div key={r.title} className="flex gap-3 px-4 py-3.5 border-b border-slate-100 last:border-b-0">
+                <div className={`shrink-0 w-9 h-9 rounded-[10px] grid place-items-center font-extrabold text-sm tabular-nums
+                  ${r.top ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600'}`}>
+                  {r.score}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-slate-900 leading-snug truncate">{r.title}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    <span className={`text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded border ${SRC_TINT[r.src]}`}>
+                      {r.src}
+                    </span>{' '}{r.meta}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* ── Stats ── */}
+          <div className="grid grid-cols-3 gap-3 mt-6">
+            {STATS.map(([n, label]) => (
+              <div key={label} className="bg-white border border-slate-200 rounded-xl py-4 text-center">
+                <p className="text-2xl font-extrabold text-slate-900 tabular-nums leading-none">{n}</p>
+                <p className="text-[11px] text-slate-500 mt-1.5">{label}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
