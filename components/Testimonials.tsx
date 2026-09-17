@@ -10,6 +10,10 @@ import Reveal from '@/components/Reveal';
 // the quotes sit to its right. The photo is portrait, which suits a tall side
 // panel better than a box beside the heading. Below lg it becomes a banner
 // above the heading.
+//
+// On scroll the photo is uncovered from the left edge, the heading comes in
+// from the right to meet it, then the quotes rise one after the other. The
+// photo keeps a very slow zoom afterwards so the section never goes static.
 
 const TESTIMONIALS = [
   {
@@ -31,19 +35,20 @@ const TESTIMONIALS = [
 export default function Testimonials() {
   return (
     <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-      <Reveal from="left" className="relative h-56 sm:h-72 lg:h-auto">
+      {/* overflow-hidden keeps the zoomed photo inside its panel */}
+      <Reveal from="wipe" duration={1300} className="relative overflow-hidden h-56 sm:h-72 lg:h-auto">
         <Image
           src="/testimonials/remote-work.jpg"
           alt=""
           fill
           sizes="(min-width: 1024px) 34vw, 100vw"
-          className="object-cover object-[50%_62%] lg:object-[50%_55%]"
+          className="object-cover object-[50%_62%] lg:object-[50%_55%] animate-slow-zoom motion-reduce:animate-none"
         />
       </Reveal>
 
       <div className="px-5 py-12 sm:py-14 lg:px-12 lg:py-20">
         <div className="max-w-2xl mx-auto">
-          <Reveal from="up">
+          <Reveal from="right" delay={250}>
             <h2 className="text-center lg:text-left text-[24px] sm:text-[30px] lg:text-[34px] font-extrabold tracking-tight text-slate-900 leading-tight text-balance">
               Built for Filipino freelancers
             </h2>
@@ -54,7 +59,7 @@ export default function Testimonials() {
 
           <div className="mt-8 grid gap-4 sm:grid-cols-2">
             {TESTIMONIALS.map((t, i) => (
-              <Reveal key={t.name} from="up" delay={150 + i * 150} className="h-full">
+              <Reveal key={t.name} from="up" delay={500 + i * 200} className="h-full">
                 <figure className="h-full flex flex-col bg-white border border-slate-200 rounded-2xl p-6 shadow-lg shadow-slate-900/5">
                   <blockquote>
                     <p lang="fil" className="text-[16px] font-semibold text-slate-900 leading-snug">

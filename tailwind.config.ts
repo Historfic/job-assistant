@@ -24,8 +24,16 @@ const config: Config = {
         // Sweeps across a placeholder card while its source is still
         // answering. Slow enough to read as waiting, not as a glitch.
         shimmer: 'shimmer 1.6s ease-in-out infinite',
+        // The landing page's remote-work photo. Slow enough that it reads as
+        // a living photo rather than as something moving; a faster zoom pulls
+        // the eye away from the quotes beside it.
+        'slow-zoom': 'slowZoom 20s ease-in-out infinite',
       },
       keyframes: {
+        slowZoom: {
+          '0%, 100%': { transform: 'scale(1)' },
+          '50%': { transform: 'scale(1.1)' },
+        },
         fadeIn: {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
