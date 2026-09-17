@@ -28,8 +28,16 @@ const config: Config = {
         // a living photo rather than as something moving; a faster zoom pulls
         // the eye away from the quotes beside it.
         'slow-zoom': 'slowZoom 20s ease-in-out infinite',
+        // Uncovers the same photo from the left edge on page load.
+        'wipe-in': 'wipeIn 1.3s cubic-bezier(0.22, 1, 0.36, 1) both',
       },
       keyframes: {
+        // inset(0 0% 0 0) rather than none at the end: a browser only
+        // animates between two clip-paths of the same shape.
+        wipeIn: {
+          '0%': { clipPath: 'inset(0 100% 0 0)' },
+          '100%': { clipPath: 'inset(0 0% 0 0)' },
+        },
         slowZoom: {
           '0%, 100%': { transform: 'scale(1)' },
           '50%': { transform: 'scale(1.1)' },

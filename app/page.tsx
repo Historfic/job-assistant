@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import Logo from '@/components/Logo';
 import Testimonials from '@/components/Testimonials';
@@ -80,7 +81,24 @@ export default async function LandingPage() {
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-700">
-      <div className="max-w-2xl mx-auto px-5">
+      <div className="relative max-w-2xl mx-auto px-5">
+        {/* ── Remote-work photo, down the empty left side of the hero ──
+            Only from xl, where that margin is wide enough to hold a photo;
+            narrower it would be a sliver, and a phone has no side at all.
+            Hung off the column's left edge, so it always stops the same gap
+            short of the content and reaches the screen edge at any width.
+            It wipes in with CSS alone, so it plays on load without waiting
+            for hydration, then keeps a very slow zoom. */}
+        <div className="hidden xl:block absolute top-16 bottom-0 right-[calc(100%+2rem)] w-[calc(50vw-21rem-2rem)] rounded-r-3xl overflow-hidden animate-wipe-in motion-reduce:animate-none">
+          <Image
+            src="/testimonials/remote-work.jpg"
+            alt=""
+            fill
+            sizes="34vw"
+            className="object-cover animate-slow-zoom motion-reduce:animate-none"
+          />
+        </div>
+
         <nav className="flex items-center justify-between py-4">
           <div className="flex items-center gap-2.5">
             {/* boxed: the bare mark is white and would vanish on a light ground */}
@@ -184,13 +202,12 @@ export default async function LandingPage() {
         </div>
       </div>
 
-      {/* ── Who it's for, in real users' words ──
-          Full width, unlike the other sections: the photo runs down the left
-          edge of the screen. overflow-x-clip keeps anything waiting to slide
-          in from opening a horizontal scrollbar. */}
-      <section className="overflow-x-clip">
-        <Testimonials />
-      </section>
+      {/* ── Who it's for, in real users' words ── */}
+      <div className="max-w-2xl mx-auto px-5">
+        <section className="py-14">
+          <Testimonials />
+        </section>
+      </div>
 
       {/* ── Price ── */}
       <div className="bg-white border-y border-slate-200">

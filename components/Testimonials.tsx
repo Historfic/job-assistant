@@ -5,15 +5,9 @@ import Reveal from '@/components/Reveal';
 // first name, photo and quote being shown. Quotes stay exactly as they wrote
 // them, in Taglish, with an English line underneath for readers who need one.
 //
-// On a wide screen the remote-work photo runs down the left edge of the page,
-// full height of the section, filling what was empty margin; the heading and
-// the quotes sit to its right. The photo is portrait, which suits a tall side
-// panel better than a box beside the heading. Below lg it becomes a banner
-// above the heading.
-//
-// On scroll the photo is uncovered from the left edge, the heading comes in
-// from the right to meet it, then the quotes rise one after the other. The
-// photo keeps a very slow zoom afterwards so the section never goes static.
+// Sits in the same centre column as every other section, the two quotes side
+// by side. The remote-work photo that used to be here lives beside the hero.
+// On scroll the heading rises in, then the quotes one after the other.
 
 const TESTIMONIALS = [
   {
@@ -34,59 +28,44 @@ const TESTIMONIALS = [
 
 export default function Testimonials() {
   return (
-    <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
-      {/* overflow-hidden keeps the zoomed photo inside its panel */}
-      <Reveal from="wipe" duration={1300} className="relative overflow-hidden h-56 sm:h-72 lg:h-auto">
-        <Image
-          src="/testimonials/remote-work.jpg"
-          alt=""
-          fill
-          sizes="(min-width: 1024px) 34vw, 100vw"
-          className="object-cover object-[50%_62%] lg:object-[50%_55%] animate-slow-zoom motion-reduce:animate-none"
-        />
+    <div>
+      <Reveal from="up">
+        <h2 className="text-center text-[22px] sm:text-[26px] font-extrabold tracking-tight text-slate-900 text-balance">
+          Built for Filipino freelancers
+        </h2>
+        <p className="text-center text-[15px] text-slate-600 mt-2.5">
+          VAs, support, admin, design and bookkeeping, from Manila to Davao.
+        </p>
       </Reveal>
 
-      <div className="px-5 py-12 sm:py-14 lg:px-12 lg:py-20">
-        <div className="max-w-2xl mx-auto">
-          <Reveal from="right" delay={250}>
-            <h2 className="text-center lg:text-left text-[24px] sm:text-[30px] lg:text-[34px] font-extrabold tracking-tight text-slate-900 leading-tight text-balance">
-              Built for Filipino freelancers
-            </h2>
-            <p className="text-center lg:text-left text-[15px] sm:text-base text-slate-600 mt-3 leading-relaxed">
-              VAs, support, admin, design and bookkeeping, from Manila to Davao.
-            </p>
+      <div className="mt-7 grid gap-4 sm:grid-cols-2">
+        {TESTIMONIALS.map((t, i) => (
+          <Reveal key={t.name} from="up" delay={250 + i * 200} className="h-full">
+            <figure className="h-full flex flex-col bg-white border border-slate-200 rounded-2xl p-6 shadow-lg shadow-slate-900/5">
+              <blockquote>
+                <p lang="fil" className="text-[16px] font-semibold text-slate-900 leading-snug">
+                  &ldquo;{t.quote}&rdquo;
+                </p>
+                <p lang="en" className="text-[13px] text-slate-500 mt-1.5 leading-relaxed">
+                  {t.english}
+                </p>
+              </blockquote>
+              {/* mt-auto pins the name to the bottom, so the two cards line up
+                  even though one quote is three times longer than the other. */}
+              <figcaption className="flex items-center gap-2.5 mt-auto pt-5">
+                <Image
+                  src={t.photo}
+                  alt=""
+                  width={40}
+                  height={40}
+                  className="w-10 h-10 rounded-full object-cover border border-slate-200"
+                  style={{ objectPosition: t.focus }}
+                />
+                <span className="text-sm font-bold text-slate-900">{t.name}</span>
+              </figcaption>
+            </figure>
           </Reveal>
-
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            {TESTIMONIALS.map((t, i) => (
-              <Reveal key={t.name} from="up" delay={500 + i * 200} className="h-full">
-                <figure className="h-full flex flex-col bg-white border border-slate-200 rounded-2xl p-6 shadow-lg shadow-slate-900/5">
-                  <blockquote>
-                    <p lang="fil" className="text-[16px] font-semibold text-slate-900 leading-snug">
-                      &ldquo;{t.quote}&rdquo;
-                    </p>
-                    <p lang="en" className="text-[13px] text-slate-500 mt-1.5 leading-relaxed">
-                      {t.english}
-                    </p>
-                  </blockquote>
-                  {/* mt-auto pins the name to the bottom, so the two cards line up
-                      even though one quote is three times longer than the other. */}
-                  <figcaption className="flex items-center gap-2.5 mt-auto pt-5">
-                    <Image
-                      src={t.photo}
-                      alt=""
-                      width={40}
-                      height={40}
-                      className="w-10 h-10 rounded-full object-cover border border-slate-200"
-                      style={{ objectPosition: t.focus }}
-                    />
-                    <span className="text-sm font-bold text-slate-900">{t.name}</span>
-                  </figcaption>
-                </figure>
-              </Reveal>
-            ))}
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   );
