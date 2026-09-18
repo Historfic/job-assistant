@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Logo from '@/components/Logo';
 import HeroBackdrop from '@/components/HeroBackdrop';
 import SideGallery from '@/components/SideGallery';
+import PhotoStrip from '@/components/PhotoStrip';
 import Testimonials from '@/components/Testimonials';
 import { getSessionUser } from '@/lib/auth';
 import { FOUNDING_SEATS, REGULAR_PRICE_COPY } from '@/lib/tiers';
@@ -206,6 +207,10 @@ export default async function LandingPage() {
             <Testimonials />
           </section>
         </div>
+
+        {/* Below xl there are no margins for the side photos, so the same faces
+            pass through here instead. */}
+        <PhotoStrip />
 
         {/* ── Price ── */}
         <div className="bg-white border-y border-slate-200">

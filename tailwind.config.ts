@@ -36,6 +36,10 @@ const config: Config = {
         // cycle: enough to feel alive in the corner of the eye, not enough to
         // pull attention off the column being read.
         float: 'float 7s ease-in-out infinite',
+        // The same photos passing through a band, on the screens too narrow to
+        // have margins for them. Linear, because any easing in a loop reads as
+        // the strip stalling once per cycle.
+        marquee: 'marquee 48s linear infinite',
         // Background glows. Three different lengths, so the three never fall
         // back into step and the movement never shows an obvious loop.
         'drift-a': 'driftA 19s ease-in-out infinite',
@@ -56,6 +60,12 @@ const config: Config = {
         float: {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-14px)' },
+        },
+        // Exactly half, because the row is rendered twice: at -50% the copy
+        // sits where the original began, so the loop has no seam.
+        marquee: {
+          from: { transform: 'translateX(0)' },
+          to: { transform: 'translateX(-50%)' },
         },
         driftA: {
           '0%, 100%': { transform: 'translate(0, 0) scale(1)' },

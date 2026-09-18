@@ -14,28 +14,44 @@ import Reveal from '@/components/Reveal';
 // The slide, the float and the tilt each live on their own wrapper because
 // all three are transforms, and one element holds only one transform.
 //
-// Only from xl, like the hero photos: narrower, the margin has no room.
+// Only from xl. Narrower, the margin has no room — PhotoStrip shows the same
+// photos there instead.
 
-type Card = {
+export interface GalleryPhoto {
   src: string;
+  /** object-position, where centring would cut the person out */
+  focus?: string;
+}
+
+export const GALLERY_PHOTOS: GalleryPhoto[] = [
+  { src: '/gallery/laptop-selfie.jpg' },
+  { src: '/gallery/headphones.jpg' },
+  { src: '/gallery/cafe-laptop.jpg', focus: 'object-[35%_45%]' },
+  { src: '/gallery/zoom-call.jpg', focus: 'object-top' },
+  { src: '/gallery/bed-laptop.jpg' },
+  { src: '/gallery/matcha-laptop.jpg' },
+];
+
+const photo = (src: string) => GALLERY_PHOTOS.find(p => p.src.includes(src))!;
+
+type Card = GalleryPhoto & {
   top: string;
   tilt: string;
   align: string;
   /** negative, so the cards are already out of step when the page loads */
   floatDelay: string;
-  focus?: string;
 };
 
 const LEFT: Card[] = [
-  { src: '/gallery/laptop-selfie.jpg', top: 'top-[3%]',  tilt: '-rotate-3', align: 'justify-end',   floatDelay: '0s' },
-  { src: '/gallery/cafe-laptop.jpg',   top: 'top-[37%]', tilt: 'rotate-2',  align: 'justify-start', floatDelay: '-2.5s', focus: 'object-[35%_45%]' },
-  { src: '/gallery/bed-laptop.jpg',    top: 'top-[71%]', tilt: '-rotate-2', align: 'justify-end',   floatDelay: '-5s' },
+  { ...photo('laptop-selfie'), top: 'top-[3%]',  tilt: '-rotate-3', align: 'justify-end',   floatDelay: '0s' },
+  { ...photo('cafe-laptop'),   top: 'top-[37%]', tilt: 'rotate-2',  align: 'justify-start', floatDelay: '-2.5s' },
+  { ...photo('bed-laptop'),    top: 'top-[71%]', tilt: '-rotate-2', align: 'justify-end',   floatDelay: '-5s' },
 ];
 
 const RIGHT: Card[] = [
-  { src: '/gallery/headphones.jpg',    top: 'top-[14%]', tilt: 'rotate-3',  align: 'justify-start', floatDelay: '-1.5s' },
-  { src: '/gallery/zoom-call.jpg',     top: 'top-[48%]', tilt: '-rotate-2', align: 'justify-end',   floatDelay: '-4s', focus: 'object-top' },
-  { src: '/gallery/matcha-laptop.jpg', top: 'top-[80%]', tilt: 'rotate-2',  align: 'justify-start', floatDelay: '-6s' },
+  { ...photo('headphones'),    top: 'top-[14%]', tilt: 'rotate-3',  align: 'justify-start', floatDelay: '-1.5s' },
+  { ...photo('zoom-call'),     top: 'top-[48%]', tilt: '-rotate-2', align: 'justify-end',   floatDelay: '-4s' },
+  { ...photo('matcha-laptop'), top: 'top-[80%]', tilt: 'rotate-2',  align: 'justify-start', floatDelay: '-6s' },
 ];
 
 function Column({ cards, side }: { cards: Card[]; side: 'left' | 'right' }) {
