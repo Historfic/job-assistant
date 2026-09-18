@@ -1,11 +1,14 @@
-import Image from 'next/image';
 import Reveal from '@/components/Reveal';
+import CrossfadePhoto, { type PhotoPair } from '@/components/CrossfadePhoto';
 
 // Photos of freelancers at work, down the empty sides of the page below the
 // hero, so the wide margins beside the centre column are not bare. Used with
 // the permission of the people in them. Decoration only: no names, no quotes,
 // nothing that presents them as customers. The testimonials are the only
 // place on the page that speaks for a user.
+//
+// Every slot holds two photos and trades between them, all on the same clock,
+// so the page turns over as one.
 //
 // Staggered, not in rows: the left and right cards sit at different heights,
 // so the eye zigzags down with the page instead of reading a grid.
@@ -17,24 +20,20 @@ import Reveal from '@/components/Reveal';
 // Only from xl. Narrower, the margin has no room — PhotoStrip shows the same
 // photos there instead.
 
-export interface GalleryPhoto {
-  src: string;
-  /** object-position, where centring would cut the person out */
-  focus?: string;
-}
-
-export const GALLERY_PHOTOS: GalleryPhoto[] = [
-  { src: '/gallery/laptop-selfie.jpg' },
-  { src: '/gallery/headphones.jpg' },
-  { src: '/gallery/cafe-laptop.jpg', focus: 'object-[35%_45%]' },
-  { src: '/gallery/zoom-call.jpg', focus: 'object-top' },
-  { src: '/gallery/bed-laptop.jpg' },
-  { src: '/gallery/matcha-laptop.jpg' },
+export const GALLERY_PAIRS: PhotoPair[] = [
+  [{ src: '/gallery/laptop-selfie.jpg' }, { src: '/gallery/bed-excel.jpg', focus: 'object-[30%_50%]' }],
+  [{ src: '/gallery/headphones.jpg' }, { src: '/gallery/cafe-macbook.jpg' }],
+  [{ src: '/gallery/cafe-laptop.jpg', focus: 'object-[35%_45%]' }, { src: '/gallery/dual-monitors.jpg', focus: 'object-[38%_50%]' }],
+  [{ src: '/gallery/zoom-call.jpg', focus: 'object-top' }, { src: '/gallery/lap-terrace.jpg' }],
+  [{ src: '/gallery/bed-laptop.jpg' }, { src: '/gallery/hills-coffee.jpg' }],
+  // The hero's home-desk photo is the sixth partner: five new photos for six
+  // slots, and reusing one of the five would put the same picture on both
+  // sides of the screen at once, since they all change together.
+  [{ src: '/gallery/matcha-laptop.jpg' }, { src: '/hero/home-desk.jpg' }],
 ];
 
-const photo = (src: string) => GALLERY_PHOTOS.find(p => p.src.includes(src))!;
-
-type Card = GalleryPhoto & {
+type Card = {
+  pair: PhotoPair;
   top: string;
   tilt: string;
   align: string;
@@ -43,15 +42,15 @@ type Card = GalleryPhoto & {
 };
 
 const LEFT: Card[] = [
-  { ...photo('laptop-selfie'), top: 'top-[3%]',  tilt: '-rotate-3', align: 'justify-end',   floatDelay: '0s' },
-  { ...photo('cafe-laptop'),   top: 'top-[37%]', tilt: 'rotate-2',  align: 'justify-start', floatDelay: '-2.5s' },
-  { ...photo('bed-laptop'),    top: 'top-[71%]', tilt: '-rotate-2', align: 'justify-end',   floatDelay: '-5s' },
+  { pair: GALLERY_PAIRS[0], top: 'top-[3%]',  tilt: '-rotate-3', align: 'justify-end',   floatDelay: '0s' },
+  { pair: GALLERY_PAIRS[2], top: 'top-[37%]', tilt: 'rotate-2',  align: 'justify-start', floatDelay: '-2.5s' },
+  { pair: GALLERY_PAIRS[4], top: 'top-[71%]', tilt: '-rotate-2', align: 'justify-end',   floatDelay: '-5s' },
 ];
 
 const RIGHT: Card[] = [
-  { ...photo('headphones'),    top: 'top-[14%]', tilt: 'rotate-3',  align: 'justify-start', floatDelay: '-1.5s' },
-  { ...photo('zoom-call'),     top: 'top-[48%]', tilt: '-rotate-2', align: 'justify-end',   floatDelay: '-4s' },
-  { ...photo('matcha-laptop'), top: 'top-[80%]', tilt: 'rotate-2',  align: 'justify-start', floatDelay: '-6s' },
+  { pair: GALLERY_PAIRS[1], top: 'top-[14%]', tilt: 'rotate-3',  align: 'justify-start', floatDelay: '-1.5s' },
+  { pair: GALLERY_PAIRS[3], top: 'top-[48%]', tilt: '-rotate-2', align: 'justify-end',   floatDelay: '-4s' },
+  { pair: GALLERY_PAIRS[5], top: 'top-[80%]', tilt: 'rotate-2',  align: 'justify-start', floatDelay: '-6s' },
 ];
 
 function Column({ cards, side }: { cards: Card[]; side: 'left' | 'right' }) {
@@ -62,19 +61,11 @@ function Column({ cards, side }: { cards: Card[]; side: 'left' | 'right' }) {
       }`}
     >
       {cards.map(card => (
-        <div key={card.src} className={`absolute inset-x-0 ${card.top} flex ${card.align}`}>
+        <div key={card.pair[0].src} className={`absolute inset-x-0 ${card.top} flex ${card.align}`}>
           <Reveal from={side} duration={1100} className="w-full max-w-[22rem]">
             <div className="animate-float motion-reduce:animate-none" style={{ animationDelay: card.floatDelay }}>
               <div className={`${card.tilt} rounded-2xl bg-white p-2 shadow-xl shadow-slate-900/10`}>
-                <div className="relative aspect-[3/4] overflow-hidden rounded-xl">
-                  <Image
-                    src={card.src}
-                    alt=""
-                    fill
-                    sizes="352px"
-                    className={`object-cover ${card.focus ?? ''}`}
-                  />
-                </div>
+                <CrossfadePhoto pair={card.pair} sizes="352px" className="aspect-[3/4] rounded-xl" />
               </div>
             </div>
           </Reveal>

@@ -40,6 +40,10 @@ const config: Config = {
         // have margins for them. Linear, because any easing in a loop reads as
         // the strip stalling once per cycle.
         marquee: 'marquee 48s linear infinite',
+        // Every photo slot holds two photos and trades between them: about 7s
+        // on each, with a 1s fade. Long enough that a reader is not watching
+        // the page change while trying to read it.
+        crossfade: 'crossfade 16s ease-in-out infinite',
         // Background glows. Three different lengths, so the three never fall
         // back into step and the movement never shows an obvious loop.
         'drift-a': 'driftA 19s ease-in-out infinite',
@@ -60,6 +64,11 @@ const config: Config = {
         float: {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-14px)' },
+        },
+        crossfade: {
+          '0%, 44%': { opacity: '0' },
+          '50%, 94%': { opacity: '1' },
+          '100%': { opacity: '0' },
         },
         // Exactly half, because the row is rendered twice: at -50% the copy
         // sits where the original began, so the loop has no seam.
