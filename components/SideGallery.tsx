@@ -63,7 +63,7 @@ function Column({ cards, side }: { cards: Card[]; side: 'left' | 'right' }) {
     >
       {cards.map(card => (
         <div key={card.src} className={`absolute inset-x-0 ${card.top} flex ${card.align}`}>
-          <Reveal from={side} duration={1100} className="w-full max-w-[15rem]">
+          <Reveal from={side} duration={1100} className="w-full max-w-[18rem]">
             <div className="animate-float motion-reduce:animate-none" style={{ animationDelay: card.floatDelay }}>
               <div className={`${card.tilt} rounded-2xl bg-white p-2 shadow-xl shadow-slate-900/10`}>
                 <div className="relative aspect-[3/4] overflow-hidden rounded-xl">
@@ -71,7 +71,7 @@ function Column({ cards, side }: { cards: Card[]; side: 'left' | 'right' }) {
                     src={card.src}
                     alt=""
                     fill
-                    sizes="240px"
+                    sizes="288px"
                     className={`object-cover ${card.focus ?? ''}`}
                   />
                 </div>

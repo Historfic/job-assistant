@@ -24,13 +24,13 @@ export default function PhotoStrip() {
         {[...GALLERY_PHOTOS, ...GALLERY_PHOTOS].map((photo, i) => (
           <div
             key={`${photo.src}-${i}`}
-            className="relative w-36 sm:w-44 aspect-[3/4] shrink-0 rounded-2xl overflow-hidden border border-slate-200 shadow-md shadow-slate-900/5"
+            className="relative w-52 sm:w-64 aspect-[3/4] shrink-0 rounded-2xl overflow-hidden border border-slate-200 shadow-md shadow-slate-900/5"
           >
             <Image
               src={photo.src}
               alt=""
               fill
-              sizes="176px"
+              sizes="256px"
               className={`object-cover ${photo.focus ?? ''}`}
             />
           </div>
